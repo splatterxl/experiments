@@ -1,11 +1,8 @@
 // thanks advaith
 
-import { ActionRow, ActionRowBuilder, Interaction, InteractionReplyOptions, MessageActionRowComponent, SelectMenuBuilder, SelectMenuOptionBuilder } from "discord.js";
-import { lastFetchedAt, rollouts } from ".";
-
-const andList = new Intl.ListFormat();
-const orList = new Intl.ListFormat({ style: "unit", type: "disjunction" });
-
+import { Guild, GuildFeature } from "discord.js"
+import { parseFilterShort, andList } from "./render.js"
+import { murmur3 } from "./util.js"
 
 export interface Experiment { 
 	data: {
@@ -45,74 +42,73 @@ export enum FilterType {
 	HubType = 4148745523
 }
 
-type FeatureFilter = [FilterType.Feature, [[number, string[]]]];
-type IDRangeFilter = [FilterType.IDRange, [[number, number | null], [number, number]]];
-type MemberCountFilter = [FilterType.MemberCount, [[number, number | null], [number, number]]];
-type IDFilter = [FilterType.ID, [[number, string[]]]];
-type HubTypeFilter = [FilterType.HubType, [[number, number[]]]];
+type FeatureFilter = [FilterType.Feature, [[_: number, features: string[]]]];
+type IDRangeFilter = [FilterType.IDRange, [[_: number, start: number | null], [_: number, end: number]]];
+type MemberCountFilter = [FilterType.MemberCount, [[_: number, start: number | null], [_: number, end: number]]];
+type IDFilter = [FilterType.ID, [[_: number, ids: string[]]]];
+type HubTypeFilter = [FilterType.HubType, [[_: number, types: number[]]]];
 
 export type Filter = FeatureFilter | IDRangeFilter | MemberCountFilter | IDFilter | HubTypeFilter;
 
-const parseFilter = (f: Filter) => {
-	if (f[0] === FilterType.Feature) return `Server has feature ${orList.format(f[1][0][1])}`;
-	if (f[0] === FilterType.IDRange) return `Server ID is in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}`;
-	if (f[0] === FilterType.MemberCount) return `Server member count is ${f[1][1][1] ? `in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}` : `${f[1][0][1]}+`}`;
-	if (f[0] === FilterType.ID) return `Server ID is ${orList.format(f[1][0][1])}`;
-	if (f[0] === FilterType.HubType) return `Server hub type is ${orList.format(f[1][0][1].map(t => t.toString()))}`;
-	return `Unknown filter type ${f[0]}`;
-};
+export * from "./render.js";
 
-export function renderExperimentHomeView(i: Interaction, id: string): InteractionReplyOptions {
-  const exp = rollouts.get(id)!;
+export const populations = (exp: Experiment) => exp.rollout[3];
+export const overrides = (exp: Experiment) => exp.rollout[4];
 
-  return {
-    embeds: [{
-      title: `${exp.data.title} (${exp.data.id})`,
-      description: exp.data.description.join("\n"),
-      color: 0xffcc00,
-      footer: {
-        text: `${exp.data.id} - ${exp.data.buckets.length} buckets`
-      }
-    }],
-    components: renderPageSelect(i, exp)
+export const check = (guild: Guild, exp: Experiment) => {
+  const hash = murmur3(`${exp.data.id}:${guild.id}`) % 1e4;
+
+  const res: { 
+    populations: { bucket: number; index: number; name: string; cond: { s: number; e: number }[] }[];
+    active: boolean; 
+    overrides: number[];
+  } = {
+    populations: [],
+    active: false,
+    overrides: []
   };
+
+  for (const { b, k } of overrides(exp)) {
+    if (k.includes(guild.id)) {
+      res.overrides.push(b);
+      res.active = true;
+    }
+  }
+
+  for (const [i, [p, filter]] of populations(exp).entries()) {
+    if (filter.length === 0 || filter.every(f => checkFilter(f, guild))) {
+      for (const [b, r] of p) {
+        if (b === -1 || b === 0) continue;
+        if (r.some(({ s, e }) => hash >= s && hash <= e)) {
+          res.populations.push({ bucket: b, index: i, name: andList.format(filter.map(f => parseFilterShort(f))), cond: r });
+          res.active = true;
+        }
+      }
+    }
+  }
+
+  return res;
 }
 
-export function renderRolloutView(i: Interaction, id: string): InteractionReplyOptions {
-  const exp = rollouts.get(id)!;
+export const checkFilter = (filter: Filter, guild: Guild) => {
+  const [t, f] = filter;
 
-  return {
-    embeds: [{
-      title: `${exp.data.title} (${exp.data.id})`,
-      description: `Rollout data available may not always be accurate. Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>`,
-      color: 0xffcc00,
-      footer: {
-        text: `${exp.data.id} - ${exp.data.buckets.length} buckets`
-      }
-    }],
-    components: renderPageSelect(i, exp)
-  };
-}
-
-export function renderPageSelect(i: Interaction, exp: Experiment): ActionRow<MessageActionRowComponent>[] {
-  return [
-      new ActionRowBuilder()
-        .addComponents(
-          new SelectMenuBuilder()
-          .setCustomId(`page,view,${i.user.id}`)
-          .addOptions(
-            new SelectMenuOptionBuilder()
-              .setLabel("Home")
-              .setValue(`home,${exp.data.id}`)
-              .setDescription("View this experiment's details.")
-              .toJSON(),
-            new SelectMenuOptionBuilder()
-              .setLabel("Rollout")
-              .setValue(`rollout,${exp.data.id}`)
-              .setDescription("View the rollout of this experiment.")
-             .toJSON(),
-          ) 
-        )
-        .toJSON(),
-  ] as unknown as any
+  switch (t) {
+    case FilterType.Feature:
+      const [[, features]] = f;
+      return features.some(f => guild.features.includes(f as GuildFeature));
+    case FilterType.IDRange: {
+      const [[, start], [, end]] = f;
+      return (start === null || +guild.id >= start) && +guild.id <= end;
+    }
+    case FilterType.MemberCount: {
+      const [[, start], [, end]] = f;
+      return (start === null || guild.memberCount >= start) && guild.memberCount <= end;
+    }
+    case FilterType.ID:
+      const [[, ids]] = f;
+      return ids.includes(guild.id);
+    case FilterType.HubType:
+      break;
+  }
 }

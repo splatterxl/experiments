@@ -1,9 +1,4 @@
-import { AutocompleteInteraction, Client, Collection, CommandInteraction, GatewayIntentBits, MessageComponentInteraction, Snowflake } from "discord.js"; 
-import { readdirSync, readFileSync, statSync, writeFileSync } from "fs";
-import FuzzySearch from "fuzzy-search";
-import kleur from "kleur";
-import { Experiment } from "./experiment";
-import { request } from "undici";
+const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
 
 const client = new Client({
   intents: GatewayIntentBits.Guilds,
@@ -63,8 +58,10 @@ export async function loadRollouts() {
   }
 }
 
+async function load() { 
+
 for (const event of readdirSync(__dirname + "/events")) {
-  const { eventName = event.match(/(.*)\.js$/)?.[1], default: handler, type = "on" } = require(`./events/${event}`);
+  const { eventName = event.match(/(.*)\.js$/)?.[1], default: handler, type = "on" } = await import(`./events/${event}`);
 
   client[type as "on"](eventName, handler);
 
@@ -72,7 +69,7 @@ for (const event of readdirSync(__dirname + "/events")) {
 }
 
 for (const command of readdirSync(__dirname + "/commands")) {
-  const { default: handler, name = command.match(/(.*)\.js$/)?.[1], handleComponent = () => {} } = require(`./commands/${command}`);
+  const { default: handler, name = command.match(/(.*)\.js$/)?.[1], handleComponent = () => {} } = await import(`./commands/${command}`);
 
   commands.set(name, { handle: handler, handleComponent });
 
@@ -80,7 +77,7 @@ for (const command of readdirSync(__dirname + "/commands")) {
 } 
 
 for (const autocomplete of readdirSync(__dirname + "/autocomplete")) {
-  const { default: handler, name = autocomplete.match(/(.*)\.js$/)?.[1] } = require(`./autocomplete/${autocomplete}`);
+  const { default: handler, name = autocomplete.match(/(.*)\.js$/)?.[1] } = await import(`./autocomplete/${autocomplete}`);
 
   autocompleteStores.set(name, handler);
 
@@ -88,6 +85,8 @@ for (const autocomplete of readdirSync(__dirname + "/autocomplete")) {
 }
 
 client.on("debug", (...d: any) => console.debug(kleur.gray("[client::debug]"), ...d.map(kleur.gray)));
+
+}
 
 client.login();
 loadRollouts();
@@ -130,3 +129,24 @@ function backupRollouts() {
 process.stdin.on("data", _ => {
   loadRollouts();
 });
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error(`[${kleur.red("unhandledRejection")}] ${reason}`);
+});
+process.on("uncaughtException", (err: Error) => {
+  console.error(`[${kleur.red("uncaughtException")}] ${err.message}`);
+});
+process.on("beforeExit", () => {
+  console.info(`[${kleur.bold("exit")}] exiting`);
+  client.destroy();
+});
+
+import { AutocompleteInteraction, Client, Collection, CommandInteraction, GatewayIntentBits, MessageComponentInteraction } from "discord.js"; 
+import { readdirSync, readFileSync, statSync, writeFileSync } from "fs";
+import FuzzySearch from "fuzzy-search";
+import kleur from "kleur";
+import { Experiment } from "./experiment";
+import { request } from "undici";
+import { dirname } from "path";
+
+load()

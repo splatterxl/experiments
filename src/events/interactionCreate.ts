@@ -1,8 +1,9 @@
-import { ApplicationCommandOptionType, Interaction, MessageComponentInteraction } from "discord.js";
+import { ApplicationCommandOptionType, Interaction, InteractionType, MessageComponentInteraction } from "discord.js";
 import kleur from "kleur";
-import { autocompleteStores, commands } from "..";
+import { autocompleteStores, commands } from "../index.js";
 
 export default async function (i: Interaction) {
+  try {
   if (i.isCommand()) {
     const command = commands.get(i.commandName);
 
@@ -17,14 +18,14 @@ export default async function (i: Interaction) {
       })() : ""}`);
     } else {
       await i.command?.delete();
-      i.reply({
+      await i.reply({
         content: `Command \`${i.commandName}\` not found.`,
         ephemeral: true,
       });
       console.warn(`[${kleur.blue("commands")}::handler] ${kleur.gray(i.user.id)} % command ${kleur.green(i.commandName)} => not found`);
     }
   } else if (i.isAutocomplete()) {
-    autocompleteStores.get(i.commandName)?.(i);
+    await autocompleteStores.get(i.commandName)?.(i);
   } else if (i.isMessageComponent()) {
     const [type, scope, id] = i.customId.split(",");
 
@@ -38,12 +39,17 @@ export default async function (i: Interaction) {
 
         console.debug(`[${kleur.blue("commands")}::handler] ${kleur.gray(i.user.id)} % component ${kleur.green(i.customId)}`);
 
-        commands.get(scope)?.handleComponent(i);
+        await commands.get(scope)?.handleComponent(i);
 
         break;
       default: 
-        return notFound(i);
+        return await notFound(i);
     }
+  }
+  } catch (e) {
+    console.error(`[${kleur.blue("commands")}::handler] ${kleur.gray(i.user.id)} % ${kleur.green(InteractionType[i.type])} => ${kleur.red("error")} ${kleur.gray(((e as any)?.stack ?? e) as any)}`);
+    // @ts-ignore 
+    if (i.reply && typeof i.reply === "function") i.reply(`An error occurred. \`\`\`js\n${e}\n\`\`\``);
   }
 }
 

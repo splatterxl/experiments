@@ -1,8 +1,7 @@
 import { CommandInteraction, SelectMenuInteraction } from "discord.js";
-import { rollouts } from "..";
-import { notFound } from "../events/interactionCreate";
-import { renderExperimentHomeView, renderRolloutView } from "../experiment";
-import { editMessage } from "../util";
+import { rollouts } from "../index.js";
+import { renderExperimentHomeView, renderRolloutView, renderOverrideView } from "../experiment.js";
+import { editMessage } from "../util.js";
 
 export default function (i: CommandInteraction) {
   if (rollouts.size === 0) {
@@ -17,7 +16,7 @@ export default function (i: CommandInteraction) {
     return { success: false, error: "rollout not found" };
   }
 
-  i.reply(renderExperimentHomeView(i, id));
+  i.reply(getViewForPage(i.options.get("page", false)?.value!.toString() ?? "home")(i, id));
 
   return { success: true };
 }
@@ -25,17 +24,19 @@ export default function (i: CommandInteraction) {
 export async function handleComponent (i: SelectMenuInteraction) {
   const [page, id] = i.values[0].split(",");
 
-  switch (page) {
+  await i.deferUpdate();
+  await editMessage(i, getViewForPage(page)(i, id));
+}
+
+function getViewForPage(p: string) {
+  switch (p) {
     case "home":
-      await i.deferUpdate();
-      await editMessage(i, renderExperimentHomeView(i, id));
-      break;
+      return renderExperimentHomeView;
     case "rollout":
-      await i.deferUpdate();
-      await editMessage(i, renderRolloutView(i, id));
-      break;
+      return renderRolloutView;
+    case "overrides":
+      return renderOverrideView;
     default:
-      notFound(i);
-      break;
+      return () => ({ content: "Not found" });
   }
 }
