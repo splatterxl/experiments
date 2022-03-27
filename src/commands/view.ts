@@ -1,9 +1,8 @@
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, SelectMenuInteraction } from "discord.js";
 import { rollouts } from "..";
-import { Filter, FilterType } from "../experiment";
-
-const andList = new Intl.ListFormat()
-const orList = new Intl.ListFormat({ style: "unit", type: "disjunction" })
+import { notFound } from "../events/interactionCreate";
+import { renderExperimentHomeView, renderRolloutView } from "../experiment";
+import { editMessage } from "../util";
 
 export default function (i: CommandInteraction) {
   if (rollouts.size === 0) {
@@ -18,34 +17,25 @@ export default function (i: CommandInteraction) {
     return { success: false, error: "rollout not found" };
   }
 
-  const exp = rollouts.get(id)!;
-
-  const filters = exp.rollout[3].map(rollout => {
-    return rollout[1].map(f => parseFilter(f));
-  });
-
-  i.reply({
-    embeds: [{
-      title: `${exp.data.title} (${exp.data.id})`,
-      description: exp.data.description.join("\n"),
-      fields: [
-        {
-          name: "Override filters",
-          value: filters.length ? filters.map(v => v.join("\n")).join("") || "None" : "None",
-          inline: true
-        }
-      ]
-    }]
-  });
+  i.reply(renderExperimentHomeView(i, id));
 
   return { success: true };
 }
 
-const parseFilter = (f: Filter) => {
-	if (f[0] === FilterType.Feature) return `Server has feature ${orList.format(f[1][0][1])}`;
-	if (f[0] === FilterType.IDRange) return `Server ID is in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}`;
-	if (f[0] === FilterType.MemberCount) return `Server member count is ${f[1][1][1] ? `in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}` : `${f[1][0][1]}+`}`;
-	if (f[0] === FilterType.ID) return `Server ID is ${orList.format(f[1][0][1])}`;
-	if (f[0] === FilterType.HubType) return `Server hub type is ${orList.format(f[1][0][1].map(t => t.toString()))}`;
-	return `Unknown filter type ${f[0]}`;
+export async function handleComponent (i: SelectMenuInteraction) {
+  const [page, id] = i.values[0].split(",");
+
+  switch (page) {
+    case "home":
+      await i.deferUpdate();
+      await editMessage(i, renderExperimentHomeView(i, id));
+      break;
+    case "rollout":
+      await i.deferUpdate();
+      await editMessage(i, renderRolloutView(i, id));
+      break;
+    default:
+      notFound(i);
+      break;
+  }
 }

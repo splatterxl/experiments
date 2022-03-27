@@ -1,5 +1,5 @@
-import { AutocompleteInteraction, Client, Collection, CommandInteraction, GatewayIntentBits, Snowflake } from "discord.js"; 
-import { readdirSync } from "fs";
+import { AutocompleteInteraction, Client, Collection, CommandInteraction, GatewayIntentBits, MessageComponentInteraction, Snowflake } from "discord.js"; 
+import { readdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import FuzzySearch from "fuzzy-search";
 import kleur from "kleur";
 import { Experiment } from "./experiment";
@@ -10,11 +10,14 @@ const client = new Client({
 });
 
 export const commands = new Collection<string, 
-  (i: CommandInteraction) =>
-    | { success: boolean; error: string } 
-    | Promise<
-      | { success: boolean; error: string }
-    >
+  { 
+    handle: (i: CommandInteraction) => 
+      | { success: boolean; error: string } 
+      | Promise<
+        | { success: boolean; error: string }
+      >; 
+    handleComponent: (i: MessageComponentInteraction) => void | Promise<void>;
+  }
 >();
 export const autocompleteStores = new Collection<string, (i: AutocompleteInteraction) => void | Promise<void>>();
 export let rollouts = new Collection<string, Experiment>();
@@ -32,12 +35,12 @@ export async function loadRollouts() {
       sort: true,
     });
     lastFetchedAt = Date.now();
+
+    backupRollouts();
   } catch (e) {
     console.error(`[${kleur.bold("rollouts")}::load] failed to fetch rollouts: ${e}`);
     
     if (process.env.AETHER_URL) {
-      console.debug(`[${kleur.bold("rollouts")}::load] falling back to aether experiments`);
-
       try {
         const data = await request(process.env.AETHER_URL!).then(res => res.body.json());
 
@@ -48,6 +51,8 @@ export async function loadRollouts() {
           sort: true,
         }); 
         lastFetchedAt = Date.now();
+
+        backupRollouts();
       } catch (e) {
         console.error(`[${kleur.bold("rollouts")}::load] failed to fetch aether experiments: ${e}`);
         if (rollouts.size === 0) startReAttemptingRolloutLoad();
@@ -67,9 +72,9 @@ for (const event of readdirSync(__dirname + "/events")) {
 }
 
 for (const command of readdirSync(__dirname + "/commands")) {
-  const { default: handler, name = command.match(/(.*)\.js$/)?.[1] } = require(`./commands/${command}`);
+  const { default: handler, name = command.match(/(.*)\.js$/)?.[1], handleComponent = () => {} } = require(`./commands/${command}`);
 
-  commands.set(name, handler);
+  commands.set(name, { handle: handler, handleComponent });
 
   console.debug(`[${kleur.blue("commands")}::load] loaded command ${name}`);
 } 
@@ -86,11 +91,40 @@ client.on("debug", (...d: any) => console.debug(kleur.gray("[client::debug]"), .
 
 client.login();
 loadRollouts();
-const int = setInterval(loadRollouts, /* four hours */ 4 * 60 * 60 * 1000);
+setInterval(loadRollouts, /* four hours */ 4 * 60 * 60 * 1000);
 
 function startReAttemptingRolloutLoad() {
   console.debug(`[${kleur.bold("rollouts")}::load] failed to load rollouts, retrying in 5 minutes`);
+  if (rollouts.size === 0) {
+    try {
+      const data = JSON.parse(readFileSync(__dirname + "/../rollouts.json", "utf-8"));
+
+      rollouts = new Collection(data.map((d: any) => [d.data.id, d]));
+      console.debug(`[${kleur.bold("rollouts")}::load] loaded ${rollouts.size} rollouts [file]`);
+      fuzzy = new FuzzySearch([...rollouts.values()], ['data.title', 'data.id'], {
+        caseSensitive: false,
+        sort: true,
+      });
+      lastFetchedAt = statSync(__dirname + "/../rollouts.json").mtimeMs;
+    } catch (e) {
+      // invalid/missing backups
+      console.error(`[${kleur.bold("rollouts")}::load] failed to load rollouts from backup: ${e}`);
+    }
+  }
   setTimeout(loadRollouts, 5 * 60 * 1000);
+}
+
+// this isn't going to be corrupted because it's gonna be only done every four hours
+function backupRollouts() {
+  console.debug(`[${kleur.bold("rollouts")}::backup] backing up ${rollouts.size} rollouts`);
+  try {
+    const data = JSON.stringify([...rollouts.values()]);
+    writeFileSync(__dirname + "/../rollouts.json", data, "utf8");
+
+    console.info(`[${kleur.bold("rollouts")}::backup] backed up ${rollouts.size} rollouts`);
+  } catch {
+    // trollface
+  }
 }
 
 process.stdin.on("data", _ => {
