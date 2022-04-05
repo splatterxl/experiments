@@ -21,7 +21,7 @@ export let lastFetchedAt = 0;
 
 export async function loadRollouts() { 
   try {
-    const data = await request("https://rollouts.advaith.workers.dev/").then(res => res.body.json());
+    const data = await request("https://rollouts.advaith.workers.dev/", { headers: { Referer: "https://rollouts.advaith.io" } }).then(res => res.body.json());
 
     rollouts = new Collection(data.map((d: any) => [d.data.id, d])); 
     console.debug(`[${kleur.bold("rollouts")}::load] loaded ${rollouts.size} rollouts`);
