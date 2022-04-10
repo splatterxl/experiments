@@ -1,8 +1,37 @@
+import { AutocompleteInteraction, Client, Collection, CommandInteraction, GatewayIntentBits, MessageComponentInteraction } from "discord.js"; 
+import fastify from "fastify";
+import fastifyCookie from "fastify-cookie";
+import { readdirSync } from "fs";
+import kleur from "kleur";
+import { dirname } from "path";
+import { loadRollouts } from "./load";
+
+declare module "fastify" {
+  export interface FastifyRequest {
+    auth: { type: string, id?: string, token: string };
+  }
+}
+
 const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
+
+/// --- BOT --- ///
 
 const client = new Client({
   intents: GatewayIntentBits.Guilds,
 });
+
+process.on("unhandledRejection", (reason, _) => {
+  console.error(`[${kleur.red("unhandledRejection")}] ${reason}`);
+});
+process.on("uncaughtException", (err: Error) => {
+  console.error(`[${kleur.red("uncaughtException")}] ${err.message}`);
+});
+process.on("beforeExit", () => {
+  console.info(`[${kleur.bold("exit")}] exiting`);
+  client.destroy();
+});
+
+load()
 
 export const commands = new Collection<string, 
   { 
@@ -15,52 +44,7 @@ export const commands = new Collection<string,
   }
 >();
 export const autocompleteStores = new Collection<string, (i: AutocompleteInteraction) => void | Promise<void>>();
-export let rollouts = new Collection<string, Experiment>();
-export let fuzzy: FuzzySearch<Experiment> = null as unknown as any;
-export let lastFetchedAt = 0;
 
-export async function loadRollouts() { 
-  try {
-    const data = await request("https://rollouts.advaith.workers.dev/", { 
-      headers: { 
-        Referer: "https://splatterxl.github.io" 
-      }
-    }).then(res => res.body.json());
-
-    rollouts = new Collection(data.map((d: any) => [d.data.id, d])); 
-    console.debug(`[${kleur.bold("rollouts")}::load] loaded ${rollouts.size} rollouts`);
-    fuzzy = new FuzzySearch([...rollouts.values()], ['data.title', 'data.id'], {
-      caseSensitive: false,
-      sort: true,
-    });
-    lastFetchedAt = Date.now();
-
-    backupRollouts();
-  } catch (e) {
-    console.error(`[${kleur.bold("rollouts")}::load] failed to fetch rollouts: ${e}`);
-    
-    if (process.env.AETHER_URL) {
-      try {
-        const data = await request(process.env.AETHER_URL!).then(res => res.body.json());
-
-        rollouts = new Collection(data.filter((d: any) => d.type === "guild").map((d: any) => [d.id, d]));
-        console.debug(`[${kleur.bold("rollouts")}::load] loaded ${rollouts.size} rollouts [aether]`);
-        fuzzy = new FuzzySearch([...rollouts.values()], ['title', 'id'], {
-          caseSensitive: false,
-          sort: true,
-        }); 
-        lastFetchedAt = Date.now();
-
-        backupRollouts();
-      } catch (e) {
-        console.error(`[${kleur.bold("rollouts")}::load] failed to fetch aether experiments: ${e}`);
-        if (rollouts.size === 0) startReAttemptingRolloutLoad();
-      }
-    } else if (rollouts.size === 0) {
-      startReAttemptingRolloutLoad();
-    }
-  }
-}
 
 async function load() { 
 
@@ -96,61 +80,95 @@ client.login();
 loadRollouts();
 setInterval(loadRollouts, /* four hours */ 4 * 60 * 60 * 1000);
 
-function startReAttemptingRolloutLoad() {
-  console.debug(`[${kleur.bold("rollouts")}::load] failed to load rollouts, retrying in 5 minutes`);
-  if (rollouts.size === 0) {
-    try {
-      const data = JSON.parse(readFileSync(__dirname + "/../rollouts.json", "utf-8"));
+/// --- API --- ///
 
-      rollouts = new Collection(data.map((d: any) => [d.data.id, d]));
-      console.debug(`[${kleur.bold("rollouts")}::load] loaded ${rollouts.size} rollouts [file]`);
-      fuzzy = new FuzzySearch([...rollouts.values()], ['data.title', 'data.id'], {
-        caseSensitive: false,
-        sort: true,
-      });
-      lastFetchedAt = statSync(__dirname + "/../rollouts.json").mtimeMs;
-    } catch (e) {
-      // invalid/missing backups
-      console.error(`[${kleur.bold("rollouts")}::load] failed to load rollouts from backup: ${e}`);
+const server = fastify({
+  logger: false,
+  ignoreTrailingSlash: false,
+});
+
+// plugins
+server.register(fastifyCookie, {
+  secret: process.env.COOKIE_SECRET,
+});
+
+// errors
+server
+  .setErrorHandler((error, req, reply) => {
+    console.error(`[${kleur.red("error")}] ${error.message}`);
+  
+    error.statusCode = error.statusCode || 500;
+    error.message = error.message || "Internal Server Error";
+  
+    reply.code(error.statusCode).send({
+      error: {
+        message: error.message,
+        validation: error.validation,
+        code: error.code ?? error.statusCode,
+      },
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
+  })
+  .setNotFoundHandler((req, reply) => {
+    reply.code(404).send({
+      error: {
+        message: "Not Found",
+        code: 404,
+      },
+    });
+  });
+
+// auth 
+server.addHook("onRequest", async (req, res, next) => {
+  console.debug(`[${kleur.green("request")}] ${req.method} ${req.url}${req.query}`);
+
+  if (!req.headers.authorization)
+    return res.code(401).send({
+      error: {
+        message: "Unauthorized",
+        details: "Missing Authorization header",
+        code: 401,
+      },
+    }); 
+
+  const [type, token] = req.headers.authorization.split(" ");
+
+  if (!["Bearer", "Bot"].includes(type)) 
+    return res.code(401).send({
+      error: {
+        message: "Unauthorized",
+        details: "Invalid Authorization header",
+        code: 401,
+      },
+    });
+
+  switch (type) {
+    case "Bot":
+      if (token !== process.env.BOT_TOKEN)
+        return res.code(401).send({
+          error: {
+            message: "Unauthorized",
+            details: "Invalid Authorization header",
+            code: 401,
+          },
+        });
+
+      req.auth = {
+        type: "Bot",
+        token,
+      };
+      break;
+    case "Bearer": {
+      const [id, secret] = token.split(".");
+
+      req.auth = {
+        type: "User",
+        id,
+        token: secret,
+      };
+      break;
     }
   }
-  setTimeout(loadRollouts, 5 * 60 * 1000);
-}
 
-// this isn't going to be corrupted because it's gonna be only done every four hours
-function backupRollouts() {
-  console.debug(`[${kleur.bold("rollouts")}::backup] backing up ${rollouts.size} rollouts`);
-  try {
-    const data = JSON.stringify([...rollouts.values()]);
-    writeFileSync(__dirname + "/../rollouts.json", data, "utf8");
-
-    console.info(`[${kleur.bold("rollouts")}::backup] backed up ${rollouts.size} rollouts`);
-  } catch {
-    // trollface
-  }
-}
-
-process.stdin.on("data", _ => {
-  loadRollouts();
+  next();
 });
-
-process.on("unhandledRejection", (reason, promise) => {
-  console.error(`[${kleur.red("unhandledRejection")}] ${reason}`);
-});
-process.on("uncaughtException", (err: Error) => {
-  console.error(`[${kleur.red("uncaughtException")}] ${err.message}`);
-});
-process.on("beforeExit", () => {
-  console.info(`[${kleur.bold("exit")}] exiting`);
-  client.destroy();
-});
-
-import { AutocompleteInteraction, Client, Collection, CommandInteraction, GatewayIntentBits, MessageComponentInteraction } from "discord.js"; 
-import { readdirSync, readFileSync, statSync, writeFileSync } from "fs";
-import FuzzySearch from "fuzzy-search";
-import kleur from "kleur";
-import { Experiment } from "./experiment";
-import { request } from "undici";
-import { dirname } from "path";
-
-load()
