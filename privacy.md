@@ -5,7 +5,7 @@ As is publicly verifiable via the source code available at the
 Discord Application does not collect personal data of any of its users.
 
 The only data we knowingly collect and manage is temporary guild cache to supply
-our services. Collecting guild informating and caching them is necessary to
+our services. Collecting guild information and caching them is necessary to
 avoid excessive HTTP requests to Discord's API. This information is never stored
 permanently and is completely purged when the Application is removed from a
 server. By using the Application, you agree to the collection of aforementioned
