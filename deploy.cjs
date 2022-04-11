@@ -1,16 +1,18 @@
 const { REST } = require("@discordjs/rest");
-const { Routes, ApplicationCommandOptionType } = require("discord-api-types/v10");
+const {
+  Routes,
+  ApplicationCommandOptionType,
+} = require("discord-api-types/v10");
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
-!(async()=>{
-
+!(async () => {
   /** @type {import("discord-api-types/v10").RESTGetAPIOAuth2CurrentApplicationResult} */
   const application = await rest.get(Routes.oauth2CurrentApplication());
 
   /** @type {import("discord-api-types/v10").RESTPutAPIApplicationCommandsJSONBody} */
   const body = [
-    { 
+    {
       name: "view",
       description: "View a specific experiment",
       name_localizations: {
@@ -46,12 +48,12 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
               name_localizations: {},
               value: "home",
             },
-            { 
+            {
               name: "rollout",
               name_localizations: {},
               value: "rollout",
             },
-            { 
+            {
               name: "overrides",
               name_localizations: {},
               value: "overrides",
@@ -68,7 +70,7 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
         fr: "Affiche la liste des expériences actives",
       },
     },
-    { 
+    {
       name: "invite",
       description: "Invite the bot to your server!",
       name_localizations: {},
@@ -97,7 +99,15 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
           autocomplete: true,
         },
       ],
-    }
+    },
+    {
+      name: "info",
+      description: "Get info about the bot",
+      name_localizations: {},
+      description_localizations: {
+        fr: "Obtenir des informations sur le bot",
+      },
+    },
   ];
 
   /** @type {import("discord-api-types/v10").RESTPutAPIApplicationCommandsResult} */
@@ -106,5 +116,4 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
   });
 
   console.info(`PUT ${res.length} commands`);
-
 })();
