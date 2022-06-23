@@ -6,7 +6,7 @@ specifiers:
   '@splatterxl/tsconfig': 1.1.1
   '@types/fuzzy-search': ^2.1.2
   '@types/node': 17.0.23
-  discord-api-types: ^0.31.0
+  discord-api-types: ^0.35.0
   discord.js: ^14.0.0-dev.1648166883.cedd053
   fastify: ^3.28.0
   fastify-cookie: ^5.6.0
@@ -21,7 +21,7 @@ dependencies:
   '@discordjs/builders': 0.13.0
   '@discordjs/rest': 0.4.1
   '@types/fuzzy-search': 2.1.2
-  discord-api-types: 0.31.0
+  discord-api-types: 0.35.0
   discord.js: 14.0.0-dev.1648166883.cedd053
   fastify: 3.28.0
   fastify-cookie: 5.6.0
@@ -221,12 +221,12 @@ packages:
     resolution: {integrity: sha512-Ekq1ICNpOTVajXKZguNFrsDeTmam+ZeA38txsNLZnANdXUjU6QBPIZLUQTC6MzigFGb0Tt8vk4xLnXmzv0shNg==}
     dev: false
 
-  /discord-api-types/0.31.0:
-    resolution: {integrity: sha512-IL4KKEo3QOQRcrtkpAYiDOQHIVuDBgtzFgDKsMqllbPKi3o/54mJOvYEG38oFa1G2qR4b+nTB5mMgc85W4/eQw==}
-    dev: false
-
   /discord-api-types/0.31.2:
     resolution: {integrity: sha512-gpzXTvFVg7AjKVVJFH0oJGC0q0tO34iJGSHZNz9u3aqLxlD6LfxEs9wWVVikJqn9gra940oUTaPFizCkRDcEiA==}
+    dev: false
+
+  /discord-api-types/0.35.0:
+    resolution: {integrity: sha512-aaIbVgPk7OA3y/HdG00tRM2nB8B3sSPH6KXgamBLRrcAJEQ8XZJNNKeRr0WVzw/lprdpKHKuTNX1DNrYnD5cOw==}
     dev: false
 
   /discord.js/14.0.0-dev.1648166883.cedd053:
