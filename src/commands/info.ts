@@ -13,7 +13,7 @@ export default function (i: CommandInteraction) {
         },
         title: "Experiments",
         description:
-          "I'm a small bot made by <@957383358592217088> to explore Discord guild experiments. Type `/` to view my commands.",
+          "I'm a small bot made by <@728342296696979526> to explore Discord guild experiments. Type `/` to view my commands.",
       },
     ],
     components: [
