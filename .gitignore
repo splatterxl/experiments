@@ -105,3 +105,5 @@ dist
 
 **/*.env
 rollouts.*
+
+.yarn/install-state.gz
