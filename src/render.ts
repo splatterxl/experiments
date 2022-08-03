@@ -110,7 +110,9 @@ export const rolloutPercentage = (r: Experiment["rollout"][3]) => {
     }
   }
 
-  return Math.trunc((t / 10_000) * 100);
+  const percentage = Math.trunc((t / 10_000) * 100);
+
+  return percentage;
 };
 
 export const createDefaultEmbed = (exp: Experiment): APIEmbed => {
