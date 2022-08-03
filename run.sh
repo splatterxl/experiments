@@ -1,7 +1,11 @@
 #!/bin/sh
-for x in $(ls -a | grep .env); do
-    echo "[run.sh::env] sourcing $x as env variables"
-    source $x
+for x in *; do
+    if ! grep -q '.env' "$x"; then continue; fi
+
+    echo "[run.sh::env] sourcing $x"
+
+    # shellcheck disable=SC1090
+    . "$x"
 done
 
 node dist/index.js
