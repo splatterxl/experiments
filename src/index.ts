@@ -7,12 +7,17 @@ import {
   MessageComponentInteraction,
   Options,
 } from "discord.js";
-import { readdirSync } from "fs";
 import kleur from "kleur";
-import { dirname } from "path";
+import { execSync } from "node:child_process";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { loadRollouts } from "./load.js";
 
 const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
+
+export const COMMIT_SHA = execSync("git rev-parse HEAD").toString().trim(),
+  PKG = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")),
+  VERSION = PKG.version;
 
 /// --- BOT --- ///
 

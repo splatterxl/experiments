@@ -4,6 +4,7 @@ import {
   ComponentType,
   MessageComponentInteraction,
 } from "discord.js";
+import { COMMIT_SHA, VERSION } from "../index.js";
 
 export default function (i: CommandInteraction) {
   return i.reply({
@@ -18,6 +19,9 @@ export default function (i: CommandInteraction) {
         title: "Experiments",
         description:
           "I'm a small bot made by <@728342296696979526> to explore Discord guild experiments. Type `/` to view my commands.",
+        footer: {
+          text: `v${VERSION} - ${COMMIT_SHA}`,
+        },
       },
     ],
     components: [
