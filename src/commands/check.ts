@@ -1,96 +1,101 @@
-import { CommandInteraction, MessageAttachment } from 'discord.js';
-import { check } from '../experiment.js';
-import { rollouts } from '../index.js';
-import { orList, treatment } from '../render.js';
-import { replyIfNotGuild } from '../util.js';
+import { AttachmentBuilder, CommandInteraction } from "discord.js";
+import { check, checkMulti } from "../experiment.js";
+import { rollouts } from "../index.js";
+import {
+  createDisclaimerComponent,
+  generateMultiExperimentRolloutCheck,
+  orList,
+  treatment,
+  ViewType,
+} from "../render.js";
+import { removeRolloutsPrefix, replyIfNotGuild } from "../util.js";
 
 export default async function (i: CommandInteraction) {
-	if (replyIfNotGuild(i)) return;
+  if (replyIfNotGuild(i)) return;
 
-	const id = i.options.get('id', true).value!.toString();
+  const id = removeRolloutsPrefix(i.options.get("id", true).value!.toString());
 
-	if (rollouts.size === 0) {
-		i.reply('Unexpected service interruption. Please try again later.');
-		return;
-	}
+  if (rollouts.size === 0) {
+    i.reply("Unexpected service interruption. Please try again later.");
+    return;
+  }
 
-	if (id === 'all') {
-		const res: { active: boolean; treatment: number[]; id: string }[] = [];
+  let res: [ViewType, string];
 
-		for (const exp of rollouts.values()) {
-			const val = check(i.guild!, exp);
+  if (id === "all") {
+    res = generateMultiExperimentRolloutCheck(
+      i,
+      checkMulti([...rollouts.values()], i.guild!)
+    );
+  } else {
+    const exp = rollouts.get(id);
 
-			if (val.active) {
-				res.push({
-					active: true,
-					treatment: val.overrides.concat(val.populations.map((v) => v.bucket)),
-					id: exp.data.id
-				});
-			}
-		}
+    if (!exp) {
+      i.reply("No experiment with that ID exists.");
+      return;
+    }
 
-		await i.reply({
-			content: `${res.length} experiment${
-				res.length === 1 ? ' is' : 's are'
-			} active in this guild.`,
-			files: [
-				new MessageAttachment(
-					Buffer.from(
-						`--- Active experiments for ${i.guild!.name} (${i.guildId}) ---
+    const val = check(i.guild!, exp);
 
-        ${res
-					.map((v) => `${v.id}: ${v.treatment.map(treatment).join(', ')}`)
-					.join('\n')}
-        `.replace(/(\n+)\s+/g, '$1')
-					),
-					'rollouts-' + i.guildId + '.txt'
-				)
-			]
-		});
-	} else {
-		const exp = rollouts.get(id);
-
-		if (!exp) {
-			i.reply('No experiment with that ID exists.');
-			return;
-		}
-
-		const val = check(i.guild!, exp);
-
-		if (val.active) {
-			i.reply(
-				`
-        Experiment \`${id}\` is active in this guild. 
-
-        ${
-					val.overrides.length > 0
-						? `
-          Overrides: ${val.overrides.map(treatment).join(', ')} 
+    if (val.active) {
+      res = [
+        ViewType.Content,
         `
-						: ''
-				}
+        Experiment \`${id}\` **is active** in this guild. 
+
         ${
-					val.populations.length > 0
-						? `
+          val.overrides.length > 0
+            ? `
+          Overrides: ${val.overrides.map(treatment).join(", ")} 
+        `
+            : ""
+        }
+        ${
+          val.populations.length > 0
+            ? `
           Matched populations:
             - ${val.populations
-							.map((p) => {
-								const t = treatment(p.bucket);
+              .map((p) => {
+                const t = treatment(p.bucket);
 
-								return `${p.name || 'Global'} (${orList.format(
-									p.cond.map(({ s, e }) => `${s}..${e}`)
-								)}): ${t}`;
-							})
-							.join('\n - ')}
+                return `${p.name || "Global"} (${orList.format(
+                  p.cond.map(({ s, e }) => `${s}..${e}`)
+                )}): ${t}`;
+              })
+              .join("\n - ")}
         `
-						: ''
-				}
-      `.replace(/(\n+)\s+/g, '$1')
-			);
-		} else {
-			i.reply(`Experiment \`${id}\` is not active in this guild.`);
-		}
-	}
+            : ""
+        }
+      `.replace(/(\n+)\s+/g, "$1"),
+      ];
+    } else {
+      res = [
+        ViewType.Content,
+        `Experiment \`${id}\` **is not active** in this guild.`,
+      ];
+    }
+  }
 
-	return { success: true };
+  switch (res[0]) {
+    case ViewType.Content:
+      await i.reply({
+        content: res[1],
+        components: [createDisclaimerComponent()],
+      });
+      break;
+    case ViewType.Attachment:
+      await i.reply({
+        files: [
+          new AttachmentBuilder(res[1], {
+            name: `check-${id}-${i.guildId}.txt`,
+          }),
+        ],
+        components: [createDisclaimerComponent()],
+      });
+      break;
+    default:
+      throw new Error("Unexpected view type: " + res[0]);
+  }
+
+  return { success: true };
 }

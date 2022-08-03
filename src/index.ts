@@ -63,7 +63,10 @@ export const commands = new Collection<
     ) =>
       | { success: boolean; error: string }
       | Promise<{ success: boolean; error: string }>;
-    handleComponent: (i: MessageComponentInteraction) => void | Promise<void>;
+    handleComponent: (
+      i: MessageComponentInteraction,
+      ...args: any[]
+    ) => void | Promise<void>;
   }
 >();
 export const autocompleteStores = new Collection<
@@ -88,7 +91,7 @@ async function load() {
     const {
       default: handler,
       name = command.match(/(.*)\.js$/)?.[1],
-      handleComponent = () => {},
+      handleComponent,
     } = await import(`./commands/${command}`);
 
     commands.set(name, { handle: handler, handleComponent });
