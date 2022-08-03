@@ -151,7 +151,7 @@ export function renderExperimentHomeView(
         ],
       },
     ],
-    components: renderPageComponents(i, exp),
+    components: renderPageComponents(i, exp, "home"),
     attachments: [],
   };
 }
@@ -183,7 +183,7 @@ export function renderRolloutView(
       ),
     ],
     embeds: [],
-    components: renderPageComponents(i, exp),
+    components: renderPageComponents(i, exp, "rollout"),
   };
 }
 
@@ -209,13 +209,14 @@ export function renderOverrideView(
         }
       ),
     ],
-    components: renderPageComponents(i, exp),
+    components: renderPageComponents(i, exp, "overrides"),
   };
 }
 
 export function renderPageComponents(
   i: { guild: any },
-  exp: Experiment
+  exp: Experiment,
+  currentPage: string = "home"
 ): ActionRow<MessageActionRowComponent>[] {
   // we can't edit while not in the guild without the interaction token,
   // so we check for the guild
@@ -230,18 +231,22 @@ export function renderPageComponents(
                   .setLabel("Home")
                   .setValue(`home,${exp.data.id}`)
                   .setDescription("View this experiment's details.")
+                  .setDefault(currentPage === "home")
                   .toJSON(),
                 new SelectMenuOptionBuilder()
                   .setLabel("Rollout")
                   .setValue(`rollout,${exp.data.id}`)
                   .setDescription("View the rollout of this experiment.")
+                  .setDefault(currentPage === "rollout")
                   .toJSON(),
                 new SelectMenuOptionBuilder()
                   .setLabel("Overrides")
                   .setValue(`overrides,${exp.data.id}`)
                   .setDescription("View rollout overrides of this experiment.")
+                  .setDefault(currentPage === "overrides")
                   .toJSON()
               )
+              .setPlaceholder("Select a page...")
           )
           .toJSON(),
         createDisclaimerComponent(),
