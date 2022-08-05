@@ -14,10 +14,10 @@ export interface Experiment {
     hash: number;
   };
   rollout: [
-    number, // hash
-    null,
-    number,
-    [
+    hash: number, // hash
+    _: null,
+    revision: number,
+    populations: [
       // populations
       [
         number, //bucket
@@ -29,7 +29,7 @@ export interface Experiment {
       ][],
       Filter[]
     ][],
-    {
+    overrides: {
       // overrides
       /** bucket */ b: number;
       /** server IDs */ k: string[];
