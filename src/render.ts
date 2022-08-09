@@ -13,6 +13,7 @@ import {
 } from "discord.js";
 import { checkMulti, Experiment, Filter, FilterType } from "./experiment.js";
 import { lastFetchedAt, rollouts } from "./index.js";
+import { murmur3 } from "./util.js";
 export const andList = new Intl.ListFormat();
 export const orList = new Intl.ListFormat(undefined, { type: "disjunction" });
 
@@ -126,7 +127,7 @@ export const createDefaultEmbed = (exp: Experiment): APIEmbed => {
 };
 
 export function renderExperimentHomeView(
-  i: { guild: any },
+  i: { guild: any, guildId: any },
   id: string
 ): InteractionReplyOptions {
   const exp = rollouts.get(id)!;
@@ -136,7 +137,7 @@ export function renderExperimentHomeView(
     embeds: [
       {
         ...createDefaultEmbed(exp),
-        description: `Rollout: ${rolloutPercentage(exp.rollout[3])}%`,
+        description: `Rollout: ${rolloutPercentage(exp.rollout[3])}%\nGuild position: ${murmur3(`${exp.data.id}:${i.guildId}`) % 1e4}`,
         fields: [
           {
             name: "Treatments",
