@@ -76,7 +76,7 @@ export default async function (i: CommandInteraction) {
 
   switch (res[0]) {
     case ViewType.Content:
-      if (res[1].length < 18e3) {
+      if (res[1].length < 17e2) {
         await i.reply({
           content: `${res[1]}${
             !i.guild
