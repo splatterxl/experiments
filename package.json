@@ -29,7 +29,7 @@
     "discord.js": "^14.0.3",
     "fuzzy-search": "^3.2.1",
     "kleur": "^4.1.5",
-    "murmur-32": "^1.0.0",
+    "murmurhash": "^2.0.1",
     "tslib": "^2.4.0",
     "undici": "^5.8.0"
   },

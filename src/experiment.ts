@@ -1,6 +1,6 @@
 // thanks advaith
 
-import { Guild, GuildFeature } from "discord.js";
+import { Guild, GuildFeature, Snowflake } from "discord.js";
 import { andList, parseFilterShort } from "./render.js";
 import { dedupe, murmur3 } from "./util.js";
 
@@ -69,8 +69,8 @@ export * from "./render.js";
 export const populations = (exp: Experiment) => exp.rollout[3];
 export const overrides = (exp: Experiment) => exp.rollout[4];
 
-export const check = (guild: Guild, exp: Experiment) => {
-  const hash = murmur3(`${exp.data.id}:${guild.id}`) % 1e4;
+export const check = (guildId: Snowflake, exp: Experiment, guild?: Guild) => {
+  const hash = murmur3(`${exp.data.id}:${guildId}`) % 1e4;
 
   const res: {
     populations: {
@@ -88,14 +88,18 @@ export const check = (guild: Guild, exp: Experiment) => {
   };
 
   for (const { b, k } of overrides(exp)) {
-    if (k.includes(guild.id)) {
+    if (k.includes(guildId)) {
       res.overrides.push(b);
       res.active = true;
     }
   }
 
   for (const [i, [p, filter]] of populations(exp).entries()) {
-    if (filter.length === 0 || filter.every((f) => checkFilter(f, guild))) {
+    if (
+      filter.length === 0 ||
+      !guild ||
+      filter.every((f) => checkFilter(f, guild))
+    ) {
       for (const [b, r] of p) {
         if (b === -1 || b === 0) continue;
         if (r.some(({ s, e }) => hash >= s && hash <= e)) {
@@ -140,11 +144,15 @@ export const checkFilter = (filter: Filter, guild: Guild) => {
   }
 };
 
-export const checkMulti = (exps: Experiment[], guild: Guild) =>
+export const checkMulti = (
+  exps: Experiment[],
+  guildId: Snowflake,
+  guild?: Guild
+) =>
   exps
     .map<[Experiment, ReturnType<typeof check>]>((experiment) => [
       experiment,
-      check(guild, experiment),
+      check(guildId, experiment, guild),
     ])
     .filter(([, v]) => v.active)
     .map(([exp, matchedData]) => ({
