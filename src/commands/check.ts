@@ -76,15 +76,17 @@ export default async function (i: CommandInteraction) {
 
   switch (res[0]) {
     case ViewType.Content:
-      await i.reply({
-        content: `${res[1]}${
-          !i.guild
-            ? "\n\n**IMPORTANT**: Your server might not qualify for this experiment. Please check the rollouts and overrides in the result of `/view ${id}` using the position calculated in the homepage to verify."
-            : ""
-        }`,
-        components: [createDisclaimerComponent()],
-      });
-      break;
+      if (res[1].length < 18e3) {
+        await i.reply({
+          content: `${res[1]}${
+            !i.guild
+              ? "\n\n**IMPORTANT**: Your server might not qualify for this experiment. Please check the rollouts and overrides in the result of `/view ${id}` using the position calculated in the homepage to verify."
+              : ""
+          }`,
+          components: [createDisclaimerComponent()],
+        });
+        break;
+      }
     case ViewType.Attachment:
       await i.reply({
         content: !i.guild
