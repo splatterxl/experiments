@@ -12,7 +12,7 @@ import {
   Message,
   MessageComponentInteraction,
 } from "discord.js";
-import * as murmur from "murmurhash";
+import murmur from "murmurhash";
 
 export async function editMessage(
   i: MessageComponentInteraction<CacheType>,
