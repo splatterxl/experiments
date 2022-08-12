@@ -93,8 +93,8 @@ export default async function (i: CommandInteraction) {
           ? "Your server might not actually qualify for this experiment. Check the rollouts and overrides for your server (`/view <experiment_id>`) to verify."
           : undefined,
         files: [
-          new AttachmentBuilder(res[1], {
-            name: `check-${id}-${i.guildId}.txt`,
+          new AttachmentBuilder(Buffer.from(res[1]), {
+            filenamename: `check-${id}-${i.guildId}.txt`,
           }),
         ],
         components: [createDisclaimerComponent()],
