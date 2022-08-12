@@ -12,7 +12,7 @@ import {
   Message,
   MessageComponentInteraction,
 } from "discord.js";
-import murmur32 from "murmur-32";
+import{v3} from "murmurhash";
 
 export async function editMessage(
   i: MessageComponentInteraction<CacheType>,
@@ -45,7 +45,7 @@ export async function editMessage(
 }
 
 export function murmur3(str: string) {
-  return parseInt(Buffer.from(murmur32(str)).toString("hex"), 16);
+  return v3(str);
 }
 
 export function pad(len: number, str: string) {

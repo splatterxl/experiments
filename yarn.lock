@@ -468,13 +468,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"encode-utf8@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "encode-utf8@npm:2.0.0"
-  checksum: 8ea087e1f252a399e745968df825abf594a82c8da5c0abf73ad86d36c5ce46fc85328fde1e90604720a2cc57fb128c38503ae359099fd2640a2dba3b8fbcc325
-  languageName: node
-  linkType: hard
-
 "encoding@npm:^0.1.13":
   version: 0.1.13
   resolution: "encoding@npm:0.1.13"
@@ -510,7 +503,7 @@ __metadata:
     discord.js: ^14.0.3
     fuzzy-search: ^3.2.1
     kleur: ^4.1.5
-    murmur-32: ^1.0.0
+    murmurhash: ^2.0.1
     nodemon: ^2.0.19
     tslib: ^2.4.0
     typescript: ^4.7.4
@@ -542,13 +535,6 @@ __metadata:
   dependencies:
     to-regex-range: ^5.0.1
   checksum: cc283f4e65b504259e64fd969bcf4def4eb08d85565e906b7d36516e87819db52029a76b6363d0f02d0d532f0033c9603b9e2d943d56ee3b0d4f7ad3328ff917
-  languageName: node
-  linkType: hard
-
-"fmix@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "fmix@npm:1.0.0"
-  checksum: c35d0fac072d9ded16f97f962c3b764de7abf4bbdb0ea21816b7a13208330daf9e860f3a8fa74267bc99ba55085753cc28f812e0f137ee434e0bf89a8fd168b8
   languageName: node
   linkType: hard
 
@@ -1035,13 +1021,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"murmur-32@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "murmur-32@npm:1.0.0"
-  dependencies:
-    encode-utf8: ^2.0.0
-    fmix: ^1.0.0
-  checksum: 313d3ad912017a9d43556498a46f21e2c0116eadc806ac4c2d0cccfb5f90522581b0fa22d219b40174f13cb7f29ca768bf6b070714f9ab5b6d72132bb8d58b62
+"murmurhash@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "murmurhash@npm:2.0.1"
+  checksum: 8bb90f43b1c41b1d046efe662a02dcc3cdbda4b42fbbadf7488046772d9eecf2b37ffb6cb73d0d96f2ff489d9f4a8252c674bbae588a6179f60854fe0bfe3325
   languageName: node
   linkType: hard
 

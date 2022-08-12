@@ -8,11 +8,9 @@ import {
   treatment,
   ViewType,
 } from "../render.js";
-import { removeRolloutsPrefix, replyIfNotGuild } from "../util.js";
+import { removeRolloutsPrefix } from "../util.js";
 
 export default async function (i: CommandInteraction) {
-  if (replyIfNotGuild(i)) return;
-
   const id = removeRolloutsPrefix(i.options.get("id", true).value!.toString());
 
   if (rollouts.size === 0) {
@@ -25,7 +23,7 @@ export default async function (i: CommandInteraction) {
   if (id === "all") {
     res = generateMultiExperimentRolloutCheck(
       i,
-      checkMulti([...rollouts.values()], i.guild!)
+      checkMulti([...rollouts.values()], i.guildId!, i.guild!)
     );
   } else {
     const exp = rollouts.get(id);
@@ -35,7 +33,7 @@ export default async function (i: CommandInteraction) {
       return;
     }
 
-    const val = check(i.guild!, exp);
+    const val = check(i.guildId!, exp, i.guild!);
 
     if (val.active) {
       res = [
@@ -79,12 +77,19 @@ export default async function (i: CommandInteraction) {
   switch (res[0]) {
     case ViewType.Content:
       await i.reply({
-        content: res[1],
+        content: `${res[1]}${
+          !i.guild
+            ? "\n\n**IMPORTANT**: Your server might not qualify for this experiment. Please check the rollouts and overrides in the result of `/view ${id}` using the position calculated in the homepage to verify."
+            : ""
+        }`,
         components: [createDisclaimerComponent()],
       });
       break;
     case ViewType.Attachment:
       await i.reply({
+        content: !i.guild
+          ? "Your server might not actually qualify for this experiment. Check the rollouts and overrides for your server (`/view <experiment_id>`) to verify."
+          : undefined,
         files: [
           new AttachmentBuilder(res[1], {
             name: `check-${id}-${i.guildId}.txt`,
