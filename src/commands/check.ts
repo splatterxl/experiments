@@ -94,8 +94,7 @@ export default async function (i: CommandInteraction) {
           : undefined,
         files: [
           new AttachmentBuilder(Buffer.from(res[1]), {
-            filename: `check-${id}-${i.guildId}.txt`,
-            content_type: "text/plain"
+            name: `check-${id}-${i.guildId}.txt`,
           }),
         ],
         components: [createDisclaimerComponent()],
