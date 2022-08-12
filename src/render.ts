@@ -291,7 +291,7 @@ export function generateMultiExperimentRolloutCheck(
   } else {
     return [
       ViewType.Content,
-      `**__Active experiments for ${i.guild!.name} (\`${i.guildId}\`)__**
+      `**__Active experiments for${i.guild?.name ? ` ${i.guild.name}` : ""} (\`${i.guildId}\`)__**
 
 			${res
         .map(
