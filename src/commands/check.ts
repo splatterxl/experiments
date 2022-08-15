@@ -39,7 +39,7 @@ export default async function (i: CommandInteraction) {
       res = [
         ViewType.Content,
         `
-        Experiment \`${id}\` **is active** in this guild. 
+        Experiment \`${id}\` **${i.guild ? "is" : "could be"} active** in this guild. 
 
         ${
           val.overrides.length > 0
@@ -82,7 +82,7 @@ export default async function (i: CommandInteraction) {
         await i.reply({
           content: `${res[1].trim()}${
             (!i.guild && res[2])
-              ? `\n\n**IMPORTANT**: Your server might not qualify for this experiment. Please check the rollouts and overrides in the result of \`/view ${id}\` using the position calculated in the homepage to verify.`
+              ? `\n\n**IMPORTANT**: Your server might not actually qualify for this experiment. Please check the rollouts and overrides in the result of \`/view\` using the position calculated in the homepage to verify.`
               : ""
           }`,
           components: [createDisclaimerComponent()],
@@ -92,7 +92,7 @@ export default async function (i: CommandInteraction) {
     case ViewType.Attachment:
       await i.reply({
         content: !i.guild
-          ? "Your server might not actually qualify for this experiment. Check the rollouts and overrides for your server (`/view id:<experiment_id> page:rollouts`) to verify."
+          ? "Your server might not actually qualify for this experiment. Check the rollouts and overrides for your server (`/view id:<experiment_id>`) to verify."
           : undefined,
         files: [
           new AttachmentBuilder(Buffer.from(res[1]), {
