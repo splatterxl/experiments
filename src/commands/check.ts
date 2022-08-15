@@ -82,7 +82,7 @@ export default async function (i: CommandInteraction) {
         await i.reply({
           content: `${res[1].trim()}${
             (!i.guild && res[2])
-              ? `\n\n**IMPORTANT**: Your server might not actually qualify for this experiment. Please check the rollouts and overrides in the result of \`/view\` using the position calculated in the homepage to verify.`
+              ? `\n\n**IMPORTANT**: Your server might not actually qualify for this experiment. Please check the population requirements carefully.`
               : ""
           }`,
           components: [createDisclaimerComponent()],
