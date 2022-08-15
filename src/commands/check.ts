@@ -18,13 +18,13 @@ export default async function (i: CommandInteraction) {
     return;
   }
 
-  let res: [ViewType, string];
+  let res: [ViewType, string, boolean];
 
   if (id === "all") {
     res = generateMultiExperimentRolloutCheck(
       i,
       checkMulti([...rollouts.values()], i.guildId!, i.guild!)
-    );
+    ) as any 
   } else {
     const exp = rollouts.get(id);
 
@@ -64,12 +64,14 @@ export default async function (i: CommandInteraction) {
         `
             : ""
         }
-      `.replace(/(\n+)\s+/g, "$1"),
+      `.replace(/(\n+)\s+/g, "$1"), 
+        true
       ];
     } else {
       res = [
         ViewType.Content,
         `Experiment \`${id}\` **is not active** in this guild.`,
+        false
       ];
     }
   }
@@ -78,8 +80,8 @@ export default async function (i: CommandInteraction) {
     case ViewType.Content:
       if (res[1].length < 17e2) {
         await i.reply({
-          content: `${res[1]}${
-            !i.guild
+          content: `${res[1].trim()}${
+            (!i.guild && res[2])
               ? "\n\n**IMPORTANT**: Your server might not qualify for this experiment. Please check the rollouts and overrides in the result of `/view ${id}` using the position calculated in the homepage to verify."
               : ""
           }`,
