@@ -11,7 +11,11 @@ import {
 import { removeRolloutsPrefix } from "../util.js";
 
 export default async function (i: CommandInteraction) {
-  const id = removeRolloutsPrefix(i.options.get("id", true).value!.toString());
+  const id = removeRolloutsPrefix(
+    i.options.get("experiment", true).value!.toString()
+  );
+
+  const guildId = (i.options.get("id", false)?.value as string) ?? i.guildId;
 
   if (rollouts.size === 0) {
     i.reply("Unexpected service interruption. Please try again later.");
@@ -23,8 +27,9 @@ export default async function (i: CommandInteraction) {
   if (id === "all") {
     res = generateMultiExperimentRolloutCheck(
       i,
-      checkMulti([...rollouts.values()], i.guildId!, i.guild!)
-    ) as any 
+      guildId,
+      checkMulti([...rollouts.values()], guildId, i.guild ?? undefined)
+    ) as any;
   } else {
     const exp = rollouts.get(id);
 
@@ -39,7 +44,9 @@ export default async function (i: CommandInteraction) {
       res = [
         ViewType.Content,
         `
-        Experiment \`${id}\` **${i.guild ? "is" : "could be"} active** in this guild. 
+        Experiment \`${id}\` **${
+          i.guild ? "is" : "could be"
+        } active** in this guild. 
 
         ${
           val.overrides.length > 0
@@ -64,25 +71,25 @@ export default async function (i: CommandInteraction) {
         `
             : ""
         }
-      `.replace(/(\n+)\s+/g, "$1"), 
-        true
+      `.replace(/(\n+)\s+/g, "$1"),
+        true,
       ];
     } else {
       res = [
         ViewType.Content,
         `Experiment \`${id}\` **is not active** in this guild.`,
-        false
+        false,
       ];
     }
   }
 
   switch (res[0]) {
     case ViewType.Content:
-      if (res[1].length < 17e2) {
+      if (res[1].length < 19e2) {
         await i.reply({
           content: `${res[1].trim()}${
-            (!i.guild && res[2])
-              ? `\n\n**IMPORTANT**: Your server might not actually qualify for this experiment. Please check the population requirements carefully.`
+            !i.guild && res[2]
+              ? `\n\n**IMPORTANT**: Your server might not actually qualify for these experiments. Please check the population requirements carefully.`
               : ""
           }`,
           components: [createDisclaimerComponent()],
@@ -92,12 +99,15 @@ export default async function (i: CommandInteraction) {
     case ViewType.Attachment:
       await i.reply({
         content: !i.guild
-          ? "Your server might not actually qualify for this experiment. Check the rollouts and overrides for your server (`/view id:<experiment_id>`) to verify."
+          ? "Your server might not actually qualify for these experiments. Check the rollouts and overrides for your server using `/view` to verify."
           : undefined,
         files: [
-          new AttachmentBuilder(Buffer.from(res[1]), {
-            name: `check-${id}-${i.guildId}.txt`,
-          }),
+          new AttachmentBuilder(
+            Buffer.from(res[1].replace(/^[__**]{4}(.+?)[__**]{4}/, "$1")),
+            {
+              name: `check-${id}-${i.guildId}.txt`,
+            }
+          ),
         ],
         components: [createDisclaimerComponent()],
       });

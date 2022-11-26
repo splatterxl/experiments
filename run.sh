@@ -1,5 +1,5 @@
 #!/bin/sh
-for x in *; do
+for x in .*; do
     if ! grep -q '.env' "$x"; then continue; fi
 
     echo "[run.sh::env] sourcing $x"
