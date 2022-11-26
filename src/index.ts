@@ -80,7 +80,9 @@ export const autocompleteStores = new Collection<
 >();
 
 async function load() {
-  for (const event of readdirSync(__dirname + "/events")) {
+  for (const event of readdirSync(__dirname + "/events").filter((v) =>
+    v.endsWith(".js")
+  )) {
     const {
       eventName = event.match(/(.*)\.js$/)?.[1],
       default: handler,
@@ -92,7 +94,9 @@ async function load() {
     console.debug(`[${kleur.green("events")}::load] loaded event ${eventName}`);
   }
 
-  for (const command of readdirSync(__dirname + "/commands")) {
+  for (const command of readdirSync(__dirname + "/commands").filter((v) =>
+    v.endsWith(".js")
+  )) {
     const {
       default: handler,
       name = command.match(/(.*)\.js$/)?.[1],
@@ -104,7 +108,9 @@ async function load() {
     console.debug(`[${kleur.blue("commands")}::load] loaded command ${name}`);
   }
 
-  for (const autocomplete of readdirSync(__dirname + "/autocomplete")) {
+  for (const autocomplete of readdirSync(__dirname + "/autocomplete").filter(
+    (v) => v.endsWith(".js")
+  )) {
     const { default: handler, name = autocomplete.match(/(.*)\.js$/)?.[1] } =
       await import(`./autocomplete/${autocomplete}`);
 

@@ -1,4 +1,4 @@
-import { APIEmbed, ButtonStyle } from "discord-api-types/v10";
+import { APIEmbed, ButtonStyle, Snowflake } from "discord-api-types/v10";
 import {
   ActionRow,
   ActionRowBuilder,
@@ -127,7 +127,7 @@ export const createDefaultEmbed = (exp: Experiment): APIEmbed => {
 };
 
 export function renderExperimentHomeView(
-  i: { guild: any, guildId: any },
+  i: { guild: any; guildId: any },
   id: string
 ): InteractionReplyOptions {
   const exp = rollouts.get(id)!;
@@ -137,7 +137,9 @@ export function renderExperimentHomeView(
     embeds: [
       {
         ...createDefaultEmbed(exp),
-        description: `Rollout: ${rolloutPercentage(exp.rollout[3])}%\nGuild position: ${murmur3(`${exp.data.id}:${i.guildId}`) % 1e4}`,
+        description: `Rollout: ${rolloutPercentage(
+          exp.rollout[3]
+        )}%\nGuild position: ${murmur3(`${exp.data.id}:${i.guildId}`) % 1e4}`,
         fields: [
           {
             name: "Treatments",
@@ -273,25 +275,22 @@ export const enum ViewType {
 
 export function generateMultiExperimentRolloutCheck(
   i: CommandInteraction,
+  guildId: Snowflake,
   res: ReturnType<typeof checkMulti>
 ): [type: ViewType, data: string] {
-  if (res.length > 50) {
-    return [
-      ViewType.Attachment,
+  let str: string;
 
-      `--- Active experiments for ${i.guild!.name} (${i.guildId}) ---
+  if (res.length > 50) {
+    str = `--- Active experiments for ${guildId}) ---
 				${res
           .map(
             ({ id, treatment: matchedTreatments }) =>
               `${id}: ${matchedTreatments.map(treatment).join(", ")}`
           )
           .join("\n")}
-        `.replace(/(\n+)\s+/g, "$1"),
-    ];
+        `.replace(/(\n+)\s+/g, "$1");
   } else {
-    return [
-      ViewType.Content,
-      `**__Active experiments for${i.guild?.name ? ` ${i.guild.name}` : ""} (\`${i.guildId}\`)__**
+    str = `**__Active experiments for ${guildId}__**
 
 			${res
         .map(
@@ -304,9 +303,12 @@ export function generateMultiExperimentRolloutCheck(
               .join(", ")}`
         )
         .join("\n")}
-			`.replace(/(\n+)\s+/g, "$1"),
-    ];
+			`.replace(/(\n+)\s+/g, "$1");
   }
+
+  if (str.length > 19e2) str = str.replace(/\[(.+?)\]\(<.+?>\)/g, "$1");
+
+  return [ViewType.Content, str];
 }
 
 export function createRolloutsURL(id: string) {

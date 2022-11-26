@@ -148,8 +148,10 @@ export const checkMulti = (
   exps: Experiment[],
   guildId: Snowflake,
   guild?: Guild
-) =>
-  exps
+) => {
+  if (guild?.id !== guildId) guild = undefined;
+
+  return exps
     .map<[Experiment, ReturnType<typeof check>]>((experiment) => [
       experiment,
       check(guildId, experiment, guild),
@@ -165,3 +167,4 @@ export const checkMulti = (
       id: exp.data.id,
       exp,
     }));
+};

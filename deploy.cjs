@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { REST } = require("@discordjs/rest");
 const {
   Routes,
@@ -15,20 +16,11 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     {
       name: "view",
       description: "View a specific experiment",
-      name_localizations: {
-        fr: "voir",
-      },
-      description_localizations: {
-        fr: "Voir un expérience spécifique",
-      },
       options: [
         {
           name: "id",
           description: "ID of the experiment to view",
           name_localizations: {},
-          description_localizations: {
-            fr: "L'ID de l'expérience",
-          },
           type: ApplicationCommandOptionType.String,
           required: true,
           autocomplete: true,
@@ -37,9 +29,6 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
           name: "page",
           description: "Page to view (default: 'home')",
           name_localizations: {},
-          description_localizations: {
-            fr: "Page à afficher (par défaut: 'home')",
-          },
           type: ApplicationCommandOptionType.String,
           required: false,
           choices: [
@@ -65,48 +54,34 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     {
       name: "list",
       description: "Shows a list of currently active experiments",
-      name_localizations: {},
-      description_localizations: {
-        fr: "Affiche la liste des expériences actives",
-      },
     },
     {
       name: "invite",
       description: "Invite the bot to your server!",
-      name_localizations: {},
-      description_localizations: {
-        fr: "Invite le bot sur votre serveur!",
-      },
     },
     {
       name: "check",
       description: "Check if an experiment is active in your guild",
       dm_permission: false,
-      name_localizations: {},
-      description_localizations: {
-        fr: "Vérifie si une expérience est active dans votre serveur",
-      },
       options: [
         {
-          name: "id",
+          name: "experiment",
           description: "ID of the experiment to check",
-          name_localizations: {},
-          description_localizations: {
-            fr: "L'ID de l'expérience à vérifier",
-          },
           type: ApplicationCommandOptionType.String,
           required: true,
           autocomplete: true,
+        },
+        {
+          name: "id",
+          description: "Guild ID to check against (default: current guild)",
+          type: ApplicationCommandOptionType.String,
+          required: false,
         },
       ],
     },
     {
       name: "info",
       description: "Get info about the bot",
-      name_localizations: {},
-      description_localizations: {
-        fr: "Obtenir des informations sur le bot",
-      },
     },
   ];
 
