@@ -6,16 +6,26 @@ import {
 	AccordionPanel,
 	Box,
 	Heading,
-	HStack
+	HStack,
+	useColorMode
 } from '@chakra-ui/react';
 import React from 'react';
 import { PrimaryButton } from '../../../brand/PrimaryButton';
 
 export const Debug: React.FC = () => {
+	const colorMode = useColorMode();
+
 	return (
 		<>
 			<Heading py={3}>Debug options</Heading>
-			<Accordion allowMultiple allowToggle>
+			<PrimaryButton
+				mb={3}
+				label='Toggle color mode'
+				onClick={() => {
+					colorMode.toggleColorMode();
+				}}
+			/>
+			<Accordion allowMultiple>
 				<AccordionItem>
 					<h2>
 						<AccordionButton>

@@ -39,7 +39,7 @@ export default function Login() {
 					align='flex-start'
 					justify='flex-start'
 					_dark={{ base: {}, md: { bgColor: 'gray.700' } }}
-					_light={{ base: {}, md: { bgColor: 'gray.100' } }}
+					_light={{ base: {}, md: { bgColor: 'orange.50' } }}
 					padding={8}
 					rounded='lg'
 					spacing={3}
