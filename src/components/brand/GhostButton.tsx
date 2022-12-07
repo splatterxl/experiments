@@ -7,9 +7,9 @@ export const GhostButton: React.FC<{ label: string } & ButtonProps> = (
 	return (
 		<Button
 			variant='ghost'
-			colorScheme='gray'
-			// 	_hover={{ borderColor: 'orange.400', color: 'orange.400' }}
-			//   color='orange.300'
+			colorScheme='orange'
+			_hover={{ color: 'orange.400' }}
+			color='orange.300'
 			// borderColor='orange.300'
 			{...props}
 		/>

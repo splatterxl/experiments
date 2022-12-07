@@ -28,7 +28,9 @@ export default function Navbar() {
 			as='nav'
 			justify='space-between'
 			align='center'
-			padding={8}
+			paddingRight={8}
+			paddingLeft={{ base: 6, md: 8 }}
+			paddingTop={{ base: 4, md: 8 }}
 			paddingBottom={4}
 			minH={{ base: 'auto', md: '13vh' }}
 		>

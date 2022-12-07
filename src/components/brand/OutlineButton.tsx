@@ -7,7 +7,7 @@ export const OutlineButton: React.FC<{ label: string } & ButtonProps> = (
 	return (
 		<Button
 			variant='outline'
-			colorScheme='gray'
+			colorScheme='orange'
 			// 	_hover={{ borderColor: 'orange.400', color: 'orange.400' }}
 			//   color='orange.300'
 			// borderColor='orange.300'
