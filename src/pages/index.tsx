@@ -45,6 +45,7 @@ export default function Home() {
 					fontSize={{ base: 'md', md: 'xl' }}
 					listStyleType='initial'
 					textAlign={'center'}
+					listStylePosition='inside'
 					// display={{ base: 'none', md: 'block' }}
 				>
 					<ListItem>Access both online and in Discord</ListItem>
