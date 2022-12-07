@@ -26,7 +26,7 @@ export default async function checkout(
 	user = one(user);
 	price = one(price)!;
 
-	let product: Products = one(req.query.product) as any;
+	let product: Products = one(req.query.product)?.toUpperCase() as any;
 
 	if (user && isNaN(parseInt(user)))
 		return res.status(400).send({ error: 'Invalid user' });
@@ -56,6 +56,11 @@ export default async function checkout(
 
 	const shouldIncludeTrial = trial === 'true';
 
+	if (price === 'yearly' && product === Products.MAILING_LIST)
+		return res
+			.status(404)
+			.send({ error: 'Mailing list does not have yearly billing' });
+
 	const session = await stripe.checkout.sessions.create({
 		line_items: [
 			{
@@ -64,7 +69,7 @@ export default async function checkout(
 			}
 		],
 		mode: 'subscription',
-		subscription_data: shouldIncludeTrial ? { trial_period_days: 3 } : {},
+		subscription_data: shouldIncludeTrial ? { trial_period_days: 7 } : {},
 		metadata: { discord_user_id: user ?? null },
 		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: `${url.origin}/premium`
