@@ -12,7 +12,7 @@ const commands: Record<string, typeof view> = { view };
 
 export default async function handler(
 	req: NextApiRequest,
-	res: NextApiResponse<APIInteractionResponse>
+	res: NextApiResponse
 ) {
 	if (req.headers['user-agent']?.startsWith('Mozilla'))
 		return res.redirect('/');
