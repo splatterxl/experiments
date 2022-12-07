@@ -21,3 +21,23 @@ declare namespace Intl {
 		) => { type: 'element' | 'literal'; value: string }[];
 	}
 }
+
+declare module 'mailersend' {
+	export class Recipient {
+		constructor(email: string, name: string);
+	}
+
+	export class EmailParams {
+		constructor();
+
+		setFrom(email: string): EmailParams;
+		setFromName(name: string): EmailParams;
+		setRecipients(recipients: Recipient[]): EmailParams;
+		setSubject(subject: string): EmailParams;
+		setTemplateId(id: string): EmailParams;
+		setPersonalization(personalization: {
+			email: string;
+			data: Record<string, string>;
+		}): EmailParams;
+	}
+}
