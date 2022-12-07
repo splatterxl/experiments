@@ -11,6 +11,7 @@ import { Url } from 'url';
 export const Button: React.FC<ButtonProps> = ({
 	label,
 	icon,
+	iconPos,
 	href,
 	...props
 }) => {
@@ -26,8 +27,9 @@ export const Button: React.FC<ButtonProps> = ({
 			{...props}
 		>
 			<HStack>
-				{icon}
+				{iconPos !== 'right' ? icon : null}
 				<Text>{label}</Text>
+				{iconPos === 'right' ? icon : null}
 			</HStack>
 		</ChakraButton>
 	);
@@ -36,5 +38,6 @@ export const Button: React.FC<ButtonProps> = ({
 export interface ButtonProps extends ChakraProps {
 	label: string;
 	icon?: React.ReactNode;
+	iconPos?: 'left' | 'right';
 	href?: Url | string;
 }
