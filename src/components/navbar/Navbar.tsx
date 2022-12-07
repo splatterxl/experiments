@@ -1,11 +1,17 @@
 import { HStack, Text } from '@chakra-ui/react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
 import { login } from '../../utils/actions/login';
 import { createAnalyticsQuery } from '../../utils/analytics';
 import { PrimaryButton } from '../brand/PrimaryButton';
 import { Logo } from './Logo';
 
 export default function Navbar() {
+	const cookies = parseCookies();
+
+	const router = useRouter();
+
 	return (
 		<HStack
 			as='nav'
@@ -33,9 +39,11 @@ export default function Navbar() {
 				</Link>
 				<PrimaryButton
 					onClick={() => {
-						login('navbar');
+						if (!cookies.auth) login('navbar');
+						else if (router.pathname !== '/dashboard')
+							router.push('/dashboard');
 					}}
-					label='Login'
+					label='Dashboard'
 					size='lg'
 				/>
 			</HStack>

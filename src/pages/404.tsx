@@ -2,7 +2,7 @@ import { ArrowBackIcon } from '@chakra-ui/icons';
 import { Center, Heading, Text } from '@chakra-ui/react';
 import { GhostButton } from '../components/brand/GhostButton';
 
-export default function Cancel() {
+export default function NotFound() {
 	return (
 		<Center h='85vh' pb='20vh' flexDirection='column' textAlign='center'>
 			<Heading>Not Found</Heading>

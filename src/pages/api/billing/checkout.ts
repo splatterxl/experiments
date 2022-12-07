@@ -8,6 +8,8 @@ export default async function checkout(
 	res: NextApiResponse
 ) {
 	if (!req.cookies.auth) return res.redirect('/auth/login');
+	if (process.env.NODE_ENV !== 'development')
+		return res.status(400).send('The Maze was not meant for you.');
 
 	const host = req.headers.host;
 
@@ -65,7 +67,7 @@ export default async function checkout(
 		subscription_data: shouldIncludeTrial ? { trial_period_days: 3 } : {},
 		metadata: { discord_user_id: user ?? null },
 		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
-		cancel_url: `${url.origin}/billing/cancel`
+		cancel_url: `${url.origin}/premium`
 	});
 
 	return res.redirect(session.url!);
