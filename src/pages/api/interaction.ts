@@ -1,16 +1,12 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { webcrypto } from 'crypto';
 import type {
-	APIChatInputApplicationCommandInteraction,
 	APIInteraction,
-	APIInteractionResponse,
-	InteractionResponseType,
-	InteractionType
+	APIInteractionResponse
 } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { view } from '../../commands/view';
-import { optionsToJson } from '../../utils/interactions';
 
 const commands: Record<string, typeof view> = { view };
 
@@ -42,18 +38,5 @@ export default async function handler(
 
 	let { body }: { body: APIInteraction } = req;
 
-	switch (body.type) {
-		case InteractionType.Ping:
-			return res.send({ type: InteractionResponseType.Pong });
-		case InteractionType.ApplicationCommand:
-			body = body as APIChatInputApplicationCommandInteraction;
-			if (Object.prototype.hasOwnProperty.call(commands, body.data.name)) {
-				return res.send(
-					commands[body.data.name]!(
-						optionsToJson(body.data.options ?? []) as any,
-						body
-					)
-				);
-			}
-	}
+	res.send('');
 }
