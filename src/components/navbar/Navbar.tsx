@@ -28,9 +28,9 @@ export default function Navbar() {
 			as='nav'
 			justify='space-between'
 			align='center'
-			padding={6}
+			padding={8}
+			paddingBottom={4}
 			minH={{ base: 'auto', md: '13vh' }}
-			marginBottom={{ base: 3, md: 2 }}
 		>
 			<Logo />
 			<HStack justify='flex-end' align='center' gap={4}>
@@ -54,7 +54,16 @@ export default function Navbar() {
 						else if (router.pathname !== '/dashboard')
 							router.push('/dashboard');
 					}}
-					icon={user ? <UserIcon size='xs' {...user} /> : null}
+					icon={
+						user ? (
+							<UserIcon
+								size='xs'
+								username={user.username}
+								id={user.id}
+								avatar={user.avatar}
+							/>
+						) : null
+					}
 					pl={user ? 5 : undefined}
 					label='Dashboard'
 					size='lg'

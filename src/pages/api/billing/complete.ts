@@ -10,7 +10,12 @@ export default async function result(
 
 	if (!id) return res.status(400).send({ error: 'Invalid session' });
 
-	const session = await stripe.checkout.sessions.retrieve(id);
+	let session;
+	try {
+		session = await stripe.checkout.sessions.retrieve(id);
+	} catch {
+		return res.status(400).send({ error: 'Unknown session' });
+	}
 
 	switch (session.status) {
 		case 'open':

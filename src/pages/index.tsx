@@ -16,7 +16,7 @@ export default function Home() {
 				<title>Experiments</title>
 			</Head>
 			<Center
-				pt={useMediaQuery('(max-height: 500px)')[0] ? 30 : 40}
+				pt={useMediaQuery('(max-height: 500px)')[0] ? 30 : 36}
 				pb={{
 					base: '30vh',
 					md: '10vh'
