@@ -1,14 +1,25 @@
 import { HStack, Text } from '@chakra-ui/react';
+import type { APIUser } from 'discord-api-types/v10';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
+import React from 'react';
 import { login } from '../../utils/actions/login';
 import { createAnalyticsQuery } from '../../utils/analytics';
+import { UserIcon } from '../account/UserIcon';
 import { PrimaryButton } from '../brand/PrimaryButton';
 import { Logo } from './Logo';
 
 export default function Navbar() {
 	const cookies = parseCookies();
+
+	const [user, setUser] = React.useState<APIUser>(null as any);
+
+	React.useEffect(() => {
+		const item = localStorage.getItem('user');
+
+		if (item) setUser(JSON.parse(item));
+	}, []);
 
 	const router = useRouter();
 
@@ -43,6 +54,8 @@ export default function Navbar() {
 						else if (router.pathname !== '/dashboard')
 							router.push('/dashboard');
 					}}
+					icon={user ? <UserIcon size='xs' {...user} /> : null}
+					pl={user ? 5 : undefined}
 					label='Dashboard'
 					size='lg'
 				/>

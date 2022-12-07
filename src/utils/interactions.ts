@@ -1,4 +1,4 @@
-import { APIApplicationCommandInteractionDataOption } from 'discord-api-types/v10.js';
+import type { APIApplicationCommandInteractionDataOption } from 'discord-api-types/v10.js';
 
 export const optionsToJson = (
 	options: APIApplicationCommandInteractionDataOption[]

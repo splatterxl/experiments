@@ -86,7 +86,7 @@ export default async function handleDiscordAuth(
 				maxAge: expires_in,
 				path: '/'
 			});
-			res.redirect(302, nextURL);
+			res.redirect('/auth/login/onboarding');
 		}
 	} catch (err) {
 		console.log(err);
