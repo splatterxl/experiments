@@ -82,6 +82,10 @@ export default async function handleDiscordAuth(
 				maxAge: expires_in,
 				path: '/'
 			});
+			setCookie({ res }, 'refresh', refresh_token, {
+				maxAge: expires_in,
+				path: '/'
+			});
 			res.redirect(302, nextURL);
 		}
 	} catch (err) {
