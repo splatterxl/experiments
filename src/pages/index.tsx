@@ -1,4 +1,11 @@
-import { Center, Heading, List, ListItem, Text } from '@chakra-ui/react';
+import {
+	Center,
+	Heading,
+	List,
+	ListItem,
+	Text,
+	useMediaQuery
+} from '@chakra-ui/react';
 import Head from 'next/head';
 import Script from 'next/script';
 import { ComingSoonBadge } from '../components/premium/ComingSoonBadge';
@@ -13,7 +20,7 @@ export default function Home() {
 				<title>Experiments</title>
 			</Head>
 			<Center
-				pt={30}
+				pt={useMediaQuery('(max-height: 500px)')[0] ? 30 : 40}
 				pb={{
 					base: '30vh',
 					md: '10vh'
