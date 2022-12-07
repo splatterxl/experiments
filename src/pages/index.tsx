@@ -7,11 +7,7 @@ import {
 	useMediaQuery
 } from '@chakra-ui/react';
 import Head from 'next/head';
-import Script from 'next/script';
-import { ComingSoonBadge } from '../components/premium/ComingSoonBadge';
 import { PremiumBadge } from '../components/premium/PremiumBadge';
-import { isSafari } from '../utils';
-import { PricingTables } from '../utils/constants/billing';
 
 export default function Home() {
 	return (

@@ -127,8 +127,7 @@ export async function getServerSideProps(
 		return {
 			redirect: {
 				destination: '/dashboard',
-				statusCode: 302 /* Found */,
-				permanent: false
+				statusCode: 302 /* Found */
 			}
 		};
 	}
