@@ -16,7 +16,7 @@
 		"@next/font": "^13.0.6",
 		"discord-api-types": "^0.37.20",
 		"discord-verify": "^1.0.0",
-		"eslint": "8.28.0",
+		"eslint": "8.29.0",
 		"eslint-config-next": "13.0.5",
 		"framer-motion": "^7.6.19",
 		"mailersend": "^1.4.5",
