@@ -9,8 +9,8 @@ import {
 } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { view } from '../../commands/view.js';
-import { optionsToJson } from '../../utils/interactions.js';
+import { view } from '../../commands/view';
+import { optionsToJson } from '../../utils/interactions';
 
 const commands: Record<string, typeof view> = { view };
 
