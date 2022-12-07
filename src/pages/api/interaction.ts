@@ -1,14 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { webcrypto } from 'crypto';
-import type {
-	APIInteraction,
-	APIInteractionResponse
-} from 'discord-api-types/v10';
+import type { APIInteraction } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { view } from '../../commands/view';
-
-const commands: Record<string, typeof view> = { view };
 
 export default async function handler(
 	req: NextApiRequest,
