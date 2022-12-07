@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { webcrypto } from 'crypto';
-import {
+import type {
 	APIChatInputApplicationCommandInteraction,
 	APIInteraction,
 	APIInteractionResponse,
