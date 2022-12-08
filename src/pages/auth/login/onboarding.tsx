@@ -7,6 +7,7 @@ import { destroyCookie, parseCookies } from 'nookies';
 import React from 'react';
 import { UserIcon } from '../../../components/account/UserIcon';
 import { GhostButton } from '../../../components/brand/GhostButton';
+import { one } from '../../../utils';
 import { Endpoints, makeDiscordURL } from '../../../utils/constants/discord';
 
 export default function LoginOnboarding() {
@@ -17,6 +18,10 @@ export default function LoginOnboarding() {
 	React.useEffect(() => {
 		(async () => {
 			const { auth } = parseCookies();
+			const scope = one(router.query.scope)?.split('+') ?? [
+				'identify',
+				'email'
+			];
 
 			try {
 				const json = await fetch(makeDiscordURL(Endpoints.ME, {}), {
@@ -26,6 +31,7 @@ export default function LoginOnboarding() {
 				if (json.message) throw json;
 
 				localStorage.setItem('user', JSON.stringify(json));
+				localStorage.setItem('scope', JSON.stringify(scope));
 
 				setUser(json);
 			} catch (err) {
@@ -54,11 +60,16 @@ export default function LoginOnboarding() {
 									id={user.id}
 									avatar={user.avatar}
 									username={user.username}
+									discrim={user.discriminator}
 								/>
 								<Text as='span'>{user.username}</Text>
 							</HStack>
 						</Heading>
-						<Text fontSize='lg' maxW='50vw' textAlign='center'>
+						<Text
+							fontSize='lg'
+							maxW={{ base: '100%', md: '60vw' }}
+							textAlign='center'
+						>
 							We&apos;re glad you could join us. Go to your personal dashboard
 							to view activities and account settings.
 						</Text>

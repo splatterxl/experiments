@@ -1,12 +1,17 @@
 import {
 	Center,
 	Heading,
+	Highlight,
+	Icon,
 	List,
 	ListItem,
 	Text,
 	useMediaQuery
 } from '@chakra-ui/react';
+import { css } from '@emotion/react';
 import Head from 'next/head';
+import { IoIosRocket } from 'react-icons/io';
+import { PrimaryButton } from '../components/brand/PrimaryButton';
 import { PremiumBadge } from '../components/premium/PremiumBadge';
 
 export default function Home() {
@@ -27,12 +32,30 @@ export default function Home() {
 				<Heading
 					size='3xl'
 					display={{ base: 'block', md: 'none' }}
-					fontWeight={'black'}
+					fontWeight='black'
+					css={css`
+						background: linear-gradient(
+							90deg,
+							rgba(246, 173, 85, 1) 0%,
+							#f99d51 100%
+						);
+						-webkit-text-fill-color: transparent;
+						background-clip: text;
+					`}
 				>
 					Experiments
 				</Heading>
 				<Heading size={{ base: 'lg', md: '3xl' }} paddingX={3} fontWeight={800}>
-					Your key to new features.
+					<Highlight
+						query='key'
+						styles={{
+							background: 'linear-gradient(90deg, #ec9c3a 0%, 	#e6893e 100%)',
+							'-webkit-text-fill-color': 'transparent',
+							'background-clip': 'text'
+						}}
+					>
+						Your key to new features.
+					</Highlight>
 				</Heading>
 				<Text
 					fontSize={{ base: 'xl', md: '2xl' }}
@@ -62,6 +85,15 @@ export default function Home() {
 						<PremiumBadge display={{ base: 'none', md: 'inline-block' }} />
 					</ListItem>
 				</List>
+				<PrimaryButton
+					mt={4}
+					pr={5}
+					size='lg'
+					href='/get-started'
+					label='Get Started'
+					icon={<Icon as={IoIosRocket} />}
+					iconPos='right'
+				/>
 			</Center>
 		</>
 	);

@@ -36,7 +36,7 @@ export const Debug: React.FC = () => {
 						</AccordionButton>
 					</h2>
 					<AccordionPanel pb={4}>
-						<HStack>
+						<HStack flexWrap='wrap' spacing={0} gap={2}>
 							<PrimaryButton label='Default' href='/api/billing/checkout' />
 							<PrimaryButton
 								label='Premium (monthly)'
@@ -75,7 +75,7 @@ export const Debug: React.FC = () => {
 						</AccordionButton>
 					</h2>
 					<AccordionPanel pb={4}>
-						<HStack>
+						<HStack flexWrap='wrap' spacing={0} gap={2}>
 							<PrimaryButton
 								label='Soft logout'
 								onClick={() => {

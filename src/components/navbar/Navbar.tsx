@@ -1,4 +1,4 @@
-import { HStack, Text } from '@chakra-ui/react';
+import { HStack, Text, useMediaQuery } from '@chakra-ui/react';
 import type { APIUser } from 'discord-api-types/v10';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -9,6 +9,7 @@ import { createAnalyticsQuery } from '../../utils/analytics';
 import { UserIcon } from '../account/UserIcon';
 import { PrimaryButton } from '../brand/PrimaryButton';
 import { Logo } from './Logo';
+import { DropdownMenu } from './Menu';
 
 export default function Navbar() {
 	const cookies = parseCookies();
@@ -23,14 +24,16 @@ export default function Navbar() {
 
 	const router = useRouter();
 
+	const [isMobile] = useMediaQuery('(max-width: 512px)');
+
 	return (
 		<HStack
 			as='nav'
 			justify='space-between'
 			align='center'
-			paddingRight={8}
+			paddingRight={cookies.auth ? 8 : 6}
 			paddingLeft={{ base: 6, md: 8 }}
-			paddingTop={{ base: 4, md: 8 }}
+			paddingTop={{ base: 5, md: 8 }}
 			paddingBottom={4}
 			minH={{ base: 'auto', md: '13vh' }}
 		>
@@ -46,10 +49,15 @@ export default function Navbar() {
 					passHref
 					legacyBehavior
 				>
-					<Text as='a' fontWeight={500}>
+					<Text
+						as='a'
+						fontWeight={500}
+						display={{ base: 'none', md: 'inline-block' }}
+					>
 						Premium
 					</Text>
 				</Link>
+
 				<PrimaryButton
 					onClick={() => {
 						if (!cookies.auth) login('navbar');
@@ -57,18 +65,20 @@ export default function Navbar() {
 							router.push('/dashboard');
 					}}
 					icon={
-						user ? (
+						user && !isMobile ? (
 							<UserIcon
 								size='xs'
-								username={user.username}
+								username={user.username + "'s"}
 								id={user.id}
 								avatar={user.avatar}
+								discrim={user.discriminator}
 							/>
 						) : null
 					}
 					pl={user ? 5 : undefined}
 					label='Dashboard'
 					size='lg'
+					role='link'
 				/>
 			</HStack>
 		</HStack>
