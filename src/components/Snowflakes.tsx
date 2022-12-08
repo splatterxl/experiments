@@ -1,10 +1,11 @@
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import { css } from '@emotion/react';
 import React from 'react';
 import { Snowflake } from './snowflakes/Snowflake';
 
 export const Snowflakes: React.FC = () => {
-	return (
+	return useColorModeValue(
+		null,
 		<Box
 			aria-hidden
 			css={css`
