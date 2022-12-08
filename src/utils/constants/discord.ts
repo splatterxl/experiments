@@ -22,8 +22,14 @@ export function makeDiscordURL(endpoint: string, query: any) {
 	).toString()}`;
 }
 
-export function userIcon(id: Snowflake, avatar: string) {
-	return `https://${Domains.CDN}/avatars/${id}/${avatar}.png?size=1024`;
+export function userIcon(
+	id: Snowflake,
+	avatar: string | null,
+	discrim: number
+) {
+	return avatar
+		? `https://${Domains.CDN}/avatars/${id}/${avatar}.png?size=1024`
+		: `https://${Domains.CDN}/embed/avatars/${discrim % 5}.png`;
 }
 
 export const APP_ID = '957383358592217088';

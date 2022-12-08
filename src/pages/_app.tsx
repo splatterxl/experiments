@@ -17,6 +17,7 @@ export default function App({ Component, pageProps }: AppProps) {
 	return (
 		<ChakraProvider>
 			<Box
+				role='main'
 				w='100vw'
 				minH='100vh'
 				_dark={{ bg: 'linear-gradient(45deg, #1A202C 0%, #1f1b1a 100%)' }}

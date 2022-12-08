@@ -7,6 +7,7 @@ export default function Logout() {
 
 	React.useEffect(() => {
 		localStorage.removeItem('user');
+		localStorage.removeItem('scope');
 
 		router.replace('/api/auth/logout');
 	});
