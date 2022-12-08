@@ -32,6 +32,6 @@
 		"@types/react": "18.0.25",
 		"@types/react-dom": "18.0.9",
 		"react-devtools": "^4.27.0",
-		"typescript": "4.9.3"
+		"typescript": "4.9.4"
 	}
 }
