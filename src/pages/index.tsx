@@ -50,8 +50,8 @@ export default function Home() {
 						query='key'
 						styles={{
 							background: 'linear-gradient(90deg, #ec9c3a 0%, 	#e6893e 100%)',
-							'-webkit-text-fill-color': 'transparent',
-							'background-clip': 'text'
+							WebkitTextFillColor: 'transparent',
+							backgroundClip: 'text'
 						}}
 					>
 						Your key to new features.

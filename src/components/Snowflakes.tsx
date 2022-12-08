@@ -124,9 +124,14 @@ export const Snowflakes: React.FC = () => {
 					-webkit-animation-delay: 4s, 2.5s;
 					animation-delay: 4s, 2.5s;
 				}
+				.snowflake:nth-of-type(12) {
+					left: 65%;
+					-webkit-animation-delay: 4s, 2.5s;
+					animation-delay: 4s, 2.5s;
+				}
 			`}
 		>
-			{Array(15).map((v, i) => (
+			{Array.from(Array(50), (_, i) => (
 				<Snowflake key={i} />
 			))}
 		</Box>
