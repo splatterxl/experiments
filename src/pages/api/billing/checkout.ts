@@ -10,8 +10,6 @@ export default async function checkout(
 	res: NextApiResponse
 ) {
 	if (!req.cookies.auth) return res.redirect('/auth/login');
-	if (process.env.NODE_ENV !== 'development')
-		return res.status(400).send('The Maze was not meant for you.');
 
 	const { email } = await fetch(makeDiscordURL(Endpoints.ME, {}), {
 		headers: { Authorization: `Bearer ${req.cookies.auth}` }
@@ -71,6 +69,9 @@ export default async function checkout(
 		return res
 			.status(404)
 			.send({ error: 'Mailing list does not have yearly billing' });
+
+	if (process.env.NODE_ENV !== 'development')
+		return res.status(400).send('The Maze was not meant for you.');
 
 	const session = await stripe.checkout.sessions.create({
 		line_items: [
