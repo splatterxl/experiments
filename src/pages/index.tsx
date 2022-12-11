@@ -10,8 +10,8 @@ import {
 } from '@chakra-ui/react';
 import { css } from '@emotion/react';
 import Head from 'next/head';
-import { IoIosRocket } from 'react-icons/io';
 import { PrimaryButton } from '../components/brand/PrimaryButton';
+import { RocketIcon } from '../components/brand/RocketIcon';
 import { PremiumBadge } from '../components/premium/PremiumBadge';
 import { createAnalyticsQuery } from '../utils/analytics';
 
@@ -95,7 +95,7 @@ export default function Home() {
 						analytics: { from: 'home-cta' }
 					})}
 					label='Get Started'
-					icon={<Icon as={IoIosRocket} />}
+					icon={<Icon as={RocketIcon} />}
 					iconPos='right'
 				/>
 			</Center>
