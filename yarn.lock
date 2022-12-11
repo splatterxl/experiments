@@ -1491,7 +1491,7 @@
   dependencies:
     "@chakra-ui/form-control" "2.0.13"
 
-"@chakra-ui/theme-tools@2.0.14":
+"@chakra-ui/theme-tools@2.0.14", "@chakra-ui/theme-tools@^2.0.14":
   version "2.0.14"
   resolved "https://registry.yarnpkg.com/@chakra-ui/theme-tools/-/theme-tools-2.0.14.tgz#6c523284ab384ca57a3aef1fcfa7c32ed357fbde"
   integrity sha512-lVcDmq5pyU0QbsIFKjt/iVUFDap7di2QHvPvGChA1YSjtg1PtuUi+BxEXWzp3Nfgw/N4rMvlBs+S0ynJypdwbg==

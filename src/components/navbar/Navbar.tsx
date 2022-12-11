@@ -31,7 +31,7 @@ export default function Navbar() {
 			as='nav'
 			justify='space-between'
 			align='center'
-			paddingRight={cookies.auth ? 8 : 6}
+			paddingRight={8}
 			paddingLeft={{ base: 6, md: 8 }}
 			paddingTop={{ base: 5, md: 8 }}
 			paddingBottom={4}
@@ -62,7 +62,12 @@ export default function Navbar() {
 					onClick={() => {
 						if (!cookies.auth) login('navbar');
 						else if (router.pathname !== '/dashboard')
-							router.push('/dashboard');
+							router.push(
+								createAnalyticsQuery({
+									path: '/dashboard',
+									analytics: { from: 'navbar' }
+								})
+							);
 					}}
 					icon={
 						user && !isMobile ? (
@@ -75,7 +80,7 @@ export default function Navbar() {
 							/>
 						) : null
 					}
-					pl={user ? 5 : undefined}
+					px={5}
 					label='Dashboard'
 					size='lg'
 					role='link'

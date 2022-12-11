@@ -54,7 +54,7 @@ export const SettingsPage: React.FC<{ page: DashboardPages }> = (props) => {
 
 	React.useEffect(() => {
 		setLocalStorage(window.localStorage);
-	});
+	}, []);
 
 	return (
 		<Box px={10}>
