@@ -20,8 +20,8 @@ export default function App({ Component, pageProps }: AppProps) {
 				role='main'
 				w='100vw'
 				minH='100vh'
-				_dark={{ bg: 'linear-gradient(45deg, #1A202C 0%, #1f1b1a 100%)' }}
-				_light={{ bg: 'linear-gradient(45deg, #F7FAFC 0%, #f9f0df 100%)' }}
+				_dark={{ bg: 'linear-gradient(90deg, #1A202C 0%, #1f1b1a 100%)' }}
+				_light={{ bg: 'linear-gradient(90deg, #F7FAFC 0%, #f9f0df 100%)' }}
 			>
 				<Navbar />
 				<Snowflakes />

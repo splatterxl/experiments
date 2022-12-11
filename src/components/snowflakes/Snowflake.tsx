@@ -7,7 +7,7 @@ export const Snowflake: React.FC = () => {
 			fontSize='1em'
 			color='white'
 			fontFamily='Arial, sans-serif'
-			textShadow='0 0 5px #000'
+			// textShadow='0 0 5px #000'
 			className='snowflake'
 			aria-hidden
 		>

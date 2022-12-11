@@ -1,7 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { destroyCookie } from 'nookies';
 import { one } from '../../../utils';
 import { stripe } from '../../../utils/billing/stripe';
 import { Prices, Products } from '../../../utils/constants/billing';
+import { Endpoints, makeDiscordURL } from '../../../utils/constants/discord';
 
 export default async function checkout(
 	req: NextApiRequest,
@@ -10,6 +12,15 @@ export default async function checkout(
 	if (!req.cookies.auth) return res.redirect('/auth/login');
 	if (process.env.NODE_ENV !== 'development')
 		return res.status(400).send('The Maze was not meant for you.');
+
+	const { email } = await fetch(makeDiscordURL(Endpoints.ME, {}), {
+		headers: { Authorization: `Bearer ${req.cookies.auth}` }
+	}).then((res) => res.json());
+
+	if (!email) {
+		destroyCookie({ res }, 'auth');
+		destroyCookie({ res }, 'refresh');
+	}
 
 	const host = req.headers.host;
 
@@ -22,14 +33,14 @@ export default async function checkout(
 			: `https://${host}`
 	);
 
-	let { discord_user_id: user, price = 'monthly' } = req.query;
-	user = one(user);
+	let { discord_guild_id: guild, price = 'monthly' } = req.query;
+	guild = one(guild);
 	price = one(price)!;
 
 	let product: Products = one(req.query.product)?.toUpperCase() as any;
 
-	if (user && isNaN(parseInt(user)))
-		return res.status(400).send({ error: 'Invalid user' });
+	if (guild && isNaN(parseInt(guild)))
+		return res.status(400).send({ error: 'Invalid guild' });
 
 	if (product) {
 		const str = product.toString();
@@ -70,9 +81,14 @@ export default async function checkout(
 		],
 		mode: 'subscription',
 		subscription_data: shouldIncludeTrial ? { trial_period_days: 7 } : {},
-		metadata: { discord_user_id: user ?? null },
+		metadata: { discord_guild_id: guild ?? null },
 		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
-		cancel_url: `${url.origin}/premium`
+		cancel_url: `${url.origin}/premium`,
+		customer_email: email,
+		allow_promotion_codes: true,
+		consent_collection: {
+			terms_of_service: 'required'
+		}
 	});
 
 	return res.redirect(session.url!);
