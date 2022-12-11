@@ -222,45 +222,43 @@ export default function TOS() {
 				<Text>
 					In addition to other prohibitions as set forth in the Terms of
 					Service, you are prohibited from using the site or its content:
-					<List styleType='initial' stylePosition='inside' p={2}>
-						<ListItem> for any unlawful purpose; </ListItem>
-						<ListItem>
-							to solicit others to perform or participate in any unlawful acts;
-						</ListItem>
-						<ListItem>
-							to violate any international, federal, provincial or state
-							regulations, rules, laws, or local ordinances;
-						</ListItem>
-						<ListItem>
-							to infringe upon or violate our intellectual property rights or
-						</ListItem>
-						<ListItem>
-							to harass, abuse, insult, harm, defame, slander, disparage,
-							intimidate, or discriminate based on gender, sexual orientation,
-							religion, ethnicity, race, age, national origin, or disability;
-						</ListItem>
-						<ListItem>to submit false or misleading information;</ListItem>
-						<ListItem>
-							to upload or transmit viruses or any other type of malicious code
-							that will or may be used in any way that will affect the
-							functionality or operation of the Service or of any related
-							website, other websites, or the Internet;
-						</ListItem>
-						<ListItem>
-							to collect or track the personal information of others;
-						</ListItem>
-						<ListItem>
-							to spam, phish, pharm, pretext, spider or crawl;
-						</ListItem>
-						<ListItem>for any obscene or immoral purpose; or</ListItem>
-						<ListItem>
-							to interfere with or circumvent the security features of the
-							Service or any related website, other websites, or the Internet.
-							We reserve the right to terminate your use of the Service or any
-							related website for violating any of the prohibited uses.
-						</ListItem>
-					</List>
 				</Text>
+				<List styleType='initial' stylePosition='inside' p={2}>
+					<ListItem> for any unlawful purpose; </ListItem>
+					<ListItem>
+						to solicit others to perform or participate in any unlawful acts;
+					</ListItem>
+					<ListItem>
+						to violate any international, federal, provincial or state
+						regulations, rules, laws, or local ordinances;
+					</ListItem>
+					<ListItem>
+						to infringe upon or violate our intellectual property rights or
+					</ListItem>
+					<ListItem>
+						to harass, abuse, insult, harm, defame, slander, disparage,
+						intimidate, or discriminate based on gender, sexual orientation,
+						religion, ethnicity, race, age, national origin, or disability;
+					</ListItem>
+					<ListItem>to submit false or misleading information;</ListItem>
+					<ListItem>
+						to upload or transmit viruses or any other type of malicious code
+						that will or may be used in any way that will affect the
+						functionality or operation of the Service or of any related website,
+						other websites, or the Internet;
+					</ListItem>
+					<ListItem>
+						to collect or track the personal information of others;
+					</ListItem>
+					<ListItem>to spam, phish, pharm, pretext, spider or crawl;</ListItem>
+					<ListItem>for any obscene or immoral purpose; or</ListItem>
+					<ListItem>
+						to interfere with or circumvent the security features of the Service
+						or any related website, other websites, or the Internet. We reserve
+						the right to terminate your use of the Service or any related
+						website for violating any of the prohibited uses.
+					</ListItem>
+				</List>
 				<Heading>Section 10: Disclaimers</Heading>
 				<Text>
 					We do not guarantee, represent or warrant that your use of our service

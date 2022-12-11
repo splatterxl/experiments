@@ -13,6 +13,7 @@ import Head from 'next/head';
 import { IoIosRocket } from 'react-icons/io';
 import { PrimaryButton } from '../components/brand/PrimaryButton';
 import { PremiumBadge } from '../components/premium/PremiumBadge';
+import { createAnalyticsQuery } from '../utils/analytics';
 
 export default function Home() {
 	return (
@@ -89,7 +90,10 @@ export default function Home() {
 					mt={4}
 					pr={5}
 					size='lg'
-					href='/get-started'
+					href={createAnalyticsQuery({
+						path: '/get-started',
+						analytics: { from: 'home-cta' }
+					})}
 					label='Get Started'
 					icon={<Icon as={IoIosRocket} />}
 					iconPos='right'

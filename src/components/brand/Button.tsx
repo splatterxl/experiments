@@ -39,5 +39,5 @@ export interface ButtonProps extends ChakraProps {
 	label: string;
 	icon?: React.ReactNode;
 	iconPos?: 'left' | 'right';
-	href?: Url | string;
+	href?: Partial<Url> | string;
 }
