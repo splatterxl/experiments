@@ -28,7 +28,7 @@ export function userIcon(
 	discrim: number
 ) {
 	return avatar
-		? `https://${Domains.CDN}/avatars/${id}/${avatar}.png?size=1024`
+		? `https://${Domains.CDN}/avatars/${id}/${avatar}.webp?size=1024`
 		: `https://${Domains.CDN}/embed/avatars/${discrim % 5}.png`;
 }
 
