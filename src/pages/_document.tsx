@@ -3,7 +3,7 @@ import { Head, Html, Main, NextScript } from 'next/document.js';
 
 export default function Document() {
 	return (
-		<Html>
+		<Html lang='en'>
 			<Head>
 				{process.env.NODE_ENV === 'development' ? (
 					// eslint-disable-next-line @next/next/no-sync-scripts
