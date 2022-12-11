@@ -33,7 +33,7 @@ export default function Navbar() {
 			align='center'
 			paddingRight={8}
 			paddingLeft={{ base: 6, md: 8 }}
-			paddingTop={{ base: 5, md: 8 }}
+			paddingTop={6}
 			paddingBottom={4}
 			minH={{ base: 'auto', md: '13vh' }}
 		>
