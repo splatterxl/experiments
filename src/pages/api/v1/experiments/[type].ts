@@ -1,7 +1,7 @@
-import FuzzySearch from 'fuzzy-search';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { one } from '../../../utils';
-import { Endpoints } from '../../../utils/constants/experiments';
+import { one } from '../../../../utils';
+import { Endpoints } from '../../../../utils/constants/experiments';
+import { getBySearch } from './search';
 
 export interface ExperimentAether {
 	type: string;
@@ -15,7 +15,7 @@ export interface ExperimentAether {
 export interface Experiment {
 	type: 'user' | 'guild';
 	title: string;
-	buckets: Record<number, string>;
+	buckets: { name: string; description: string | null }[];
 	id: string;
 	hash: number;
 }
@@ -24,22 +24,42 @@ export default async function listExperiments(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
+	try {
+		delete req.query.q;
+
+		res.send(await getBySearch(req.query as any));
+	} catch (err: any) {
+		res.status(400).send({ error: err.message });
+	}
+}
+
+export interface GetExperimentsOptions {
+	type?: 'user' | 'guild' | 'any';
+	q?: string;
+	limit?: number;
+	cursor?: number;
+}
+
+export async function getExperiments(
+	options: GetExperimentsOptions
+): Promise<Experiment[]> {
 	let json: ExperimentAether[];
 
 	try {
-		const nelly = await fetch(Endpoints.LIST_AETHER);
+		const raw = await fetch(Endpoints.LIST_AETHER);
 
-		if (!nelly.ok) {
-			throw await nelly.text();
+		if (!raw.ok) {
+			throw await raw.text();
 		}
 
-		json = await nelly.json();
+		json = await raw.json();
 	} catch (err) {
 		console.log(err);
-		return res.status(502).send({ error: 'Bad Gateway' });
+
+		throw new Error('Bad Gateway');
 	}
 
-	const query = one(req.query.type);
+	const query = one(options.type);
 
 	if (query) {
 		switch (query) {
@@ -49,14 +69,20 @@ export default async function listExperiments(
 			case 'guild':
 				json = json.filter((v) => v.type === 'guild');
 				break;
+			case 'any':
+				break;
 			default:
-				return res.status(400).send({ error: 'Invalid filter' });
+				throw new TypeError(
+					'Invalid experiment filter, must be one of [user, guild]'
+				);
 		}
 	}
 
-	const experiments = json.map((experiment) => {
+	return json.map((experiment) => {
 		const result = {
 			...experiment,
+			type: experiment.type as 'user' | 'guild',
+			id: experiment.id,
 			description: undefined,
 			buckets: Array.from(experiment.buckets as number[], (v, i) => ({
 				name: i === 0 ? 'Control' : `Treatment ${i}`,
@@ -70,21 +96,4 @@ export default async function listExperiments(
 
 		return result;
 	});
-
-	const search = one(req.query.search);
-
-	if (search) {
-		const fuzzy = new FuzzySearch(experiments, ['title', 'id'], {
-			caseSensitive: false,
-			sort: true
-		});
-
-		const result = fuzzy.search(search);
-
-		if (!result.length)
-			return res.status(404).send({ error: 'No such experiment(s)' });
-		else return res.send(result);
-	} else {
-		return res.send(experiments);
-	}
 }

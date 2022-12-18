@@ -21,8 +21,6 @@ export default function Premium() {
 export async function getServerSideProps({
 	req
 }: GetServerSidePropsContext): Promise<GetServerSidePropsResult<{}>> {
-	console.log(req.cookies.auth);
-
 	switch (true) {
 		case req.cookies.auth == undefined || !req.cookies.auth:
 			return { redirect: { destination: '/auth/login', permanent: false } };
