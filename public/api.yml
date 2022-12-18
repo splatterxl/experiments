@@ -1,0 +1,270 @@
+openapi: '3.0.2'
+info:
+  title: Experiments
+  version: '1.0'
+
+servers:
+  - url: https://exps.splt.dev/api/v1
+  - url: http://localhost:3001/api/v1
+
+paths:
+  /experiments:
+    get:
+      summary: Retrieve a list of all experiments
+      responses:
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        200:
+          description: List of active experiments returned from various sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExperimentsList'
+  /experiments/{type}:
+    get:
+      summary: Retrieve the list of active experiments that are of a specific type
+      parameters:
+        - $ref: '#/components/parameters/ExperimentTypeUrl'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+      responses:
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        200:
+          description: List of active experiments returned from various sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExperimentsList'
+        404:
+          description: Invalid experiment type
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  error:
+                    type: string
+                    example: Invalid experiment filter, must be one of [user, guild]
+        400:
+          description: Bad request query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Error'
+  /experiments/search:
+    get:
+      summary: Search experiments
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/ExperimentTypeQuery'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+      responses:
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        200:
+          description: List of active experiments returned from various sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExperimentsList'
+        400:
+          description: Bad request query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Error'
+
+security:
+  - apiKey: []
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: auth
+      in: cookie
+  parameters:
+    ExperimentTypeUrl:
+      in: path
+      name: type
+      required: true
+      description: Type of experiment to retrieve
+      schema:
+        $ref: '#/components/schemas/ExperimentType'
+    ExperimentTypeQuery:
+      in: query
+      name: type
+      required: false
+      description: Type of experiment to retrieve
+      schema:
+        $ref: '#/components/schemas/ExperimentType'
+    limit:
+      in: query
+      name: limit
+      description: Limit the amount of response items
+      required: false
+      schema:
+        type: integer
+        minimum: 10
+        maximum: 200
+        default: 50
+        format: int32
+    cursor:
+      in: query
+      name: cursor
+      description: Control where the returned array slice starts
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 500
+        default: 0
+        format: int32
+    query:
+      in: query
+      name: q
+      required: true
+      description: String to search for using fuzzy search
+      schema:
+        type: string
+        maxLength: 50
+        example: report
+
+  schemas:
+    400Error:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          example: Invalid query
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          description: The error encountered
+          pattern: '[\w\s]+'
+          maxLength: 50
+          example: Invalid request
+      required:
+        - error
+    ExperimentsList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Experiment'
+      maxItems: 200
+    PaginatedExperimentsList:
+      type: object
+      properties:
+        hits:
+          type: integer
+          description: The total number of results, even ones not returned.
+          example: 178
+        position:
+          type: object
+          description: The returned array slice's position in the total results, null if the total results are all sent.
+          properties:
+            start:
+              type: integer
+              example: 0
+              minimum: 0
+              maximum: 499
+            end:
+              type: integer
+              minimum: 1
+              maximum: 500
+              example: 50
+            remaining:
+              type: integer
+              minimum: 0
+              maximum: 499
+              example: 128
+          required:
+            - start
+            - end
+            - remaining
+          additionalProperties: false
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentsList'
+      additionalProperties: false
+      required:
+        - hits
+        - position
+        - results
+    Experiment:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - title
+        - buckets
+        - id
+        - hash
+      properties:
+        type:
+          $ref: '#/components/schemas/ExperimentType'
+        title:
+          type: string
+          description: Human readable title for the experiment
+          example: Test page for guild subscription payment flows
+          pattern: '[\w ]+'
+          maxLength: 200
+        id:
+          type: string
+          description: Machine readable title for the experiment, usually year-month_title
+          example: 2021-06_guild_subscriptions_payment_flow_test_page
+          pattern: \d{4}-\d{2}_[a-z_]+
+          maxLength: 100
+        hash:
+          type: number
+          description: Murmurhash v3 of the machine readable ID, used to retrieve rollout data
+          example: 1573645622
+        buckets:
+          maxItems: 50
+          type: array
+          items:
+            $ref: '#/components/schemas/Bucket'
+    ExperimentType:
+      type: string
+      default: any
+      enum:
+        - user
+        - guild
+        - any
+      description: Whether the experiment applies to users or guilds
+    Bucket:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Treatment name, either "Control" or "Treatment N" where N is a non-zero number.
+          example: Treatment 1
+          pattern: 'Control|Treatment \d{1,2}'
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+          description: Treatment description
+          example: AA guild test enabled. Noop on UI effect.
+          pattern: '[\w. ]+'
+          maxLength: 100
