@@ -202,9 +202,7 @@ components:
           additionalProperties: false
           nullable: true
         results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExperimentsList'
+          $ref: '#/components/schemas/ExperimentsList'
       additionalProperties: false
       required:
         - hits
