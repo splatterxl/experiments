@@ -16,6 +16,7 @@
 		"@emotion/styled": "^11.10.5",
 		"@next/font": "^13.0.6",
 		"@types/fuzzy-search": "^2.1.2",
+		"@vercel/analytics": "^0.1.6",
 		"discord-api-types": "^0.37.20",
 		"discord-verify": "^1.0.0",
 		"eslint": "8.29.0",
