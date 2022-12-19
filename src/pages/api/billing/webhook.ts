@@ -14,7 +14,7 @@ export default function handleStripeWebhook(
 		event = stripe.webhooks.constructEvent(
 			typeof req.body === 'string' ? req.body : JSON.stringify(req.body),
 			signature!,
-			process.env.STRIPE_WEBOOK!
+			process.env.STRIPE_WEBHOOK!
 		);
 	} catch (err: any) {
 		res.status(400).send(`Webhook Error: ${err.toString()}`);
