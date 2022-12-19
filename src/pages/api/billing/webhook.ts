@@ -17,7 +17,7 @@ export default function handleStripeWebhook(
 			process.env.STRIPE_WEBOOK!
 		);
 	} catch (err: any) {
-		res.status(400).send(`Webhook Error: ${err.toString}`);
+		res.status(400).send(`Webhook Error: ${err.toString()}`);
 		return;
 	}
 
