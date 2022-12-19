@@ -9,7 +9,7 @@ export default async function searchExperiments(
 ) {
 	const { q } = req.query;
 
-	if (!q) res.status(400).send({ error: 'No query' });
+	if (!q) return res.status(400).send({ error: 'No query' });
 
 	try {
 		res.send(await getBySearch(req.query as any));
