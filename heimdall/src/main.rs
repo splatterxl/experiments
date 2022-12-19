@@ -4,7 +4,6 @@ use twilight_http::{
     routing::Path,
     Client,
 };
-use twilight_model::id::Id;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
