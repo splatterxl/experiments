@@ -20,7 +20,7 @@ export default function Navbar() {
 
 		if (!cookies.auth) localStorage.removeItem('user');
 		else if (item) setUser(JSON.parse(item));
-	}, []);
+	}, [cookies.auth]);
 
 	const router = useRouter();
 

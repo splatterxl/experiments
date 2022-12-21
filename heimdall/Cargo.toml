@@ -12,3 +12,4 @@ twilight-model = { path = 'twilight/twilight-model' }
 anyhow = "*"
 futures-util = "*"
 tracing-subscriber = "*"
+mongodb = '2'
