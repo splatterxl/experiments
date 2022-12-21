@@ -5,6 +5,7 @@ import {
 	Icon,
 	List,
 	ListItem,
+	Tag,
 	Text,
 	useMediaQuery
 } from '@chakra-ui/react';
@@ -30,6 +31,9 @@ export default function Home() {
 				flexDirection='column'
 				gap={{ base: 2, md: 1 }}
 			>
+				<Tag rounded='lg'>
+					<b>NEW</b>: Get an monthly email updates for only $1
+				</Tag>
 				<Heading
 					size={{ base: '3xl', md: '3xl' }}
 					paddingX={3}
