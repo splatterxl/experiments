@@ -31,22 +31,10 @@ export default function Home() {
 				gap={{ base: 2, md: 1 }}
 			>
 				<Heading
-					size='3xl'
-					display={{ base: 'block', md: 'none' }}
-					fontWeight='black'
-					css={css`
-						background: linear-gradient(
-							90deg,
-							rgba(246, 173, 85, 1) 0%,
-							#f99d51 100%
-						);
-						-webkit-text-fill-color: transparent;
-						background-clip: text;
-					`}
+					size={{ base: '3xl', md: '3xl' }}
+					paddingX={3}
+					fontWeight={800}
 				>
-					Experiments
-				</Heading>
-				<Heading size={{ base: 'lg', md: '3xl' }} paddingX={3} fontWeight={800}>
 					<Highlight
 						query='key'
 						styles={{
@@ -62,18 +50,18 @@ export default function Home() {
 					fontSize={{ base: 'xl', md: '2xl' }}
 					maxW={{ base: '100%', md: '60vw' }}
 					textAlign='center'
-					paddingX={6}
+					paddingX={{ base: 24, md: 6 }}
 				>
 					Experiments makes it easier to find out when your server gets access
 					to new features, giving your community more time to focus on itself.
 				</Text>
 				<List
 					mt={3}
-					fontSize={{ base: 'md', md: 'xl' }}
+					fontSize={{ base: 'xl', md: 'xl' }}
 					listStyleType='initial'
 					textAlign={'center'}
 					listStylePosition='inside'
-					// display={{ base: 'none', md: 'block' }}
+					display={{ base: 'none', md: 'block' }}
 				>
 					<ListItem>Access both online and in Discord</ListItem>
 					<ListItem>Personalised email digests every week</ListItem>
