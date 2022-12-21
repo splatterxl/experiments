@@ -1,5 +1,9 @@
 import { Ratelimit } from '@upstash/ratelimit';
-import { APIGuild, Snowflake } from 'discord-api-types/v10';
+import {
+	APIGuild,
+	PermissionFlagsBits,
+	Snowflake
+} from 'discord-api-types/v10';
 import { Collection, WithId } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
@@ -71,10 +75,17 @@ export default async function subscription(
 					return res.status(400).send({ message: 'Invalid guild id' });
 				}
 
-				if (!userGuilds.find((guild: APIGuild) => guild.id === body.guild_id))
+				if (
+					!userGuilds.find(
+						(guild: APIGuild) =>
+							guild.id === body.guild_id &&
+							(BigInt(guild.permissions!) & PermissionFlagsBits.ManageGuild) ===
+								PermissionFlagsBits.ManageGuild
+					)
+				)
 					return res
 						.status(422)
-						.send({ message: 'User is not a member of the target guild' });
+						.send({ message: 'User is not an admin of the target guild' });
 
 				const count = await coll.countDocuments({
 					guild_id: body.guild_id,
