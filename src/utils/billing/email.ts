@@ -1,12 +1,12 @@
-import { EmailParams, Recipient } from 'mailersend';
+import { Attachment, EmailParams, Recipient } from 'mailersend';
 
-export const mailer = new (require('mailersend'))({
+export const mailersend = new (require('mailersend'))({
 	api_key: process.env.MAILER_KEY
 });
 
-const from = {
+export const from = {
 	email: 'noreply@splt.dev',
-	name: 'Splatterxl'
+	name: 'Experiments'
 };
 
 interface IRecipient {
@@ -17,19 +17,57 @@ interface IRecipient {
 interface EmailContent {
 	subject: string;
 	template: string;
-	variables: Record<string, string>;
+	/**
+	 * These don't work for now.
+	 */
+	variables?: {
+		email: string;
+		substitutions: Required<Record<'var' | 'value', string>>[];
+	};
+	attachments?: IAttachment[];
+}
+
+interface IAttachment {
+	name: string;
+	data: string;
 }
 
 export function sendEmail(recipient: IRecipient, content: EmailContent) {
 	const recipients = [new Recipient(recipient.email, recipient.name)];
 
-	const params = new EmailParams()
+	let params = new EmailParams()
 		.setFrom(from.email)
 		.setFromName(from.name)
 		.setRecipients(recipients)
 		.setSubject(content.subject)
 		.setTemplateId(content.template)
-		.setPersonalization({ email: recipient.email, data: content.variables });
+		.setVariables(content.variables as any);
 
-	return mailer.send(params);
+	if (content.attachments) {
+		params = params.setAttachments(
+			content.attachments.map(
+				(v) => new Attachment(v.data, v.name, 'attachment')
+			)
+		);
+	}
+
+	// FIXME: we can't use personalisation for some reason??
+	// .setPersonalization({
+	// 	data: content.variables,
+	// 	email: recipient.email
+	// });
+
+	return mailersend.send(params).then(async (res: Response) => {
+		const resp = {
+			status: `${res.status} ${res.statusText}`,
+			json: null as any
+		};
+
+		if (!res.ok) {
+			resp.json = await res.json();
+			console.error(resp.json);
+		}
+
+		return resp;
+	});
 }

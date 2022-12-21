@@ -1,6 +1,7 @@
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 import { Center, Heading, HStack, Spinner, Text } from '@chakra-ui/react';
 import type { APIUser } from 'discord-api-types/v10';
+import { decode } from 'jsonwebtoken';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
@@ -8,7 +9,6 @@ import React from 'react';
 import { UserIcon } from '../../../components/account/UserIcon';
 import { GhostButton } from '../../../components/brand/GhostButton';
 import { one } from '../../../utils';
-import { Endpoints, makeDiscordURL } from '../../../utils/constants/discord';
 
 export default function LoginOnboarding() {
 	const [user, setUser] = React.useState<APIUser>(null as any);
@@ -23,17 +23,15 @@ export default function LoginOnboarding() {
 				'email'
 			];
 
+			if (!auth) router.replace('/auth/login/try-again');
+
 			try {
-				const json = await fetch(makeDiscordURL(Endpoints.ME, {}), {
-					headers: { Authorization: `Bearer ${auth}` }
-				}).then((res) => res.json());
+				const user = (decode(auth) as APIUser)!;
 
-				if (json.message) throw json;
-
-				localStorage.setItem('user', JSON.stringify(json));
+				localStorage.setItem('user', JSON.stringify(user));
 				localStorage.setItem('scope', JSON.stringify(scope));
 
-				setUser(json);
+				setUser(user);
 			} catch (err) {
 				console.error(err);
 

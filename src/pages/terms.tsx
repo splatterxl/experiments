@@ -12,6 +12,9 @@ export default function TOS() {
 				<Heading size='3xl' pb={1} fontWeight='black'>
 					Terms of Service
 				</Heading>
+				<Text fontWeight={300}>
+					Last modified and effective: December 19, 2022.
+				</Text>
 				<Heading fontWeight='extrabold'>Overview</Heading>
 				<Text>
 					This website is operated by Splatterxl. Throughout the site, the terms
@@ -354,5 +357,3 @@ export default function TOS() {
 		</>
 	);
 }
-
-

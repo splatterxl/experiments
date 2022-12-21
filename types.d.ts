@@ -27,6 +27,10 @@ declare module 'mailersend' {
 		constructor(email: string, name: string);
 	}
 
+	export class Attachment {
+		constructor(data: string, filename: string, type: 'attachment');
+	}
+
 	export class EmailParams {
 		constructor();
 
@@ -35,9 +39,10 @@ declare module 'mailersend' {
 		setRecipients(recipients: Recipient[]): EmailParams;
 		setSubject(subject: string): EmailParams;
 		setTemplateId(id: string): EmailParams;
-		setPersonalization(personalization: {
+		setVariables(variables: {
 			email: string;
-			data: Record<string, string>;
+			substitutions: Required<Record<'var' | 'value', string>>[];
 		}): EmailParams;
+		setAttachments(attachments: Attachment[]): EmailParams;
 	}
 }

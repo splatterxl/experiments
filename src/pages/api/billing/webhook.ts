@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { one } from '../../../utils';
 import { stripe } from '../../../utils/billing/stripe';
 
+// Should only be requested by Stripe
 export default function handleStripeWebhook(
 	req: NextApiRequest,
 	res: NextApiResponse
