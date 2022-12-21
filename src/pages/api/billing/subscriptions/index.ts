@@ -38,32 +38,35 @@ export default async function subscription(
 		return;
 	}
 
-	const guilds = await getGuilds(user.access_token);
-
-	if (!guilds) return res.status(502).send({ message: 'Bad Gateway' });
-
 	const coll = client.collection<Subscription>('subscriptions');
 
-	const subscriptions = await coll
+	let subscriptions = await coll
 		.find({
 			user_id: user.id
 		})
-		.toArray()
-		.then((subs) =>
-			Promise.all(
-				subs.map((sub) => getSubscriptionData(sub, guilds, false, coll))
-			)
+		.toArray();
+
+	if (subscriptions.length) {
+		const guilds = await getGuilds(user.access_token);
+
+		if (!guilds) return res.status(502).send({ message: 'Bad Gateway' });
+
+		const subs = await Promise.all(
+			subscriptions.map((sub) => getSubscriptionData(sub, guilds, false, coll))
 		);
 
-	// repair on read to delete cancelled subs
-	// TODO: listen to stripe webhook customer.subscription.delete
-	for (const sub of subscriptions) {
-		if (sub.cancelled) {
-			await coll.deleteMany({
-				subscription_id: sub.id
-			});
+		// repair on read to delete cancelled subs
+		// TODO: listen to stripe webhook customer.subscription.delete
+		for (const sub of subs) {
+			if (sub.cancelled) {
+				await coll.deleteMany({
+					subscription_id: sub.id
+				});
+			}
 		}
-	}
 
-	return res.send(subscriptions.filter((v) => !v.cancelled));
+		return res.send(subs.filter((v) => !v.cancelled));
+	} else {
+		return res.send([]);
+	}
 }
