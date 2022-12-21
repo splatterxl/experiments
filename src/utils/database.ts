@@ -35,7 +35,8 @@ export function getAuth(userId: Snowflake) {
 
 export const checkAuth = async (
 	req: NextApiRequest,
-	res: NextApiResponse
+	res: NextApiResponse,
+	thorough = true
 ): Promise<(APIUser & { access_token: string }) | undefined> => {
 	if (!req.cookies.auth) {
 		res

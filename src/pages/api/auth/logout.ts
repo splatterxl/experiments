@@ -1,7 +1,8 @@
+import { decode, JwtPayload } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { destroyCookie } from 'nookies';
 import { Endpoints, makeDiscordURL } from '../../../utils/constants/discord';
-import { checkAuth, client } from '../../../utils/database';
+import { client } from '../../../utils/database';
 
 // This endpoint is navigated to directly by the frontend
 export default async function Logout(
@@ -10,9 +11,7 @@ export default async function Logout(
 ) {
 	if (!req.cookies.auth) return res.redirect('/');
 	else {
-		const user = await checkAuth(req, res);
-
-		if (!user) return;
+		const user = decode(req.cookies.auth) as JwtPayload;
 
 		const auth = await client.collection('auth').findOne({ user_id: user.id });
 
