@@ -1,6 +1,10 @@
+import { sign } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../../utils/billing/stripe';
+import { checkAuth, client } from '../../../utils/database';
+import { JWT_TOKEN } from '../../../utils/jwt';
 
+// Navigated to directly
 export default async function result(
 	req: NextApiRequest,
 	res: NextApiResponse
@@ -17,6 +21,8 @@ export default async function result(
 		return res.status(400).send({ error: 'Unknown session' });
 	}
 
+	const user = await checkAuth(req, res);
+
 	switch (session.status) {
 		case 'open':
 			return res.redirect(session.url!);
@@ -30,6 +36,15 @@ export default async function result(
 						.send({ error: 'Complete request with unpaid payment' });
 				case 'no_payment_required':
 				case 'paid': {
+					// login then apply payment to account
+					if (!user)
+						return res.redirect(
+							`/auth/login/apply?sub=${sign(
+								{ session: session.id },
+								JWT_TOKEN
+							)}`
+						);
+
 					let subscription_id;
 
 					if (typeof session.subscription === 'string') {
@@ -48,13 +63,23 @@ export default async function result(
 						customer = sub.customer;
 					}
 
-					if (customer.deleted) {
-						await stripe.subscriptions.cancel(sub.id);
+					await client.collection('subscriptions').updateOne(
+						{
+							user_id: user.id,
+							session_id: session.id
+						},
+						{
+							$set: {
+								user_id: user.id,
+								session_id: session.id,
+								customer_id: customer.id,
+								subscription_id: sub.id
+							}
+						},
+						{ upsert: true }
+					);
 
-						return res.redirect('/');
-					}
-
-					return res.send({ session, customer, sub });
+					return res.redirect('/premium/liftoff');
 				}
 			}
 		}

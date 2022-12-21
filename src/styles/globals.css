@@ -15,6 +15,11 @@ a {
 	box-sizing: border-box;
 }
 
+a:link,
+a:any-link {
+	font-weight: 700;
+}
+
 @media (prefers-color-scheme: dark) {
 	html {
 		color-scheme: dark;

@@ -15,6 +15,8 @@ export default function App({ Component, pageProps }: AppProps) {
 
 	React.useEffect(() => {
 		cleanURL(router);
+
+		// TODO: clean up stored user data when cookie expires
 	}, [router]);
 
 	return (

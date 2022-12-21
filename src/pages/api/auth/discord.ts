@@ -1,4 +1,8 @@
-import type { RESTPostOAuth2AccessTokenResult } from 'discord-api-types/v10';
+import type {
+	APIUser,
+	RESTPostOAuth2AccessTokenResult
+} from 'discord-api-types/v10';
+import { sign } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { setCookie } from 'nookies';
 import {
@@ -7,6 +11,8 @@ import {
 	GUILD_INVITE,
 	makeDiscordURL
 } from '../../../utils/constants/discord';
+import { client } from '../../../utils/database';
+import { JWT_TOKEN } from '../../../utils/jwt';
 
 const ErrorUrls = {
 	TRY_AGAIN: '/auth/login/try-again'
@@ -78,14 +84,45 @@ export default async function handleDiscordAuth(
 				} catch {}
 			}
 
-			setCookie({ res }, 'auth', access_token, {
-				maxAge: expires_in,
-				path: '/'
-			});
-			setCookie({ res }, 'refresh', refresh_token, {
-				maxAge: expires_in,
-				path: '/'
-			});
+			const me: APIUser = await fetch(makeDiscordURL(Endpoints.ME, {}), {
+				method: 'GET',
+				headers: {
+					Authorization: `${token_type} ${access_token}`
+				}
+			}).then((res) => res.json());
+
+			if (!me.id) throw 'Unknown error';
+
+			const coll = client.collection('auth');
+
+			await coll.updateOne(
+				{ user_id: me.id },
+				{
+					$set: {
+						access_token,
+						refresh_token,
+						expires_in,
+						token_type,
+						scope,
+						user_id: me.id
+					}
+				},
+				{
+					upsert: true
+				}
+			);
+
+			setCookie(
+				{ res },
+				'auth',
+				sign(me, JWT_TOKEN, {
+					expiresIn: expires_in
+				}),
+				{
+					maxAge: expires_in,
+					path: '/'
+				}
+			);
 			res.redirect(`/auth/login/onboarding?scope=${scope.join('+')}`);
 		}
 	} catch (err) {

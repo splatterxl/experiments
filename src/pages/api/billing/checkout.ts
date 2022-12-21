@@ -1,24 +1,38 @@
+import { Ratelimit } from '@upstash/ratelimit';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { destroyCookie } from 'nookies';
 import { one } from '../../../utils';
 import { stripe } from '../../../utils/billing/stripe';
 import { Prices, Products } from '../../../utils/constants/billing';
-import { Endpoints, makeDiscordURL } from '../../../utils/constants/discord';
+import { checkAuth, redis } from '../../../utils/database';
+
+const ratelimit = new Ratelimit({
+	redis: redis,
+	limiter: Ratelimit.fixedWindow(3, '10 m')
+});
 
 export default async function checkout(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
-	if (!req.cookies.auth) return res.redirect('/auth/login');
+	const user = await checkAuth(req, res);
 
-	const { email } = await fetch(makeDiscordURL(Endpoints.ME, {}), {
-		headers: { Authorization: `Bearer ${req.cookies.auth}` }
-	}).then((res) => res.json());
+	if (!user) return;
 
-	if (!email) {
-		destroyCookie({ res }, 'auth');
-		destroyCookie({ res }, 'refresh');
+	const identifier = 'checkout:' + user.id;
+	const result = await ratelimit.limit(identifier);
+	res.setHeader('X-RateLimit-Limit', result.limit);
+	res.setHeader('X-RateLimit-Remaining', result.remaining);
+	res.setHeader('X-RateLimit-Reset', result.reset);
+
+	if (!result.success) {
+		res.status(429).json({
+			message: 'You are being rate limited.',
+			reset_after: (result.reset - Date.now()) / 1000
+		});
+		return;
 	}
+
+	const { email } = user;
 
 	const host = req.headers.host;
 
@@ -85,7 +99,7 @@ export default async function checkout(
 		metadata: { discord_guild_id: guild ?? null },
 		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: `${url.origin}/premium`,
-		customer_email: email,
+		customer_email: email!,
 		allow_promotion_codes: true,
 		consent_collection: {
 			terms_of_service: 'required'
