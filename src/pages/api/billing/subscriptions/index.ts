@@ -11,7 +11,7 @@ import { getSubscriptionData, SubscriptionData } from './[id]';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
-	limiter: Ratelimit.fixedWindow(5, '5 s')
+	limiter: Ratelimit.fixedWindow(1, '2 s')
 });
 
 export default async function subscription(
@@ -24,7 +24,7 @@ export default async function subscription(
 
 	if (!user) return;
 
-	const identifier = 'checkout:' + user.id;
+	const identifier = 'subscriptions:' + user.id;
 	const result = await ratelimit.limit(identifier);
 	res.setHeader('X-RateLimit-Limit', result.limit);
 	res.setHeader('X-RateLimit-Remaining', result.remaining);
