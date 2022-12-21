@@ -9,8 +9,8 @@ import {
 	Text,
 	useMediaQuery
 } from '@chakra-ui/react';
-import { css } from '@emotion/react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { PrimaryButton } from '../components/brand/PrimaryButton';
 import { RocketIcon } from '../components/brand/RocketIcon';
 import { PremiumBadge } from '../components/premium/PremiumBadge';
@@ -31,9 +31,12 @@ export default function Home() {
 				flexDirection='column'
 				gap={{ base: 2, md: 1 }}
 			>
-				<Tag rounded='lg'>
-					<b>NEW</b>: Get an monthly email updates for only $1
-				</Tag>
+				<Link href='/updates'>
+					{/* // TODO */}
+					<Tag rounded='lg' display='none'>
+						<b>NEW</b>: Get monthly email updates for only $1
+					</Tag>
+				</Link>
 				<Heading
 					size={{ base: '3xl', md: '3xl' }}
 					paddingX={3}
