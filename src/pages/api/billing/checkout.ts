@@ -20,8 +20,8 @@ export default async function checkout(
 
 	if (!user) return;
 
-	if (process.env.NODE_ENV !== 'development')
-		return res.status(400).send('The Maze was not meant for you.');
+	// if (process.env.NODE_ENV !== 'development')
+	// 	return res.status(400).send('The Maze was not meant for you.');
 
 	// rate limits
 	const identifier = 'checkout:' + user.id;
@@ -116,7 +116,7 @@ export default async function checkout(
 		],
 		mode: 'subscription',
 		subscription_data: shouldIncludeTrial ? { trial_period_days: 7 } : {},
-		metadata: { discord_guild_id: guild ?? null, product },
+		metadata: { discord_guild_id: guild ?? null, product, user_id: user.id },
 		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: `${url.origin}/premium`,
 		customer_email: email!,
