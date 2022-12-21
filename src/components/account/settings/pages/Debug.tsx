@@ -9,6 +9,7 @@ import {
 	HStack,
 	useColorMode
 } from '@chakra-ui/react';
+import { destroyCookie } from 'nookies';
 import React from 'react';
 import { PrimaryButton } from '../../../brand/PrimaryButton';
 
@@ -80,6 +81,12 @@ export const Debug: React.FC = () => {
 								label='Soft logout'
 								onClick={() => {
 									localStorage.removeItem('user');
+								}}
+							/>
+							<PrimaryButton
+								label='Delete cookies'
+								onClick={() => {
+									destroyCookie(null, 'auth');
 								}}
 							/>
 							<PrimaryButton label='Login again' href='/auth/login' />

@@ -14,6 +14,8 @@ export default async function checkout(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
+	if (!req.cookies.auth) return res.redirect('/auth/login?next=/premium');
+
 	const user = await checkAuth(req, res);
 
 	if (!user) return;
