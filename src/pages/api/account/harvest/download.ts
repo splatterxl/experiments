@@ -30,7 +30,8 @@ export default async function downloadHarvest(
 				message: 'Harvest expiration date invalid'
 			};
 
-		const identifier = 'download_harvest:' + payload.user + ':' + getClientIp;
+		const identifier =
+			'download_harvest:' + payload.user + ':' + getClientIp(req);
 		const result = await ratelimit.limit(identifier);
 		res.setHeader('X-RateLimit-Limit', result.limit);
 		res.setHeader('X-RateLimit-Remaining', result.remaining);
