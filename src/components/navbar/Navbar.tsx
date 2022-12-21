@@ -9,7 +9,6 @@ import { createAnalyticsQuery } from '../../utils/analytics';
 import { UserIcon } from '../account/UserIcon';
 import { PrimaryButton } from '../brand/PrimaryButton';
 import { Logo } from './Logo';
-import { DropdownMenu } from './Menu';
 
 export default function Navbar() {
 	const cookies = parseCookies();
@@ -19,7 +18,8 @@ export default function Navbar() {
 	React.useEffect(() => {
 		const item = localStorage.getItem('user');
 
-		if (item) setUser(JSON.parse(item));
+		if (!cookies.auth) localStorage.removeItem('user');
+		else if (item) setUser(JSON.parse(item));
 	}, []);
 
 	const router = useRouter();
