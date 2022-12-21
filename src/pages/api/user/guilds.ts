@@ -29,13 +29,19 @@ export const getGuilds = async (
 
 	let res = await get();
 
-	while (res.status === 429) {
+	let i = 0;
+
+	while (res.status === 429 && i < 2) {
 		await sleep(
 			parseInt(res.headers.get('x-ratelimit-reset')!) * 1000 - Date.now()
 		);
 
 		res = await get();
+
+		i++;
 	}
+
+	if (res.status === 429) return undefined;
 
 	const json = await res.json();
 

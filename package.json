@@ -15,6 +15,7 @@
 		"@emotion/react": "^11.10.5",
 		"@emotion/styled": "^11.10.5",
 		"@next/font": "^13.0.6",
+		"@sentry/nextjs": "^7.28.0",
 		"@types/fuzzy-search": "^2.1.2",
 		"@types/jsonwebtoken": "^8.5.9",
 		"@types/request-ip": "^0.0.37",
