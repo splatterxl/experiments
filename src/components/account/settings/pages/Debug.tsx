@@ -17,7 +17,7 @@ export const Debug: React.FC = () => {
 
 	return (
 		<>
-			<Heading py={3}>Debug options</Heading>
+			<Heading pb={3}>Debug options</Heading>
 			<PrimaryButton
 				mb={3}
 				label='Toggle color mode'

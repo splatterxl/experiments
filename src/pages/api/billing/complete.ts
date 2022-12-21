@@ -1,6 +1,7 @@
 import { sign } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../../utils/billing/stripe';
+import { Products } from '../../../utils/constants/billing';
 import { checkAuth, client } from '../../../utils/database';
 import { JWT_TOKEN } from '../../../utils/jwt';
 
@@ -71,15 +72,31 @@ export default async function result(
 						{
 							$set: {
 								user_id: user.id,
+								guild_id: session.metadata?.discord_guild_id || null,
 								session_id: session.id,
 								customer_id: customer.id,
-								subscription_id: sub.id
+								subscription_id: sub.id,
+								product: +session.metadata!.product
 							}
 						},
 						{ upsert: true }
 					);
 
-					return res.redirect('/premium/liftoff');
+					return res.redirect(
+						!session.metadata?.discord_guild_id
+							? `/premium/liftoff?subscription=${sub.id}&product=${
+									+session.metadata!.product === Products.MAILING_LIST
+										? 'Mailing List'
+										: +session.metadata!.product === Products.PREMIUM
+										? 'Premium'
+										: 'Unknown'
+							  }`
+							: `/dashboard/guild/${session.metadata!.discord_guild_id}/${
+									+session.metadata!.product === Products.MAILING_LIST
+										? 'mailing-list'
+										: 'premium'
+							  }/liftoff`
+					);
 				}
 			}
 		}

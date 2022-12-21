@@ -3,11 +3,11 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { one } from '../../../utils';
 import { stripe } from '../../../utils/billing/stripe';
 import { Prices, Products } from '../../../utils/constants/billing';
-import { checkAuth, redis } from '../../../utils/database';
+import { checkAuth, client, redis } from '../../../utils/database';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
-	limiter: Ratelimit.fixedWindow(3, '10 m')
+	limiter: Ratelimit.fixedWindow(10, '10 m')
 });
 
 export default async function checkout(
@@ -18,6 +18,10 @@ export default async function checkout(
 
 	if (!user) return;
 
+	if (process.env.NODE_ENV !== 'development')
+		return res.status(400).send('The Maze was not meant for you.');
+
+	// rate limits
 	const identifier = 'checkout:' + user.id;
 	const result = await ratelimit.limit(identifier);
 	res.setHeader('X-RateLimit-Limit', result.limit);
@@ -26,14 +30,24 @@ export default async function checkout(
 
 	if (!result.success) {
 		res.status(429).json({
-			message: 'You are being rate limited.',
+			error: 'You are being rate limited.',
 			reset_after: (result.reset - Date.now()) / 1000
 		});
 		return;
 	}
 
-	const { email } = user;
+	// make sure the user can only have 25 subscriptions
 
+	const count = await client
+		.collection('subscriptions')
+		.countDocuments({ user_id: user.id });
+
+	if (count >= 25)
+		res
+			.status(429)
+			.send({ error: 'A user can only have a max of 25 subscriptions' });
+
+	// get redirection url
 	const host = req.headers.host;
 
 	if (!host) return res.status(400).send({ error: 'Invalid host' });
@@ -49,6 +63,7 @@ export default async function checkout(
 	guild = one(guild);
 	price = one(price)!;
 
+	// query validation
 	let product: Products = one(req.query.product)?.toUpperCase() as any;
 
 	if (guild && isNaN(parseInt(guild)))
@@ -84,8 +99,11 @@ export default async function checkout(
 			.status(404)
 			.send({ error: 'Mailing list does not have yearly billing' });
 
-	if (process.env.NODE_ENV !== 'development')
-		return res.status(400).send('The Maze was not meant for you.');
+	// failsafe to link customers
+
+	const { email } = user;
+
+	if (!email) return res.status(400).send({ error: 'No email' });
 
 	const session = await stripe.checkout.sessions.create({
 		line_items: [
@@ -96,7 +114,7 @@ export default async function checkout(
 		],
 		mode: 'subscription',
 		subscription_data: shouldIncludeTrial ? { trial_period_days: 7 } : {},
-		metadata: { discord_guild_id: guild ?? null },
+		metadata: { discord_guild_id: guild ?? null, product },
 		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: `${url.origin}/premium`,
 		customer_email: email!,

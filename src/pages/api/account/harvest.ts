@@ -21,15 +21,22 @@ export default async function startHarvest(
 
 	const identifier = 'start_harvest:' + user.id;
 	const result = await ratelimit.limit(identifier);
-	res.setHeader('X-RateLimit-Limit', result.limit);
-	res.setHeader('X-RateLimit-Remaining', result.remaining);
-	res.setHeader('X-RateLimit-Reset', result.reset);
 
 	if (!result.success) {
-		res.status(429).json({
-			message: 'Data harvest already in progress.'
-		});
+		if (req.method === 'POST') {
+			res.setHeader('X-RateLimit-Limit', result.limit);
+			res.setHeader('X-RateLimit-Remaining', result.remaining);
+			res.setHeader('X-RateLimit-Reset', result.reset);
+
+			res.status(429).json({
+				message: 'Data harvest already in progress.'
+			});
+		} else if (req.method === 'GET') {
+			res.status(200).send({ status: true });
+		}
 		return;
+	} else {
+		if (req.method === 'GET') return res.status(200).send({ status: false });
 	}
 
 	const host = req.headers.host;
