@@ -1,9 +1,7 @@
-import { sign } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../../utils/billing/stripe';
 import { Products } from '../../../utils/constants/billing';
-import { checkAuth, client } from '../../../utils/database';
-import { JWT_TOKEN } from '../../../utils/jwt';
+import { client } from '../../../utils/database';
 
 // Navigated to directly
 export default async function result(
@@ -22,7 +20,7 @@ export default async function result(
 		return res.status(400).send({ error: 'Unknown session' });
 	}
 
-	const user = await checkAuth(req, res);
+	const { user_id } = session.metadata!;
 
 	switch (session.status) {
 		case 'open':
@@ -37,15 +35,6 @@ export default async function result(
 						.send({ error: 'Complete request with unpaid payment' });
 				case 'no_payment_required':
 				case 'paid': {
-					// login then apply payment to account
-					if (!user)
-						return res.redirect(
-							`/auth/login/apply?sub=${sign(
-								{ session: session.id },
-								JWT_TOKEN
-							)}`
-						);
-
 					let subscription_id;
 
 					if (typeof session.subscription === 'string') {
@@ -66,12 +55,12 @@ export default async function result(
 
 					await client.collection('subscriptions').updateOne(
 						{
-							user_id: user.id,
+							user_id: user_id,
 							session_id: session.id
 						},
 						{
 							$set: {
-								user_id: user.id,
+								user_id: user_id,
 								guild_id: session.metadata?.discord_guild_id || null,
 								session_id: session.id,
 								customer_id: customer.id,
