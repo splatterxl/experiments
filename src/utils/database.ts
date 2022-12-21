@@ -5,6 +5,7 @@ import { verify } from 'jsonwebtoken';
 import { MongoClient } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { destroyCookie } from 'nookies';
+import { Products } from './constants/billing';
 import { Endpoints, makeDiscordURL } from './constants/discord';
 import { JWT_TOKEN } from './jwt';
 
@@ -17,6 +18,15 @@ export const redis = new Redis({
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!
 });
 
+export interface Subscription {
+	user_id: Snowflake;
+	session_id: string;
+	customer_id: string;
+	subscription_id: string;
+	guild_id?: string | null;
+	product: Products;
+}
+
 export function getAuth(userId: Snowflake) {
 	const coll = client.collection('auth');
 
@@ -26,7 +36,7 @@ export function getAuth(userId: Snowflake) {
 export const checkAuth = async (
 	req: NextApiRequest,
 	res: NextApiResponse
-): Promise<APIUser | undefined> => {
+): Promise<(APIUser & { access_token: string }) | undefined> => {
 	if (!req.cookies.auth) {
 		res
 			.status(401)
@@ -46,7 +56,7 @@ export const checkAuth = async (
 			if (discord.status !== 200) {
 				logout(res);
 			} else {
-				return discord.json();
+				return { ...(await discord.json()), access_token: auth.access_token };
 			}
 		} catch (err) {
 			console.error(err);

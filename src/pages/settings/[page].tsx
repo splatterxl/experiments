@@ -1,8 +1,8 @@
 import { GetStaticPropsContext } from 'next';
 import Head from 'next/head';
 import {
-	DashboardPages,
-	SettingsPage
+	SettingsPage,
+	SettingsPages
 } from '../../components/account/settings/Settings';
 import { one } from '../../utils';
 
@@ -24,7 +24,7 @@ interface DashboardProps {
 
 export async function getStaticPaths() {
 	return {
-		paths: Object.values(DashboardPages)
+		paths: Object.values(SettingsPages)
 			.filter((v) => typeof v === 'string')
 			.map((v) => ({ params: { page: v.toString().toLowerCase() } })),
 		fallback: false
@@ -38,7 +38,7 @@ export async function getStaticProps({ params }: GetStaticPropsContext) {
 
 	return {
 		props: {
-			page: DashboardPages[page.toUpperCase() as keyof typeof DashboardPages],
+			page: SettingsPages[page.toUpperCase() as keyof typeof SettingsPages],
 			title: page[0].toUpperCase() + page.slice(1).toLowerCase()
 		}
 	};

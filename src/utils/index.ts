@@ -1,9 +1,13 @@
+import { APIGuild } from 'discord-api-types/v10';
+
 export const one = <T>(item: T): Exclude<T, any[]> =>
 	Array.isArray(item) ? item[0] : item;
 
 export const isSafari = /^((?!chrome|android).)*safari/i.test(
 	globalThis?.navigator?.userAgent
 );
+
+export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export interface PaginationOptions {
 	limit?: number;
@@ -46,3 +50,39 @@ export function paginate<T>(
 		results: sliced
 	};
 }
+
+export const random = (min: number, max: number) =>
+	Math.floor(Math.random() * (max - min)) + min;
+
+export const range = (start: number, end: number, step = 1) => {
+	let output = [];
+	if (typeof end === 'undefined') {
+		end = start;
+		start = 0;
+	}
+	for (let i = start; i < end; i += step) {
+		output.push(i);
+	}
+	return output;
+};
+
+export const getGuilds = async (): Promise<APIGuild[] | undefined> => {
+	async function get() {
+		return await fetch('/api/user/guilds');
+	}
+
+	let res = await get();
+
+	while (res.status === 429) {
+		await sleep(
+			parseInt(res.headers.get('x-ratelimit-reset')!) * 1000 - Date.now()
+		);
+
+		res = await get();
+	}
+
+	const json = await res.json();
+
+	if (!res.ok) console.error(json);
+	else return json;
+};

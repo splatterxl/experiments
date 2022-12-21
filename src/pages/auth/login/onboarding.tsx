@@ -75,6 +75,7 @@ export default function LoginOnboarding() {
 							label='Go to Dashboard'
 							icon={<ArrowForwardIcon />}
 							iconPos='right'
+							iconOnly={false}
 							mt={3}
 							href='/dashboard'
 						/>

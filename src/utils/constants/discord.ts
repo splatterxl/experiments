@@ -5,7 +5,8 @@ export const Endpoints = {
 	EXCHANGE: '/oauth2/token',
 	REVOKE_TOKEN: '/oauth2/token/revoke',
 	ACCEPT_INVITE: (invite: string) => `/invites/${invite}`,
-	ME: '/users/@me'
+	ME: '/users/@me',
+	GUILDS: '/users/@me/guilds'
 };
 
 export const Domains = {
@@ -30,6 +31,10 @@ export function userIcon(
 	return avatar
 		? `https://${Domains.CDN}/avatars/${id}/${avatar}.webp?size=1024`
 		: `https://${Domains.CDN}/embed/avatars/${discrim % 5}.png`;
+}
+
+export function cdn(route: string) {
+	return `https://${Domains.CDN}` + route;
 }
 
 export const APP_ID = '957383358592217088';

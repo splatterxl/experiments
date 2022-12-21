@@ -16,3 +16,18 @@ export const Prices: Record<Products, Record<string, string>> = {
 export const PricingTables = {
 	INDEX: 'prctbl_1MBmojEoozb1aKsttXYAqP9c'
 };
+
+export const Months = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec'
+];

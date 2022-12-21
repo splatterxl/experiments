@@ -38,7 +38,7 @@ export default async function downloadHarvest(
 		res.setHeader('X-RateLimit-Reset', result.reset);
 
 		if (!result.success) {
-			res.status(200).json({
+			res.status(429).json({
 				message: 'The request has been rate limited.',
 				reset_after: (result.reset - Date.now()) / 1000
 			});

@@ -1,28 +1,38 @@
+import { buffer } from 'micro';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { one } from '../../../utils';
+import Stripe from 'stripe';
 import { stripe } from '../../../utils/billing/stripe';
+import { client, Subscription } from '../../../utils/database';
 
-// Should only be requested by Stripe
-export default function handleStripeWebhook(
-	req: NextApiRequest,
-	res: NextApiResponse
-) {
-	const signature = one(req.headers['stripe-signature']);
+export const config = { api: { bodyParser: false } };
+
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+	const signature = req.headers['stripe-signature'] as any;
+	const reqBuffer = await buffer(req);
 
 	let event;
 
 	try {
 		event = stripe.webhooks.constructEvent(
-			typeof req.body === 'string' ? req.body : JSON.stringify(req.body),
-			signature!,
+			reqBuffer,
+			signature,
 			process.env.STRIPE_WEBHOOK!
 		);
-	} catch (err: any) {
-		res.status(400).send(`Webhook Error: ${err.toString()}`);
-		return;
+	} catch (error: any) {
+		console.log(error);
+		return res.status(400).send(`Webhook error: ${error.message}`);
 	}
 
-	console.log(event.type);
+	switch (event.type) {
+		case 'customer.subscription.deleted':
+			const subscription = event.data as Stripe.Subscription;
 
-	res.send('');
-}
+			await client
+				.collection<Subscription>('subscriptions')
+				.deleteMany({ subscription_id: subscription.id });
+	}
+
+	res.send({ received: true });
+};
+
+export default handler;
