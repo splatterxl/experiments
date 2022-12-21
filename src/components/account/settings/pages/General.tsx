@@ -1,5 +1,7 @@
 import { Box, Heading, HStack, Text } from '@chakra-ui/react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { destroyCookie } from 'nookies';
 import React from 'react';
 import { UserIcon } from '../../UserIcon';
 
@@ -10,6 +12,18 @@ export const General: React.FC<{ storage: typeof localStorage }> = ({
 	const scopes = JSON.parse(
 		localStorage.getItem('scope') ?? JSON.stringify(['guilds', 'email'])
 	);
+
+	const router = useRouter();
+
+	React.useEffect(() => {
+		if (!user) {
+			destroyCookie(null, 'auth');
+
+			router.replace('/auth/login');
+		}
+	});
+
+	if (!user) return <></>;
 
 	return (
 		<>

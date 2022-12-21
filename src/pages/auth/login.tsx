@@ -73,8 +73,8 @@ export default function Login() {
 						</ListItem>
 						<ListItem>
 							<Checkbox
-								defaultChecked={true}
-								iconSize='lg'
+								checked={true}
+								isChecked={true}
 								spacing={3}
 								size='lg'
 								onChange={(event) => {
@@ -82,12 +82,9 @@ export default function Login() {
 								}}
 							>
 								<HStack>
-									<Text>List your guilds in the dashboard</Text>
-									<Badge
-										variant='outline'
-										display={{ base: 'none', md: 'true' }}
-									>
-										Recommended
+									<Text>View your server names and icons.</Text>
+									<Badge variant='solid' display={{ base: 'none', md: 'true' }}>
+										Required
 									</Badge>
 								</HStack>
 							</Checkbox>
@@ -105,6 +102,9 @@ export default function Login() {
 								<HStack>
 									<Text>Join our support server</Text>
 								</HStack>
+								<Badge variant='outline' display={{ base: 'none', md: 'true' }}>
+									Recommended
+								</Badge>
 							</Checkbox>
 						</ListItem>
 					</List>
@@ -132,7 +132,7 @@ export async function getServerSideProps(
 	if (context.req.cookies['auth']) {
 		return {
 			redirect: {
-				destination: '/dashboard',
+				destination: '/auth/login/onboarding',
 				statusCode: 302 /* Found */
 			}
 		};
