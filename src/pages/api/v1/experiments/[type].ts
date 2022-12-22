@@ -1,6 +1,7 @@
+import { ObjectId } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { one } from '../../../../utils';
-import { Endpoints } from '../../../../utils/constants/experiments';
+import { client } from '../../../../utils/database';
 import { getBySearch } from './search';
 
 export interface ExperimentAether {
@@ -18,6 +19,36 @@ export interface Experiment {
 	buckets: { name: string; description: string | null }[];
 	id: string;
 	hash: number;
+}
+
+export interface ExperimentRollout {
+	populations: Population[];
+	overrides: Override[];
+	overrides_formatted: [Population[]];
+}
+
+export interface Population {
+	rollout: Rollout[];
+	filters: Filters;
+}
+
+export interface Rollout {
+	bucket: number;
+	rollout: Rollout[];
+}
+
+export interface Filters {
+	features: string[] | null;
+	id_range: { start: bigint | null; end: bigint } | null;
+	member_count: { start: bigint | null; end: bigint | null } | null;
+	ids: bigint[] | null;
+	hub_types: number[] | null;
+	range_by_hash: { hash_key: bigint; target: number } | null;
+}
+
+export interface Override {
+	b: number;
+	k: bigint[];
 }
 
 export default async function listExperiments(
@@ -38,26 +69,45 @@ export interface GetExperimentsOptions {
 	q?: string;
 	limit?: number;
 	cursor?: number;
+	with_rollouts?: boolean;
 }
 
 export async function getExperiments(
 	options: GetExperimentsOptions
 ): Promise<Experiment[]> {
-	let json: ExperimentAether[];
+	if (options.limit != undefined && options.limit > 200)
+		throw new TypeError('limit must be less than 200');
 
-	try {
-		const raw = await fetch(Endpoints.LIST_AETHER);
+	const withRollouts = !!options.with_rollouts;
 
-		if (!raw.ok) {
-			throw await raw.text();
-		}
+	let json = await client
+		.collection<Experiment>('experiments')
+		.find(!withRollouts ? { type: { $exists: true } } : {})
+		.skip(options.cursor ?? 0)
+		.limit(options.limit ?? 50)
+		.toArray()
+		.then((docs) =>
+			docs.map(
+				(doc: Experiment & { _id?: ObjectId } & Partial<ExperimentRollout>) => {
+					delete doc._id;
 
-		json = await raw.json();
-	} catch (err) {
-		console.log(err);
+					doc.buckets = doc.buckets.map((v) => ({
+						...v,
+						description:
+							v.description?.replace(/^(Control|Treatment \d+)(: )?/, '') ||
+							null
+					}));
 
-		throw new Error('Bad Gateway');
-	}
+					if (!withRollouts) {
+						delete doc.overrides;
+						delete doc.overrides_formatted;
+						delete doc.populations;
+					}
+
+					return doc;
+				}
+			)
+		);
 
 	const query = one(options.type);
 
@@ -78,22 +128,5 @@ export async function getExperiments(
 		}
 	}
 
-	return json.map((experiment) => {
-		const result = {
-			...experiment,
-			type: experiment.type as 'user' | 'guild',
-			id: experiment.id,
-			description: undefined,
-			buckets: Array.from(experiment.buckets as number[], (v, i) => ({
-				name: i === 0 ? 'Control' : `Treatment ${i}`,
-				description:
-					experiment.description![i].replace(
-						/^(Control|Treatment \d+)(: )?/,
-						''
-					) || null
-			}))
-		};
-
-		return result;
-	});
+	return json;
 }
