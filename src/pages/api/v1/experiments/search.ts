@@ -1,6 +1,5 @@
 import FuzzySearch from 'fuzzy-search';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { paginate } from '../../../../utils';
 import { Experiment, getExperiments, GetExperimentsOptions } from './[type]';
 
 export default async function searchExperiments(
@@ -19,7 +18,7 @@ export default async function searchExperiments(
 }
 
 export async function getBySearch(options: GetExperimentsOptions) {
-	let { q: search, limit, cursor } = options;
+	let { q: search } = options;
 
 	const experiments = await getExperiments(options);
 
@@ -38,5 +37,5 @@ export async function getBySearch(options: GetExperimentsOptions) {
 		result = experiments;
 	}
 
-	return paginate(result, { limit, cursor });
+	return result;
 }

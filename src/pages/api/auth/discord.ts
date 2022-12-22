@@ -101,7 +101,7 @@ export default async function handleDiscordAuth(
 					$set: {
 						access_token,
 						refresh_token,
-						expires_in,
+						expires: new Date(Date.now() + expires_in),
 						token_type,
 						scope,
 						user_id: me.id

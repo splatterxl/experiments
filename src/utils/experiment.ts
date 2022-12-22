@@ -43,20 +43,20 @@ export enum FilterType {
 	RangeByHash = 2294888943
 }
 
-type FeatureFilter = [FilterType.Feature, [[number, string[]]]];
+type FeatureFilter = [FilterType.Feature, [[_: number, features: string[]]]];
 type IDRangeFilter = [
 	FilterType.IDRange,
-	[[number, number | null], [number, number]]
+	[[_: number, start: number | null], [_: number, end: number]]
 ];
 type MemberCountFilter = [
 	FilterType.MemberCount,
-	[[number, number | null], [number, number]]
+	[[_: number, start: number | null], [_: number, end: number]]
 ];
-type IDFilter = [FilterType.ID, [[number, string[]]]];
-type HubTypeFilter = [FilterType.HubType, [[number, number[]]]];
+type IDFilter = [FilterType.ID, [[_: number, ids: string[]]]];
+type HubTypeFilter = [FilterType.HubType, [[_: number, types: number[]]]];
 type RangeByHashFilter = [
 	FilterType.RangeByHash,
-	[[number, number], [number, number]]
+	[[_: number, hash_key: number], [_: number, target: number]]
 ];
 
 export type Filter =
