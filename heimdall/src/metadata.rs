@@ -1,10 +1,7 @@
 // https://aether.gaminggeek.dev/v2/discexp
 
-use std::env::VarError;
-
 use reqwest::{header::HeaderMap, Client};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 pub type AetherResponse = Vec<ExperimentAether>;
 
