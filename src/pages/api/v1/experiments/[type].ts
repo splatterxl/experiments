@@ -91,7 +91,7 @@ export async function getExperiments(
 				(doc: Experiment & { _id?: ObjectId } & Partial<ExperimentRollout>) => {
 					delete doc._id;
 
-					doc.buckets = doc.buckets.map((v) => ({
+					doc.buckets = doc.buckets?.map((v) => ({
 						...v,
 						description:
 							v.description?.replace(/^(Control|Treatment \d+)(: )?/, '') ||
