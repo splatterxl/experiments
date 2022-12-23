@@ -4,12 +4,15 @@ import {
 	PermissionFlagsBits,
 	Snowflake
 } from 'discord-api-types/v10';
+import { EmailParams, Recipient } from 'mailersend';
 import { Collection, WithId } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { one } from '../../../../utils';
+import { from, mailersend } from '../../../../utils/billing/email';
 import { stripe } from '../../../../utils/billing/stripe';
 import { Products } from '../../../../utils/constants/billing';
+import { Templates } from '../../../../utils/constants/email';
 import {
 	checkAuth,
 	client,
@@ -18,9 +21,14 @@ import {
 } from '../../../../utils/database';
 import { getGuilds } from '../../user/guilds';
 
-const ratelimit = new Ratelimit({
+const baseRatelimit = new Ratelimit({
 	redis: redis,
 	limiter: Ratelimit.fixedWindow(1, '2 s')
+});
+
+const cancelRatelimit = new Ratelimit({
+	redis,
+	limiter: Ratelimit.fixedWindow(5, '2 m')
 });
 
 export default async function subscription(
@@ -33,8 +41,8 @@ export default async function subscription(
 
 	if (!user) return;
 
-	const identifier = 'subscriptions:' + user.id;
-	const result = await ratelimit.limit(identifier);
+	const identifier = 'subscription:' + user.id;
+	const result = await baseRatelimit.limit(identifier);
 	res.setHeader('X-RateLimit-Limit', result.limit);
 	res.setHeader('X-RateLimit-Remaining', result.remaining);
 	res.setHeader('X-RateLimit-Reset', result.reset);
@@ -131,13 +139,91 @@ export default async function subscription(
 				.send(
 					await getSubscriptionData(subscription, userGuilds, true, coll, data)
 				);
-		case 'DELETE':
+		case 'DELETE': {
 			if (cancelled) return res.status(204).send('' as any);
+
+			const identifier = 'subscription_cancel:' + user.id;
+			const result = await cancelRatelimit.limit(identifier);
+			res.setHeader('X-RateLimit-Limit', result.limit);
+			res.setHeader('X-RateLimit-Remaining', result.remaining);
+			res.setHeader('X-RateLimit-Reset', result.reset);
+
+			if (!result.success) {
+				res.status(429).json({
+					message: 'The resource is being rate limited.',
+					reset_after: (result.reset - Date.now()) / 1000
+				});
+				return;
+			}
+
+			const host = req.headers.host;
+
+			if (!host) return res.status(400).send({ message: 'Invalid host' });
+
+			const url = new URL(
+				req.url!,
+				process.env.NODE_ENV === 'development'
+					? `http://${host}`
+					: `https://${host}`
+			);
 
 			try {
 				await stripe.subscriptions.update(subscription.subscription_id, {
 					cancel_at_period_end: true
 				});
+
+				const recipients = [new Recipient(user.email!, user.username)];
+
+				const variables = [
+					{
+						email: user.email!,
+						substitutions: [
+							{
+								var: 'product',
+								value:
+									subscription.product === Products.MAILING_LIST
+										? 'Mailing List'
+										: 'Premium'
+							},
+							{
+								var: 'expires_on',
+								value: new Date(
+									data.current_period_end * 1000
+								).toLocaleDateString()
+							},
+							{
+								var: 'name',
+								value: user.username
+							},
+							{
+								var: 'settings_page',
+								value: `${url.origin}/settings/billing`
+							},
+							{
+								var: 'reinstate_url',
+								value: `${url.origin}/settings/billing/subscriptions/${subscription.subscription_id}`
+							}
+						]
+					}
+				];
+
+				const emailParams = new EmailParams()
+					.setFrom(from.email)
+					.setFromName(from.name)
+					.setRecipients(recipients)
+					.setSubject(
+						`Your ${
+							subscription.product === Products.MAILING_LIST
+								? 'Mailing List'
+								: 'Premium'
+						} subscription has been cancelled`
+					)
+					.setTemplateId(Templates.SUBSCRIPTION_CANCEL)
+					.setVariables(variables as any);
+
+				const resp = await mailersend.send(emailParams);
+
+				console.log(resp.status);
 
 				return res.status(204).send('' as any);
 			} catch (err: any) {
@@ -145,8 +231,23 @@ export default async function subscription(
 					message: err.message
 				});
 			}
-		case 'POST':
+		}
+		case 'POST': {
 			if (!cancelled) return res.status(201).send('' as any);
+
+			const identifier = 'subscription_cancel:' + user.id;
+			const result = await cancelRatelimit.limit(identifier);
+			res.setHeader('X-RateLimit-Limit', result.limit);
+			res.setHeader('X-RateLimit-Remaining', result.remaining);
+			res.setHeader('X-RateLimit-Reset', result.reset);
+
+			if (!result.success) {
+				res.status(429).json({
+					message: 'The resource is being rate limited.',
+					reset_after: (result.reset - Date.now()) / 1000
+				});
+				return;
+			}
 
 			try {
 				await stripe.subscriptions.update(subscription.subscription_id, {
@@ -159,6 +260,7 @@ export default async function subscription(
 					message: err.message
 				});
 			}
+		}
 		default:
 			return res.status(405).send({ message: 'Method Not Allowed' });
 	}

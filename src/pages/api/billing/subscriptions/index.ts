@@ -55,16 +55,6 @@ export default async function subscription(
 			subscriptions.map((sub) => getSubscriptionData(sub, guilds, false, coll))
 		);
 
-		// repair on read to delete cancelled subs
-		// TODO: listen to stripe webhook customer.subscription.delete
-		for (const sub of subs) {
-			if (sub.cancelled) {
-				await coll.deleteMany({
-					subscription_id: sub.id
-				});
-			}
-		}
-
 		return res.send(subs.filter((v) => !v.cancelled));
 	} else {
 		return res.send([]);

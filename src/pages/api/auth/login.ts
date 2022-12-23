@@ -21,7 +21,7 @@ export default function Login(req: NextApiRequest, res: NextApiResponse) {
 		scope = JSON.parse(Buffer.from(scopes, 'base64').toString());
 		if (!('guilds' in scope && 'join' in scope)) throw 'invalid scope object';
 	} catch (err) {
-		return res.redirect('/auth/login');
+		return res.redirect('/auth/login/try-again');
 	}
 
 	const appliedScope = ['identify', 'email'];

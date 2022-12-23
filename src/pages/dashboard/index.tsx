@@ -1,7 +1,7 @@
 import { Center, Flex } from '@chakra-ui/react';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
-import { PrimaryButton } from '../components/brand/PrimaryButton';
+import { PrimaryButton } from '../../components/brand/PrimaryButton';
 
 export default function Premium() {
 	return (

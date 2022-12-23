@@ -11,9 +11,10 @@ import {
 } from '@chakra-ui/react';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
-import { PrimaryButton } from '../../components/brand/PrimaryButton';
+import { PrimaryButton } from '../../../components/brand/PrimaryButton';
+import { one } from '../../../utils';
 
-export default function Login() {
+export default function Login({ next }: { next: string }) {
 	const scopes = {
 		guilds: true,
 		join: false
@@ -115,7 +116,10 @@ export default function Login() {
 							{
 								pathname: '/api/auth/login',
 								query: {
-									scopes: Buffer.from(JSON.stringify(scopes)).toString('base64')
+									scopes: Buffer.from(JSON.stringify(scopes)).toString(
+										'base64'
+									),
+									next
 								}
 							} as any
 						}
@@ -128,17 +132,25 @@ export default function Login() {
 
 export async function getServerSideProps(
 	context: GetServerSidePropsContext
-): Promise<GetServerSidePropsResult<{}>> {
+): Promise<GetServerSidePropsResult<{ next: string }>> {
 	if (context.req.cookies['auth']) {
 		return {
 			redirect: {
-				destination: '/auth/login/onboarding',
+				destination: `/auth/login/onboarding${
+					context.query.next
+						? `?next=${encodeURIComponent(one(context.query.next))}`
+						: ''
+				}`,
 				statusCode: 302 /* Found */
 			}
 		};
 	}
 
+	console.log(context.query);
+
 	return {
-		props: {}
+		props: {
+			next: one(context.query.next) ?? '/dashboard'
+		}
 	};
 }

@@ -2,18 +2,22 @@ import { ArrowForwardIcon } from '@chakra-ui/icons';
 import { Center, Heading, HStack, Spinner, Text } from '@chakra-ui/react';
 import type { APIUser } from 'discord-api-types/v10';
 import { decode } from 'jsonwebtoken';
+import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { destroyCookie, parseCookies } from 'nookies';
 import React from 'react';
 import { UserIcon } from '../../../components/account/UserIcon';
 import { GhostButton } from '../../../components/brand/GhostButton';
-import { one } from '../../../utils';
+import { Link } from '../../../components/Link';
+import { one, sleep } from '../../../utils';
 
-export default function LoginOnboarding() {
+export default function LoginOnboarding({ next }: { next: string }) {
 	const [user, setUser] = React.useState<APIUser>(null as any);
 
 	const router = useRouter();
+
+	const [seconds, setSeconds] = React.useState(5);
 
 	React.useEffect(() => {
 		(async () => {
@@ -23,7 +27,7 @@ export default function LoginOnboarding() {
 				'email'
 			];
 
-			if (!auth) router.replace('/auth/login/try-again');
+			if (!auth) return router.replace('/auth/login/try-again');
 
 			try {
 				const user = (decode(auth) as APIUser)!;
@@ -38,9 +42,29 @@ export default function LoginOnboarding() {
 				destroyCookie(null, 'auth');
 
 				router.replace('/auth/login/try-again');
+
+				return;
+			}
+
+			{
+				let i = 5;
+
+				while (i > 0) {
+					await sleep(1000);
+
+					let _ = 0;
+
+					setSeconds((prev) => {
+						return prev <= 0 ? prev : prev - 1;
+					});
+
+					i--;
+				}
+
+				router.replace(next);
 			}
 		})();
-	}, [router]);
+	}, [router, next]);
 
 	return (
 		<>
@@ -63,22 +87,30 @@ export default function LoginOnboarding() {
 								<Text as='span'>{user.username}</Text>
 							</HStack>
 						</Heading>
-						<Text
-							fontSize='lg'
-							maxW={{ base: '100%', md: '60vw' }}
-							textAlign='center'
-						>
-							We&apos;re glad you could join us. Go to your personal dashboard
-							to view activities and account settings.
+						<Text fontSize='lg' px={16} textAlign='center'>
+							We&apos;re glad you could join us.{' '}
+							{next !== '/dashboard' ? (
+								<>
+									You&apos;ll be <Link href={next}>redirected</Link> in{' '}
+									{seconds} seconds.
+								</>
+							) : (
+								<>
+									Go to your personal dashboard to view activities and account
+									settings.
+								</>
+							)}
 						</Text>
-						<GhostButton
-							label='Go to Dashboard'
-							icon={<ArrowForwardIcon />}
-							iconPos='right'
-							iconOnly={false}
-							mt={3}
-							href='/dashboard'
-						/>
+						{next === '/dashboard' ? (
+							<GhostButton
+								label='Go to Dashboard'
+								icon={<ArrowForwardIcon />}
+								iconPos='right'
+								iconOnly={false}
+								mt={3}
+								href='/dashboard'
+							/>
+						) : null}
 					</>
 				) : (
 					<Spinner size='lg' />
@@ -86,4 +118,24 @@ export default function LoginOnboarding() {
 			</Center>
 		</>
 	);
+}
+
+export async function getServerSideProps(
+	context: GetServerSidePropsContext
+): Promise<GetServerSidePropsResult<{ next: string }>> {
+	console.log(context);
+
+	let next: string;
+
+	if (context.query.next) {
+		try {
+			next = new URL(one(context.query.next), 'https://google.com').pathname;
+		} catch {
+			next = '/dashboard';
+		}
+	} else {
+		next = '/dashboard';
+	}
+
+	return { props: { next } };
 }
