@@ -34,7 +34,7 @@ export function userIcon(
 }
 
 export function cdn(route: string) {
-	return `https://${Domains.CDN}` + route;
+	return `https://${Domains.CDN}/${route}`;
 }
 
 export const APP_ID = '957383358592217088';

@@ -11,7 +11,6 @@ import {
 	Spinner,
 	Text,
 	useDisclosure,
-	useToast,
 	VisuallyHidden,
 	VStack
 } from '@chakra-ui/react';
@@ -19,6 +18,8 @@ import { useRouter } from 'next/router';
 import React from 'react';
 import { SubscriptionData } from '../../../../../pages/api/billing/subscriptions/[id]';
 import { one } from '../../../../../utils';
+import useToast from '../../../../../utils/hooks/useToast';
+import { request } from '../../../../../utils/http';
 import SubscriptionHeader from './SubscriptionHeader';
 
 export const Subscription: React.FC = () => {
@@ -37,7 +38,7 @@ export const Subscription: React.FC = () => {
 
 	React.useEffect(() => {
 		if (router.query.sub_id)
-			fetch(`/api/billing/subscriptions/${sub_id}`).then(async (res) => {
+			request(`/api/billing/subscriptions/${sub_id}`).then(async (res) => {
 				const json = await res.json();
 
 				if (res.ok) setSubscription(json);
@@ -53,7 +54,12 @@ export const Subscription: React.FC = () => {
 
 	return subscription ? (
 		<VStack w='full' pt={2} pr={2} align='flex-start'>
-			<SubscriptionHeader subscription={subscription} length={1} index={0} />
+			<SubscriptionHeader
+				subscription={subscription}
+				length={1}
+				index={0}
+				main
+			/>
 			<Text>
 				{subscription.cancels_at ? (
 					<>
@@ -124,8 +130,12 @@ export const Subscription: React.FC = () => {
 								<>You will continue being charged.</>
 							) : (
 								<>
-									<b>{subscription.guild?.name ?? 'your server'}</b> will lose
-									its perks on the next billing cycle.
+									{subscription.guild?.name ? (
+										<b>{subscription.guild.name}</b>
+									) : (
+										'Your server'
+									)}{' '}
+									will lose its perks on the next billing cycle.
 								</>
 							)}
 						</AlertDialogBody>
@@ -141,7 +151,7 @@ export const Subscription: React.FC = () => {
 									setCancelling(true);
 
 									try {
-										const res = await fetch(
+										const res = await request(
 											`/api/billing/subscriptions/${subscription.id}`,
 											{ method: subscription.cancels_at ? 'POST' : 'DELETE' }
 										);
@@ -165,10 +175,11 @@ export const Subscription: React.FC = () => {
 										}
 
 										setCancelling(false);
-										onClose();
 									} catch {
 										setCancelling(false);
 									}
+
+									onClose();
 								}}
 								ml={3}
 							>

@@ -9,6 +9,10 @@ export const GuildIcon: React.FC<{
 	name: string;
 	size?: string;
 }> = (props) => {
+	console.log(
+		cdn(CDNRoutes.guildIcon(props.id, props.hash!, ImageFormat.WebP))
+	);
+
 	return (
 		<Avatar
 			src={

@@ -4,15 +4,20 @@ use serde_json::Value;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RolloutsRaw {
     pub fingerprint: String,
-    pub assignments: Vec<Vec<i64>>,
+    pub assignments: Vec<Assignment>,
     pub guild_experiments: Vec<GuildExperiment>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GuildRollouts {
     pub fingerprint: String,
+    #[serde(skip_serializing)]
+    pub assignments: Vec<Assignment>,
     pub guild_experiments: Vec<ExperimentRollout>,
 }
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Assignment(pub HashKey, pub u32, pub i32, pub i32, pub i32);
 
 impl RolloutsRaw {
     pub fn simplify(self) -> GuildRollouts {
@@ -24,7 +29,8 @@ impl RolloutsRaw {
         }
 
         GuildRollouts {
-            fingerprint: "guilds".to_string(),
+            fingerprint: self.fingerprint,
+            assignments: self.assignments,
             guild_experiments: new_experiments,
         }
     }

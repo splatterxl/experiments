@@ -1,4 +1,4 @@
-import { Box, Heading, Text, VStack } from '@chakra-ui/react';
+import { Box, Code, Heading, Text, VStack } from '@chakra-ui/react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -10,6 +10,7 @@ export default function Liftoff() {
 	const router = useRouter();
 	const product = one(router.query.product);
 	const subscription = one(router.query.subscription);
+	const alreadyAssigned = one(router.query.prev_guild_id);
 
 	// React.useEffect(() => {
 	// 	if (!subscription) router.replace('/premium');
@@ -34,20 +35,37 @@ export default function Liftoff() {
 				spacing={0}
 			>
 				<Box>
-					<Heading as={Sparkles}>Thanks for subscribing!</Heading>
+					<Heading as={!alreadyAssigned ? Sparkles : 'h1'}>
+						{alreadyAssigned
+							? 'Reassign your subscription'
+							: 'Thanks for subscribing!'}
+					</Heading>
 					<Text>
-						Now, let&apos;s apply your subscription. You subscribed to:{' '}
-						<Link
-							href={{
-								pathname: '/settings/billing/subscriptions/[sub_id]',
-								query: { sub_id: subscription }
-							}}
-						>
-							{product ?? 'Premium'}
-						</Link>
+						{alreadyAssigned ? (
+							<>
+								You can apply this subcription to any server you have{' '}
+								<b>Manage Server</b> permissions in.
+							</>
+						) : (
+							<>
+								Now, let&apos;s apply your subscription. You subscribed to:{' '}
+								<Link
+									href={{
+										pathname: '/settings/billing/subscriptions/[sub_id]',
+										query: { sub_id: subscription }
+									}}
+								>
+									{product ?? 'Premium'}
+								</Link>
+							</>
+						)}{' '}
 					</Text>
 				</Box>
-				<AssignSubscription subscription={subscription!} product={product!} />
+				<AssignSubscription
+					subscription={subscription!}
+					product={product!}
+					prev={alreadyAssigned}
+				/>
 			</VStack>
 		</>
 	);

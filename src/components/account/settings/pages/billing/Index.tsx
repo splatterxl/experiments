@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import React from 'react';
 import type { SubscriptionData } from '../../../../../pages/api/billing/subscriptions/[id]';
+import { request } from '../../../../../utils/http';
 import SubscriptionHeader from './SubscriptionHeader';
 
 export const BillingIndex: React.FC = () => {
@@ -19,7 +20,7 @@ export const BillingIndex: React.FC = () => {
 	);
 
 	React.useEffect(() => {
-		fetch('/api/billing/subscriptions').then(async (res) => {
+		request('/api/billing/subscriptions').then(async (res) => {
 			const json = await res.json();
 
 			if (res.ok) setSubscriptions(json);

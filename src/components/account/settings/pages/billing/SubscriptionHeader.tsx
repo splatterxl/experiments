@@ -1,4 +1,13 @@
-import { Badge, Heading, HStack, Text, VStack } from '@chakra-ui/react';
+import { EditIcon } from '@chakra-ui/icons';
+import {
+	Badge,
+	Heading,
+	HStack,
+	Text,
+	VisuallyHidden,
+	VStack
+} from '@chakra-ui/react';
+import Link from 'next/link';
 import type { SubscriptionData } from '../../../../../pages/api/billing/subscriptions/[id]';
 import { Months } from '../../../../../utils/constants/billing';
 import { GuildIcon } from '../../../GuildIcon';
@@ -6,11 +15,13 @@ import { GuildIcon } from '../../../GuildIcon';
 export default function SubscriptionHeader({
 	subscription,
 	index,
-	length
+	length,
+	main
 }: {
 	subscription: SubscriptionData;
 	index: number;
 	length: number;
+	main?: boolean;
 }) {
 	const date = new Date(
 		(subscription.cancels_at ??
@@ -37,7 +48,7 @@ export default function SubscriptionHeader({
 				{subscription.guild ? (
 					<GuildIcon
 						name={subscription.guild.name}
-						hash={subscription.guild.icon_hash!}
+						hash={subscription.guild.icon!}
 						id={subscription.guild.id!}
 						size='lg'
 					/>
@@ -51,9 +62,30 @@ export default function SubscriptionHeader({
 							</Badge>
 						) : null}
 					</HStack>
-					<Text fontWeight={400}>
-						{subscription.guild?.name ?? 'Unassigned'}
-					</Text>
+					<HStack align='center'>
+						<Text fontWeight={400}>
+							{subscription.guild?.name ?? 'Unassigned'}
+						</Text>
+						{main && !subscription.cancels_at ? (
+							<Link
+								href={{
+									pathname: '/premium/liftoff',
+									query: {
+										product: subscription.product.label,
+										subscription: subscription.id,
+										prev_guild_id: subscription.guild?.id
+									}
+								}}
+							>
+								<EditIcon />
+								<VisuallyHidden>
+									{subscription.guild?.name
+										? 'Change server'
+										: 'Apply to server'}
+								</VisuallyHidden>
+							</Link>
+						) : null}
+					</HStack>
 				</VStack>
 			</HStack>
 			<VStack spacing={0} display={{ base: 'none', md: 'flex' }}>

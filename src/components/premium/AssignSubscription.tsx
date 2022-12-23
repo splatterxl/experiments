@@ -1,13 +1,18 @@
-import { HStack, Select, useToast } from '@chakra-ui/react';
+import { HStack, Select } from '@chakra-ui/react';
 import { APIGuild, PermissionFlagsBits } from 'discord-api-types/v10';
 import router from 'next/router';
 import React from 'react';
-import { getGuilds } from '../../utils';
+import useToast from '../../utils/hooks/useToast';
+import { getGuilds, request } from '../../utils/http';
 import { PrimaryButton } from '../brand/PrimaryButton';
 
 export const AssignSubscription: React.FC<
-	React.PropsWithChildren<{ subscription: string; product: string }>
-> = ({ subscription, product }) => {
+	React.PropsWithChildren<{
+		subscription: string;
+		product: string;
+		prev?: string;
+	}>
+> = ({ subscription, product, prev }) => {
 	const ref = React.useRef<HTMLSelectElement>(null as any);
 
 	const [guilds, setGuilds] = React.useState<APIGuild[]>([]);
@@ -26,6 +31,7 @@ export const AssignSubscription: React.FC<
 				// borderColor={guilds.length ? '' : undefined}
 				ref={ref}
 				disabled={!guilds.length}
+				defaultValue={prev}
 			>
 				{guilds
 					.filter(
@@ -42,8 +48,8 @@ export const AssignSubscription: React.FC<
 				px={7}
 				onClick={async () => {
 					if (ref.current.value) {
-						const res = await fetch(
-							'/api/billing/subscriptions/' + subscription,
+						const res = await request(
+							`/api/billing/subscriptions/${subscription}`,
 							{
 								method: 'PATCH',
 								headers: {
@@ -57,9 +63,11 @@ export const AssignSubscription: React.FC<
 
 						if (res.ok) {
 							router.push(
-								`/dashboard/guilds/${ref.current.value}/${
-									product === 'Mailing List' ? 'mailing-list' : 'premium'
-								}/liftoff`
+								prev
+									? `/settings/billing/subscriptions/${subscription}`
+									: `/dashboard/guilds/${ref.current.value}/${
+											product === 'Mailing List' ? 'mailing-list' : 'premium'
+									  }/liftoff`
 							);
 						} else {
 							const json = await res.json();

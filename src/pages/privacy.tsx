@@ -25,18 +25,19 @@ export default function Privacy() {
 				<Heading>01. Data Collected</Heading>
 				<Text>
 					We and our partners collect some personally identifiable information
-					to faciliate our services and payment systems.
+					to faciliate our services and payment systems. We collect and store
+					your:
 				</Text>
 				<List styleType='initial' px={6}>
 					<ListItem>
-						To faciliate our subscription service linking to Discord, we collect
-						and link email addresses used for purchases through our payment
-						gateway <Link href='https://stripe.com'>Stripe</Link>. This works
-						very simply: when a payment is made through Stripe, we permanently
-						link the email address used by your Discord account at that time to
-						that subscription and your unique numeric identifier provided by
-						Discord in our encrypted database hosted by{' '}
-						<Link href='https://mongodb.com/atlas'>MongoDB Atlas</Link>.
+						Numeric user and server identifiers provided by Discord, to identify
+						you on our services.
+					</ListItem>
+					<ListItem>
+						Email address, to contact you about important changes to your
+						account and subscription, and to provide our{' '}
+						<Link href='/premium'>Mailing List</Link> services. We will never
+						send you promotional content without prior and active consent.
 					</ListItem>
 				</List>
 				<Heading>02. Request Your Data</Heading>
