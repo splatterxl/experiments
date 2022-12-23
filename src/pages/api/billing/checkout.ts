@@ -20,8 +20,8 @@ export default async function checkout(
 
 	if (!user) return;
 
-	// if (process.env.NODE_ENV !== 'development')
-	// 	return res.status(400).send('The Maze was not meant for you.');
+	if (process.env.NODE_ENV !== 'development')
+		return res.status(400).send('The Maze was not meant for you.');
 
 	// rate limits
 	const identifier = 'checkout:' + user.id;

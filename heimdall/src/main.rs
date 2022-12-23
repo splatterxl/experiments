@@ -8,19 +8,15 @@ use mongodb::{
 use twilight_http::Client;
 use twilight_model::{http::attachment::Attachment, id::Id};
 
-mod discord;
 mod env;
 mod metadata;
 mod rollouts;
 
-use discord::webhook;
 use rollouts::ExperimentRollout;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let http = Client::new(env::token()).await;
-
-    webhook("Starting scrape".to_string(), &http).await?;
 
     let me = http.current_user().await?.model().await?;
     println!("[discord] current user: {}#{}", me.name, me.discriminator);
