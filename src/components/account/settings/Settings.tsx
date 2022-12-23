@@ -12,7 +12,9 @@ import {
 	VisuallyHidden
 } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
+import { parseCookies } from 'nookies';
 import React from 'react';
+import { login } from '../../../utils/actions/login';
 import { Account } from './pages/Account';
 import { Billing } from './pages/Billing';
 import { Debug } from './pages/Debug';
@@ -52,11 +54,26 @@ export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
 		typeof window.localStorage
 	>(null as any);
 
+	const cookies = parseCookies();
+
 	React.useEffect(() => {
+		if (!cookies.auth) {
+			login('settings', router.asPath);
+			return;
+		}
+
 		setLocalStorage(window.localStorage);
-	}, []);
+	}, [cookies.auth, router]);
 
 	const [index, setIndex] = React.useState(props.page);
+
+	if (!localStorage) {
+		return (
+			<Center w='full' h='60vh'>
+				<Spinner size='lg' />
+			</Center>
+		);
+	}
 
 	return (
 		<Box px={10}>

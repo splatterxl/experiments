@@ -123,7 +123,11 @@ export default async function handleDiscordAuth(
 					path: '/'
 				}
 			);
-			res.redirect(`/auth/login/onboarding?scope=${scope.join('+')}`);
+			res.redirect(
+				`/auth/login/onboarding?scope=${scope.join(
+					'+'
+				)}&next=${encodeURIComponent(nextURL)}`
+			);
 		}
 	} catch (err) {
 		console.log(err);

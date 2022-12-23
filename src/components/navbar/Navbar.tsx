@@ -60,7 +60,7 @@ export default function Navbar() {
 
 				<PrimaryButton
 					onClick={() => {
-						if (!cookies.auth) login('navbar');
+						if (!cookies.auth) login('navbar', router.asPath);
 						else if (router.pathname !== '/dashboard')
 							router.push(
 								createAnalyticsQuery({

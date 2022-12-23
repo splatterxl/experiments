@@ -9,14 +9,11 @@ export const Link: React.FC<
 		} & React.RefAttributes<HTMLAnchorElement>
 > = (props) => {
 	return (
-		<NextLink
-			passHref
-			legacyBehavior
-			style={{ textDecoration: 'underline' }}
-			{...props}
-		>
+		<NextLink passHref legacyBehavior {...props}>
 			<HStack as='a' display='inline-flex'>
-				<Box as='span'>{props.children}</Box>
+				<Box as='span' textDecoration='underline'>
+					{props.children}
+				</Box>
 			</HStack>
 		</NextLink>
 	);
