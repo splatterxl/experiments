@@ -1,6 +1,6 @@
 import { Heading, List, ListItem, Text, VStack } from '@chakra-ui/react';
 import Head from 'next/head';
-import Link from 'next/link';
+import { Link } from '../components/Link';
 
 export default function TOS() {
 	return (
@@ -8,7 +8,7 @@ export default function TOS() {
 			<Head>
 				<title>ToS | Experiments</title>
 			</Head>
-			<VStack px={7} pb={8} align='flex-start'>
+			<VStack px={16} pt={10} pb={16} align='flex-start'>
 				<Heading size='3xl' pb={1} fontWeight='black'>
 					Terms of Service
 				</Heading>

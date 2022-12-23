@@ -14,12 +14,16 @@ export const Footer = () => {
 			<Heading size='sm' fontWeight={500}>
 				&copy; Experiments, 2022. All rights reserved.
 			</Heading>
-			<List fontWeight={400} as={HStack} spacing={0} gap={2}>
+			<List as={HStack} spacing={0} gap={2}>
 				<ListItem>
-					<Link href='/terms'>Terms of Service</Link>
+					<Link href='/terms' style={{ fontWeight: 400 }}>
+						Terms of Service
+					</Link>
 				</ListItem>
 				<ListItem>
-					<Link href='/privacy'>Privacy Policy</Link>
+					<Link href='/privacy' style={{ fontWeight: 400 }}>
+						Privacy Policy
+					</Link>
 				</ListItem>
 			</List>
 		</Stack>
