@@ -1,4 +1,4 @@
-use std::future::IntoFuture;
+use std::{future::IntoFuture, time::Instant};
 
 use mongodb::{
     bson::{doc, to_document},
@@ -13,6 +13,7 @@ mod database;
 mod env;
 mod metadata;
 mod rollouts;
+mod sentry;
 
 use database::Experiment;
 
@@ -31,6 +32,10 @@ async fn main() -> anyhow::Result<()> {
 
     db.run_command(doc! {"ping": 1}, None).await?;
     println!("[mongo] connected successfully.");
+
+    let req = reqwest::Client::new();
+    let check_in_id = sentry::start(&req).await?;
+    let start = Instant::now();
 
     let coll = db.collection::<Experiment>("experiments");
 
@@ -105,6 +110,10 @@ async fn main() -> anyhow::Result<()> {
             rollouts.fingerprint
         );
     }
+
+    let duration = start.elapsed();
+
+    sentry::end(&req, check_in_id, duration).await?;
 
     Ok(())
 }

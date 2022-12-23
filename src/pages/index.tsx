@@ -37,11 +37,7 @@ export default function Home() {
 						<b>NEW</b>: Get monthly email updates for only $1
 					</Tag>
 				</Link>
-				<Heading
-					size={{ base: '3xl', md: '3xl' }}
-					paddingX={3}
-					fontWeight={800}
-				>
+				<Heading size='3xl' paddingX={3} fontWeight={800} textAlign='center'>
 					<Highlight
 						query='key'
 						styles={{
