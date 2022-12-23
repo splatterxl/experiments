@@ -50,7 +50,7 @@ pub async fn apply_assignments(
     assignments: Vec<Assignment>,
     fingerprint: String,
 ) -> anyhow::Result<()> {
-    for Assignment(HashKey(hash_key), revision, bucket, override_, population) in assignments {
+    for Assignment(HashKey(hash_key), revision, bucket, _, _) in assignments {
         let experiment = coll
             .find_one(doc! { "hash_key": hash_key.clone() }, None)
             .await?;

@@ -98,7 +98,7 @@ async fn main() -> anyhow::Result<()> {
         println!("[mongo] inserted guild rollouts into database");
 
         assignments::apply_assignments(coll, rollouts.assignments, rollouts.fingerprint.clone())
-            .await;
+            .await?;
 
         println!(
             "[mongo] inserted user assignments for {} into database",
