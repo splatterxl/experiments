@@ -1,6 +1,5 @@
 import { ObjectId } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { one } from '../../../../utils';
 import { client } from '../../../../utils/database';
 import { getBySearch } from './search';
 
@@ -18,13 +17,20 @@ export interface Experiment {
 	title: string;
 	buckets: { name: string; description: string | null }[];
 	id: string;
-	hash: number;
+	hash_key: number;
 }
 
 export interface ExperimentRollout {
+	type: 'guild';
 	populations: Population[];
 	overrides: Override[];
 	overrides_formatted: [Population[]];
+}
+
+export interface ExperimentAssignment {
+	type: 'user';
+	has_assignments: boolean;
+	assignments?: Record<`${number}`, number>;
 }
 
 export interface Population {
@@ -65,11 +71,12 @@ export default async function listExperiments(
 }
 
 export interface GetExperimentsOptions {
-	type?: 'user' | 'guild' | 'any';
+	type?: 'user' | 'guild';
 	q?: string;
 	limit?: number;
 	cursor?: number;
 	with_rollouts?: boolean;
+	with_assignments?: boolean;
 }
 
 export async function getExperiments(
@@ -79,16 +86,24 @@ export async function getExperiments(
 		throw new TypeError('limit must be less than 200');
 
 	const withRollouts = !!options.with_rollouts;
+	const withAssignments = !!options.with_assignments;
 
 	let json = await client
 		.collection<Experiment>('experiments')
-		.find(!withRollouts ? { type: { $exists: true } } : {})
+		.find({
+			type: options.type ?? { $exists: !withRollouts ? true : undefined }
+		})
 		.skip(options.cursor ?? 0)
 		.limit(options.limit ?? 50)
 		.toArray()
 		.then((docs) =>
 			docs.map(
-				(doc: Experiment & { _id?: ObjectId } & Partial<ExperimentRollout>) => {
+				(
+					doc: Experiment & { _id?: ObjectId } & (
+							| Partial<ExperimentRollout>
+							| Partial<ExperimentAssignment>
+						)
+				) => {
 					delete doc._id;
 
 					doc.buckets = doc.buckets?.map((v) => ({
@@ -98,35 +113,20 @@ export async function getExperiments(
 							null
 					}));
 
-					if (!withRollouts) {
+					if (!withRollouts && doc.type === 'guild') {
 						delete doc.overrides;
 						delete doc.overrides_formatted;
 						delete doc.populations;
+					}
+
+					if (!withAssignments && doc.type === 'user') {
+						delete doc.assignments;
 					}
 
 					return doc;
 				}
 			)
 		);
-
-	const query = one(options.type);
-
-	if (query) {
-		switch (query) {
-			case 'user':
-				json = json.filter((v) => v.type === 'user');
-				break;
-			case 'guild':
-				json = json.filter((v) => v.type === 'guild');
-				break;
-			case 'any':
-				break;
-			default:
-				throw new TypeError(
-					'Invalid experiment filter, must be one of [user, guild]'
-				);
-		}
-	}
 
 	return json;
 }

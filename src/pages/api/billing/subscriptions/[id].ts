@@ -66,8 +66,20 @@ export default async function subscription(
 	if (!Array.isArray(userGuilds))
 		return res.status(502).send({ message: 'Bad Gateway' });
 
+	const data = await stripe.subscriptions.retrieve(
+		subscription.subscription_id
+	);
+	const cancelled =
+		data.canceled_at ?? data.cancel_at_period_end ?? data.cancel_at;
+
 	switch (req.method) {
 		case 'PATCH': {
+			if (cancelled) {
+				return res
+					.status(403)
+					.send({ message: 'Cannot update a cancelled subscription' });
+			}
+
 			const { body } = req;
 
 			if ('guild_id' in body) {
@@ -75,46 +87,53 @@ export default async function subscription(
 					return res.status(400).send({ message: 'Invalid guild id' });
 				}
 
-				if (
-					!userGuilds.find(
-						(guild: APIGuild) =>
-							guild.id === body.guild_id &&
-							(BigInt(guild.permissions!) & PermissionFlagsBits.ManageGuild) ===
-								PermissionFlagsBits.ManageGuild
+				if (body.guild_id !== subscription.guild_id) {
+					if (
+						!userGuilds.find(
+							(guild: APIGuild) =>
+								guild.id === body.guild_id &&
+								(BigInt(guild.permissions!) &
+									PermissionFlagsBits.ManageGuild) ===
+									PermissionFlagsBits.ManageGuild
+						)
 					)
-				)
-					return res
-						.status(422)
-						.send({ message: 'User is not an admin of the target guild' });
+						return res
+							.status(422)
+							.send({ message: 'User is not an admin of the target guild' });
 
-				const count = await coll.countDocuments({
-					guild_id: body.guild_id,
-					product: subscription.product
-				});
-
-				if (count)
-					return res.status(409).send({
-						message:
-							'A subscription of this type has already been applied to the guild'
+					const count = await coll.countDocuments({
+						guild_id: body.guild_id,
+						product: subscription.product
 					});
 
-				coll.updateOne(
-					{ user_id: user.id, subscription_id: id },
-					{
-						$set: {
-							guild_id: body.guild_id
-						}
-					}
-				);
+					if (count)
+						return res.status(409).send({
+							message:
+								'A subscription of this type has already been applied to the guild'
+						});
 
-				subscription.guild_id = body.guild_id;
+					coll.updateOne(
+						{ user_id: user.id, subscription_id: id },
+						{
+							$set: {
+								guild_id: body.guild_id
+							}
+						}
+					);
+
+					subscription.guild_id = body.guild_id;
+				}
 			}
 		}
 		case 'GET':
 			return res
 				.status(200)
-				.send(await getSubscriptionData(subscription, userGuilds, true, coll));
+				.send(
+					await getSubscriptionData(subscription, userGuilds, true, coll, data)
+				);
 		case 'DELETE':
+			if (cancelled) return res.status(204).send('' as any);
+
 			try {
 				await stripe.subscriptions.update(subscription.subscription_id, {
 					cancel_at_period_end: true
@@ -127,6 +146,8 @@ export default async function subscription(
 				});
 			}
 		case 'POST':
+			if (!cancelled) return res.status(201).send('' as any);
+
 			try {
 				await stripe.subscriptions.update(subscription.subscription_id, {
 					cancel_at_period_end: false
@@ -147,11 +168,12 @@ export const getSubscriptionData = async (
 	subscription: WithId<Subscription>,
 	guilds: APIGuild[],
 	extended = false,
-	collection: Collection<Subscription>
+	collection: Collection<Subscription>,
+	fetched?: Stripe.Response<Stripe.Subscription>
 ): Promise<SubscriptionData> => {
-	const data = await stripe.subscriptions.retrieve(
-		subscription.subscription_id
-	);
+	const data =
+		fetched ??
+		(await stripe.subscriptions.retrieve(subscription.subscription_id));
 	const product = await stripe.products.retrieve(
 		data.items.data[0].price.product as string
 	);
@@ -181,7 +203,12 @@ export const getSubscriptionData = async (
 		user_id: subscription.user_id,
 		guild_id: subscription.guild_id,
 		guild: guilds.find((guild) => guild.id === subscription.guild_id) ?? null,
-		product: { id: product.id, label: product.name },
+		product: {
+			id: product.id,
+			label: product.name,
+			type:
+				product.name === 'Premium' ? Products.PREMIUM : Products.MAILING_LIST
+		},
 		currency: data.currency,
 		price: data.items.data[0].price.unit_amount,
 		trial_ends_at: data.trial_end,
@@ -213,6 +240,7 @@ export interface SubscriptionData {
 	product: {
 		id: string;
 		label: string;
+		type: Products;
 	};
 	currency: string;
 	price: number | null;

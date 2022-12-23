@@ -1,5 +1,3 @@
-import { APIGuild } from 'discord-api-types/v10';
-
 export const one = <T>(item: T): Exclude<T, any[]> =>
 	Array.isArray(item) ? item[0] : item;
 
@@ -64,25 +62,4 @@ export const range = (start: number, end: number, step = 1) => {
 		output.push(i);
 	}
 	return output;
-};
-
-export const getGuilds = async (): Promise<APIGuild[] | undefined> => {
-	async function get() {
-		return await fetch('/api/user/guilds');
-	}
-
-	let res = await get();
-
-	while (res.status === 429) {
-		await sleep(
-			parseInt(res.headers.get('x-ratelimit-reset')!) * 1000 - Date.now()
-		);
-
-		res = await get();
-	}
-
-	const json = await res.json();
-
-	if (!res.ok) console.error(json);
-	else return json;
 };
