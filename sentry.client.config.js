@@ -1,5 +1,5 @@
-// This file configures the initialization of Sentry on the browser.
-// The config you add here will be used whenever a page is visited.
+// This file configures the initialization of Sentry on the server.
+// The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from '@sentry/nextjs';
@@ -8,16 +8,31 @@ const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 Sentry.init({
 	environment: process.env.NODE_ENV,
+	debug: process.env.NODE_ENV === 'development',
 	dsn:
 		SENTRY_DSN ||
 		'https://352f8e9b23364aa284aaf79fd69cf727@o917511.ingest.sentry.io/4504368705830912',
-	// Adjust this value in production, or use tracesSampler for greater control
 	tracesSampleRate: 1.0,
 	autoSessionTracking: false,
 	beforeSend(event) {
 		if (process.env.NODE_ENV === 'development') return null;
 
 		return event;
+	},
+	initialScope: (scope) => {
+		/**
+		 * @type {import('discord-api-types/v10').APIUser}
+		 */
+		const user = JSON.parse(localStorage.getItem('user') ?? 'null');
+
+		if (user)
+			scope.setUser({
+				email: user.email ?? undefined,
+				id: user.id,
+				username: user.username
+			});
+
+		return scope;
 	}
 	// ...
 	// Note: if you want to override the automatic release value, do not set a

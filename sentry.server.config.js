@@ -18,21 +18,6 @@ Sentry.init({
 		if (process.env.NODE_ENV === 'development') return null;
 
 		return event;
-	},
-	initialScope: (scope) => {
-		/**
-		 * @type {import('discord-api-types/v10').APIUser}
-		 */
-		const user = JSON.parse(localStorage.getItem('user') ?? 'null');
-
-		if (user)
-			scope.setUser({
-				email: user.email ?? undefined,
-				id: user.id,
-				username: user.username
-			});
-
-		return scope;
 	}
 	// ...
 	// Note: if you want to override the automatic release value, do not set a
