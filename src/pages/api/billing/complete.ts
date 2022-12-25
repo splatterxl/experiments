@@ -1,7 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../../utils/billing/stripe';
 import { Products } from '../../../utils/constants/billing';
-import { client } from '../../../utils/database';
+import {
+	client,
+	Subscription,
+	SubscriptionStatus
+} from '../../../utils/database';
 
 // Navigated to directly
 export default async function result(
@@ -53,7 +57,7 @@ export default async function result(
 						customer = sub.customer;
 					}
 
-					await client.collection('subscriptions').updateOne(
+					await client.collection<Subscription>('subscriptions').updateOne(
 						{
 							user_id: user_id,
 							session_id: session.id
@@ -61,6 +65,7 @@ export default async function result(
 						{
 							$set: {
 								user_id: user_id,
+								status: SubscriptionStatus.ACTIVE,
 								guild_id: session.metadata?.discord_guild_id || null,
 								session_id: session.id,
 								customer_id: customer.id,
@@ -70,6 +75,24 @@ export default async function result(
 						},
 						{ upsert: true }
 					);
+
+					await client.collection('customers').insertOne({
+						user_id,
+						customer_id: customer.id
+					});
+
+					let payment_method_id =
+						typeof sub.default_payment_method === 'string'
+							? sub.default_payment_method
+							: sub.default_payment_method?.id;
+
+					if (payment_method_id) {
+						await stripe.paymentMethods.update(payment_method_id, {
+							metadata: {
+								user_id
+							}
+						});
+					}
 
 					return res.redirect(
 						!session.metadata?.discord_guild_id

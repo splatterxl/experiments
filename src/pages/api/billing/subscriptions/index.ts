@@ -6,8 +6,9 @@ import {
 	redis,
 	Subscription
 } from '../../../../utils/database';
+import { SubscriptionData } from '../../../../utils/types';
 import { getGuilds } from '../../user/guilds';
-import { getSubscriptionData, SubscriptionData } from './[id]';
+import { getSubscriptionData } from './[id]';
 
 const ratelimit = new Ratelimit({
 	redis: redis,

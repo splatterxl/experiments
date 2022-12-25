@@ -39,7 +39,7 @@ export default function LoginOnboarding({ next }: { next: string }) {
 			} catch (err) {
 				console.error(err);
 
-				destroyCookie(null, 'auth');
+				destroyCookie(null, 'auth', { path: '/' });
 
 				router.replace('/auth/login/try-again');
 

@@ -29,7 +29,7 @@ export default function Home() {
 					md: '10vh'
 				}}
 				flexDirection='column'
-				gap={{ base: 2, md: 1 }}
+				gap={{ base: 1, md: 1 }}
 			>
 				<Link href='/updates'>
 					{/* // TODO */}
@@ -37,7 +37,13 @@ export default function Home() {
 						<b>NEW</b>: Get monthly email updates for only $1
 					</Tag>
 				</Link>
-				<Heading size='3xl' paddingX={3} fontWeight={800} textAlign='center'>
+				<Heading
+					size={{ base: '2xl', md: '2xl', lg: '3xl' }}
+					lineHeight={0}
+					paddingX={3}
+					fontWeight={800}
+					textAlign='center'
+				>
 					<Highlight
 						query='key'
 						styles={{
@@ -51,9 +57,8 @@ export default function Home() {
 				</Heading>
 				<Text
 					fontSize={{ base: 'xl', md: '2xl' }}
-					maxW={{ base: '100%', md: '60vw' }}
 					textAlign='center'
-					paddingX={{ base: 24, md: 6 }}
+					paddingX={{ base: 24, md: 16, lg: 72 }}
 				>
 					Experiments makes it easier to find out when your server gets access
 					to new features, giving your community more time to focus on itself.

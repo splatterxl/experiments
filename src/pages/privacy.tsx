@@ -8,25 +8,31 @@ export default function Privacy() {
 			<Head>
 				<title>Privacy | Experiments</title>
 			</Head>
-			<VStack px={16} pt={10} pb={8} align='flex-start'>
+			<VStack px={16} pt={10} pb={24} align='flex-start' spacing={2}>
 				<Heading size='3xl' pb={1} fontWeight='black'>
 					Privacy Policy
 				</Heading>
 				<Text fontWeight={300}>
-					Last modified and effective: December 23, 2022.
+					Last modified and effective: December 24, 2022.
 				</Text>
 				<Heading fontWeight='extrabold'>Overview</Heading>
 				<Text>
-					Experiments is a service and website dashboard for tracking new
-					features (&quot;<b>experiments</b>&quot;) on the popular voice and
-					messaging platform Discord. In this document we will outline the data
-					collected, linked and shared by us and our partners to facilitate our
-					services.
+					Welcome! Thanks for using Experiments, a service and website dashboard
+					for tracking new features (&quot;experiments&quot;) on the popular
+					voice and messaging platform Discord. In this document we will outline
+					the data collected, linked and shared by us and our partners to
+					facilitate our services.
 				</Text>
-				<Heading>01. Data Collected</Heading>
+				<Heading id='data-collected'>01. Data Collected</Heading>
 				<Text>
-					We and our partners collect some personally identifiable information
-					to faciliate our services and payment systems.
+					We and our partners collect and store some personally identifiable
+					information to faciliate our services and payment systems. All data is
+					transmitted under{' '}
+					<Link href='https://en.wikipedia.org/wiki/Transport_Layer_Security'>
+						Transport Layer Security (TLS)
+					</Link>{' '}
+					and is encrypted at rest. Your account information is stored securely
+					by <Link href='https://mongodb.com'>MongoDB Inc.</Link>.
 				</Text>
 				<List styleType='initial' px={6}>
 					<ListItem>
@@ -50,10 +56,10 @@ export default function Privacy() {
 						If you choose to purchase a subscription to our services through our
 						payment gateway <Link href='https://stripe.com'>Stripe</Link>, they
 						may collect and store your personal data as detailed in their{' '}
-						<Link href='https://stripe.com/privacy'>Privacy Policy.</Link>
+						<Link href='https://stripe.com/privacy'>Privacy Policy</Link>.
 					</ListItem>
 				</List>
-				<Heading>02. Request Your Data</Heading>
+				<Heading id='request-your-data'>02. Request Your Data</Heading>
 				<Text>
 					You may request a copy of your data through the online dashboard by
 					navigating to your{' '}
@@ -61,16 +67,17 @@ export default function Privacy() {
 					the button labelled &quot;Request My Data&quot;. It may take up to 30
 					days for us to process your request.
 				</Text>
-				<Heading>03. Delete Your Data</Heading>
+				<Heading id='delete-your-data'>03. Delete Your Data</Heading>
 				<Text>
 					You may remove our records of your data and billing subscription
 					history by deleting your account through{' '}
 					<Link href='/settings/account'>Account Settings</Link>. Unfortunately
 					due to technical limitations beyond our control we are unable to
 					delete your data after you disconnect our OAuth2 Application through
-					your Discord settings.
+					your Discord settings, you must immediately navigate to our
+					website&apos;s Account Settings page.
 				</Text>
-				<Heading>04. Further Information</Heading>
+				<Heading id='further-information'>04. Further Information</Heading>
 				<Text>
 					If you have any questions or wish to contact us about your
 					information, please do not hesitate to contact us at{' '}

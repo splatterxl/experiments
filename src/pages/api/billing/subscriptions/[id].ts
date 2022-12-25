@@ -1,9 +1,5 @@
 import { Ratelimit } from '@upstash/ratelimit';
-import {
-	APIGuild,
-	PermissionFlagsBits,
-	Snowflake
-} from 'discord-api-types/v10';
+import { APIGuild, PermissionFlagsBits } from 'discord-api-types/v10';
 import { EmailParams, Recipient } from 'mailersend';
 import { Collection, WithId } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -17,8 +13,10 @@ import {
 	checkAuth,
 	client,
 	redis,
-	Subscription
+	Subscription,
+	SubscriptionStatus
 } from '../../../../utils/database';
+import { SubscriptionData } from '../../../../utils/types';
 import { getGuilds } from '../../user/guilds';
 
 const baseRatelimit = new Ratelimit({
@@ -77,8 +75,7 @@ export default async function subscription(
 	const data = await stripe.subscriptions.retrieve(
 		subscription.subscription_id
 	);
-	const cancelled =
-		data.canceled_at ?? data.cancel_at_period_end ?? data.cancel_at;
+	const cancelled = subscription.status === SubscriptionStatus.CANCELLED;
 
 	switch (req.method) {
 		case 'PATCH': {
@@ -140,7 +137,8 @@ export default async function subscription(
 					await getSubscriptionData(subscription, userGuilds, true, coll, data)
 				);
 		case 'DELETE': {
-			if (cancelled) return res.status(204).send('' as any);
+			if (cancelled || subscription.status === SubscriptionStatus.FAILED)
+				return res.status(204).send('' as any);
 
 			const identifier = 'subscription_cancel:' + user.id;
 			const result = await cancelRatelimit.limit(identifier);
@@ -171,6 +169,15 @@ export default async function subscription(
 				await stripe.subscriptions.update(subscription.subscription_id, {
 					cancel_at_period_end: true
 				});
+
+				await coll.updateOne(
+					{ subscription_id: subscription.subscription_id },
+					{
+						$set: {
+							status: SubscriptionStatus.CANCELLED
+						}
+					}
+				);
 
 				const recipients = [new Recipient(user.email!, user.username)];
 
@@ -223,8 +230,6 @@ export default async function subscription(
 
 				const resp = await mailersend.send(emailParams);
 
-				console.log(resp.status);
-
 				return res.status(204).send('' as any);
 			} catch (err: any) {
 				return res.status(422).send({
@@ -234,6 +239,11 @@ export default async function subscription(
 		}
 		case 'POST': {
 			if (!cancelled) return res.status(201).send('' as any);
+
+			if (subscription.status === SubscriptionStatus.FAILED)
+				return res
+					.status(403)
+					.send({ message: 'Cannot reinstate a failed subscription' });
 
 			const identifier = 'subscription_cancel:' + user.id;
 			const result = await cancelRatelimit.limit(identifier);
@@ -253,6 +263,15 @@ export default async function subscription(
 				await stripe.subscriptions.update(subscription.subscription_id, {
 					cancel_at_period_end: false
 				});
+
+				await coll.updateOne(
+					{ subscription_id: subscription.subscription_id },
+					{
+						$set: {
+							status: SubscriptionStatus.ACTIVE
+						}
+					}
+				);
 
 				return res.status(201).send('' as any);
 			} catch (err: any) {
@@ -302,6 +321,7 @@ export const getSubscriptionData = async (
 
 	const base = {
 		id: data.id,
+		status: subscription.status,
 		user_id: subscription.user_id,
 		guild_id: subscription.guild_id,
 		guild: guilds.find((guild) => guild.id === subscription.guild_id) ?? null,
@@ -333,25 +353,3 @@ export const getSubscriptionData = async (
 		return base;
 	}
 };
-
-export interface SubscriptionData {
-	id: string;
-	user_id: Snowflake;
-	guild_id?: Snowflake | null;
-	guild: APIGuild | null;
-	product: {
-		id: string;
-		label: string;
-		type: Products;
-	};
-	currency: string;
-	price: number | null;
-	trial_ends_at: number | null;
-	cancels_at: number | null;
-	cancelled: boolean;
-	renews_at: number | null;
-	payment_method?: {
-		type: Stripe.PaymentMethod['type'];
-		last4?: string;
-	} | null;
-}

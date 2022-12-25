@@ -86,7 +86,7 @@ export const Debug: React.FC = () => {
 							<PrimaryButton
 								label='Delete cookies'
 								onClick={() => {
-									destroyCookie(null, 'auth');
+									destroyCookie(null, 'auth', { path: '/' });
 								}}
 							/>
 							<PrimaryButton label='Login again' href='/auth/login' />

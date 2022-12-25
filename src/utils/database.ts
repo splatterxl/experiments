@@ -25,18 +25,33 @@ export interface Subscription {
 	subscription_id: string;
 	guild_id?: string | null;
 	product: Products;
+	status: SubscriptionStatus;
+}
+
+export enum SubscriptionStatus {
+	ACTIVE,
+	CANCELLED,
+	FAILED
+}
+
+export interface Authorization {
+	access_token: string;
+	refresh_token: string;
+	expires: Date;
+	token_type: string;
+	scope: string[];
+	user_id: Snowflake;
 }
 
 export function getAuth(userId: Snowflake) {
-	const coll = client.collection('auth');
+	const coll = client.collection<Authorization>('auth');
 
 	return coll.findOne({ user_id: userId });
 }
 
 export const checkAuth = async (
 	req: NextApiRequest,
-	res: NextApiResponse,
-	thorough = true
+	res: NextApiResponse
 ): Promise<(APIUser & { access_token: string }) | undefined> => {
 	if (!req.cookies.auth) {
 		res
@@ -55,7 +70,7 @@ export const checkAuth = async (
 			});
 
 			if (discord.status !== 200) {
-				logout(res);
+				await logout(res);
 			} else {
 				return { ...(await discord.json()), access_token: auth.access_token };
 			}
@@ -63,7 +78,7 @@ export const checkAuth = async (
 			console.error(err);
 
 			try {
-				logout(res);
+				await logout(res);
 			} catch {
 				// there's a chance the response will already have been sent
 			}
@@ -71,11 +86,16 @@ export const checkAuth = async (
 	}
 };
 
-function logout(res: NextApiResponse) {
-	destroyCookie({ res }, 'auth');
-	destroyCookie({ res }, 'refresh');
+async function logout(res: NextApiResponse, id?: Snowflake) {
+	destroyCookie({ res }, 'auth', { path: '/' });
+	destroyCookie({ res }, 'refresh', { path: '/' });
 
 	// TODO: implement refreshing
+
+	console.log('logging out');
+
+	if (id)
+		await client.collection<Authorization>('auth').deleteMany({ user_id: id });
 
 	res.status(401).send({
 		message: 'Authentication token expired, please log in again.'
