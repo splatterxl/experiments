@@ -1,4 +1,5 @@
 import { sleep } from '.';
+import { APIEndpoints, makeURL } from './constants';
 
 export const request = async (url: string, init?: RequestInit) => {
 	async function get() {
@@ -21,4 +22,4 @@ export const request = async (url: string, init?: RequestInit) => {
 };
 
 export const getGuilds = () =>
-	request('/api/user/guilds').then((res) => res.json());
+	request(makeURL(APIEndpoints.GUILDS)).then((res) => res.json());

@@ -5,6 +5,7 @@ import type {
 import { sign } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { setCookie } from 'nookies';
+import { APIEndpoints, makeURL } from '../../../utils/constants';
 import {
 	APP_ID,
 	Endpoints,
@@ -35,7 +36,7 @@ export default async function handleDiscordAuth(
 		if (!host) return res.status(400).send({ error: 'Invalid host' });
 
 		const redirectURL = new URL(
-			'/api/auth/discord',
+			makeURL(APIEndpoints.DISCORD_CALLBACK),
 			process.env.NODE_ENV === 'development'
 				? `http://${host}`
 				: `https://${host}`

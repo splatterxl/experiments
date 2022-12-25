@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import Link from 'next/link';
 import React from 'react';
+import { APIEndpoints, makeURL } from '../../../../../utils/constants';
 import { request } from '../../../../../utils/http';
 import type {
 	PaymentMethod,
@@ -28,13 +29,13 @@ export const BillingIndex: React.FC = () => {
 	const [paymentMethods, setPMs] = React.useState<PaymentMethod[]>(null as any);
 
 	React.useEffect(() => {
-		request('/api/billing/subscriptions').then(async (res) => {
+		request(makeURL(APIEndpoints.SUBSCRIPTIONS)).then(async (res) => {
 			const json = await res.json();
 
 			if (res.ok) setSubscriptions(json);
 			else console.error(json);
 		});
-		request('/api/billing/payment-methods').then(async (res) => {
+		request(makeURL(APIEndpoints.PAYMENT_METHODS)).then(async (res) => {
 			const json = await res.json();
 
 			if (res.ok) setPMs(json);
@@ -86,7 +87,7 @@ export const BillingIndex: React.FC = () => {
 						</Text>
 					)
 				) : (
-					<Center w='full' h='30vh'>
+					<Center w='full' h='20vh'>
 						<Spinner size='lg' />
 					</Center>
 				)}
@@ -111,12 +112,18 @@ export const BillingIndex: React.FC = () => {
 					paymentMethods.length ? (
 						<>[payment methods placeholder]</>
 					) : (
-						<Text pt={4} fontStyle='italic'>
+						<Text
+							mt={4}
+							p={6}
+							rounded='xl'
+							_dark={{ bgColor: 'gray.700' }}
+							_light={{ bgColor: 'gray.200' }}
+						>
 							Purchase a subscription to add a payment method.
 						</Text>
 					)
 				) : (
-					<Center w='full' h='30vh'>
+					<Center w='full' h='20vh'>
 						<Spinner size='lg' />
 					</Center>
 				)}

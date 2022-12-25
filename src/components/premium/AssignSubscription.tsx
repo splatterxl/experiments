@@ -2,6 +2,7 @@ import { HStack, Select } from '@chakra-ui/react';
 import { APIGuild, PermissionFlagsBits } from 'discord-api-types/v10';
 import router from 'next/router';
 import React from 'react';
+import { APIEndpoints, makeURL } from '../../utils/constants';
 import useToast from '../../utils/hooks/useToast';
 import { getGuilds, request } from '../../utils/http';
 import { PrimaryButton } from '../brand/PrimaryButton';
@@ -49,7 +50,7 @@ export const AssignSubscription: React.FC<
 				onClick={async () => {
 					if (ref.current.value) {
 						const res = await request(
-							`/api/billing/subscriptions/${subscription}`,
+							makeURL(APIEndpoints.SUBSCRIPTION(subscription)),
 							{
 								method: 'PATCH',
 								headers: {

@@ -1,5 +1,6 @@
 import { Box, Heading, Text, VStack } from '@chakra-ui/react';
 import React from 'react';
+import { APIEndpoints, makeURL } from '../../../../utils/constants';
 import useToast from '../../../../utils/hooks/useToast';
 import { request } from '../../../../utils/http';
 import { PrimaryButton } from '../../../brand/PrimaryButton';
@@ -16,7 +17,7 @@ export const Account: React.FC = () => {
 	const [state, setState] = React.useState<RequestState>(RequestState.LOADING);
 
 	React.useEffect(() => {
-		request('/api/account/harvest')
+		request(makeURL(APIEndpoints.HARVEST))
 			.then((res) => res.json())
 			.then(({ status }: { status: boolean }) => {
 				if (status) setState(RequestState.SENT);
@@ -45,9 +46,12 @@ export const Account: React.FC = () => {
 					isLoading={state === RequestState.LOADING}
 					label='Request My Data'
 					onClick={async () => {
-						const { message, ok } = await request('/api/account/harvest', {
-							method: 'POST'
-						}).then(async (res) => ({ ok: res.ok, ...(await res.json()) }));
+						const { message, ok } = await request(
+							makeURL(APIEndpoints.HARVEST),
+							{
+								method: 'POST'
+							}
+						).then(async (res) => ({ ok: res.ok, ...(await res.json()) }));
 
 						toast({
 							status: ok ? 'success' : 'error',

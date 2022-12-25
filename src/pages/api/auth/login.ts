@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { parseCookies } from 'nookies';
 import { one } from '../../../utils';
+import { APIEndpoints, makeURL } from '../../../utils/constants';
 import {
 	APP_ID,
 	Endpoints,
@@ -32,7 +33,7 @@ export default function Login(req: NextApiRequest, res: NextApiResponse) {
 	const authorizeURL = makeDiscordURL(Endpoints.OAUTH2_AUTH, {
 		client_id: APP_ID,
 		scope: scope.join(' '),
-		redirect_uri: url.origin + '/api/auth/discord',
+		redirect_uri: url.origin + makeURL(APIEndpoints.DISCORD_CALLBACK),
 		response_type: 'code',
 		state: Buffer.from(
 			JSON.stringify({ next: one(req.query.next) ?? '/dashboard' })

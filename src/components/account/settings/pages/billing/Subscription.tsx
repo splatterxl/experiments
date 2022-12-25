@@ -17,6 +17,7 @@ import {
 import { useRouter } from 'next/router';
 import React from 'react';
 import { one } from '../../../../../utils';
+import { APIEndpoints, makeURL } from '../../../../../utils/constants';
 import useToast from '../../../../../utils/hooks/useToast';
 import { request } from '../../../../../utils/http';
 import { SubscriptionData } from '../../../../../utils/types';
@@ -37,8 +38,8 @@ export const Subscription: React.FC = () => {
 	const toast = useToast();
 
 	React.useEffect(() => {
-		if (router.query.sub_id)
-			request(`/api/billing/subscriptions/${sub_id}`).then(async (res) => {
+		if (sub_id)
+			request(makeURL(APIEndpoints.SUBSCRIPTION(sub_id))).then(async (res) => {
 				const json = await res.json();
 
 				if (res.ok) setSubscription(json);
@@ -152,7 +153,7 @@ export const Subscription: React.FC = () => {
 
 									try {
 										const res = await request(
-											`/api/billing/subscriptions/${subscription.id}`,
+											makeURL(APIEndpoints.SUBSCRIPTION(subscription.id)),
 											{ method: subscription.cancels_at ? 'POST' : 'DELETE' }
 										);
 
