@@ -22,7 +22,10 @@ export const cleanURL = (router: NextRouter) => {
 export const createAnalyticsQuery = (options: Partial<RoutingOptions>) => {
 	return {
 		pathname: options.path,
-		query: new URLSearchParams(options.analytics).toString()
+		query: new URLSearchParams({
+			...options.analytics,
+			...options.query
+		}).toString()
 	};
 };
 
@@ -33,4 +36,5 @@ export interface RoutingOptions {
 		source?: string;
 		campaign?: string;
 	};
+	query: Record<string, any>;
 }

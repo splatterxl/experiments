@@ -8,12 +8,12 @@ export default function TOS() {
 			<Head>
 				<title>ToS | Experiments</title>
 			</Head>
-			<VStack px={16} pt={10} pb={16} align='flex-start'>
+			<VStack px={16} pt={10} pb={24} align='flex-start'>
 				<Heading size='3xl' pb={1} fontWeight='black'>
 					Terms of Service
 				</Heading>
 				<Text fontWeight={300}>
-					Last modified and effective: December 19, 2022.
+					Last modified and effective: December 24, 2022.
 				</Text>
 				<Heading fontWeight='extrabold'>Overview</Heading>
 				<Text>
@@ -24,19 +24,19 @@ export default function TOS() {
 					terms, conditions, policies and notices stated here.
 				</Text>
 				<Text>
-					By visiting our site and/ or purchasing something from us, you engage
+					By visiting our site and/or purchasing something from us, you engage
 					in our “Service” and agree to be bound by the following terms and
 					conditions (“Terms of Service”, “Terms”), including those additional
 					terms and conditions and policies referenced herein and/or available
 					by hyperlink. These Terms of Service apply to all users of the site,
-					including without limitation users who are browsers, vendors,
-					customers, merchants, and/ or contributors of content. Please read
-					these Terms of Service carefully before accessing or using our
-					website. By accessing or using any part of the site, you agree to be
-					bound by these Terms of Service. If you do not agree to all the terms
-					and conditions of this agreement, then you may not access the website
-					or use any Services. If these Terms of Service are considered an
-					offer, acceptance is expressly limited to these Terms of Service.
+					including without limitation users who are browsers, vendors or
+					customers. Please read these Terms of Service carefully before
+					accessing or using our website. By accessing or using any part of the
+					site, you agree to be bound by these Terms of Service. If you do not
+					agree to all the terms and conditions of this agreement, then you may
+					not access the website or use any Services. If these Terms of Service
+					are considered an offer, acceptance is expressly limited to these
+					Terms of Service.
 				</Text>
 				<Text>
 					Any new features or tools which are added to the current website shall
@@ -46,8 +46,8 @@ export default function TOS() {
 					of Service by posting updates and/or changes to our website. It is
 					your responsibility to check this page periodically for changes. Your
 					continued use of or access to the website following the posting of any
-					changes constitutes acceptance of those changes. Our store is hosted
-					on <Link href='https://vercel.com'>Vercel</Link> and uses{' '}
+					changes constitutes acceptance of those changes. Our services are
+					hosted on <Link href='https://vercel.com'>Vercel</Link> and uses{' '}
 					<Link href='https://stripe.com'>Stripe</Link>&apos;s excellent payment
 					solutions to handle subscriptions.
 				</Text>

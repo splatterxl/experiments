@@ -11,7 +11,7 @@ import {
 	GUILD_INVITE,
 	makeDiscordURL
 } from '../../../utils/constants/discord';
-import { client } from '../../../utils/database';
+import { Authorization, client } from '../../../utils/database';
 import { JWT_TOKEN } from '../../../utils/jwt';
 
 const ErrorUrls = {
@@ -93,7 +93,7 @@ export default async function handleDiscordAuth(
 
 			if (!me.id) throw 'Unknown error';
 
-			const coll = client.collection('auth');
+			const coll = client.collection<Authorization>('auth');
 
 			await coll.updateOne(
 				{ user_id: me.id },
@@ -101,7 +101,7 @@ export default async function handleDiscordAuth(
 					$set: {
 						access_token,
 						refresh_token,
-						expires: new Date(Date.now() + expires_in),
+						expires: new Date(Date.now() + expires_in * 1000),
 						token_type,
 						scope,
 						user_id: me.id
@@ -119,7 +119,6 @@ export default async function handleDiscordAuth(
 					expiresIn: expires_in
 				}),
 				{
-					maxAge: expires_in,
 					path: '/'
 				}
 			);

@@ -12,22 +12,11 @@ export default function Login(req: NextApiRequest, res: NextApiResponse) {
 
 	if (cookies.auth) return res.redirect('/dashboard');
 
-	const scopes = one(req.query.scopes);
+	const join = Boolean(one(req.query.join));
 
-	let scope: { guilds: boolean; join: boolean };
+	const scope = ['identify', 'email', 'guilds'];
 
-	try {
-		if (!scopes) throw 'no scopes';
-		scope = JSON.parse(Buffer.from(scopes, 'base64').toString());
-		if (!('guilds' in scope && 'join' in scope)) throw 'invalid scope object';
-	} catch (err) {
-		return res.redirect('/auth/login/try-again');
-	}
-
-	const appliedScope = ['identify', 'email'];
-
-	if (scope.guilds) appliedScope.push('guilds');
-	if (scope.join) appliedScope.push('guilds.join');
+	if (join) scope.push('guilds.join');
 
 	const host = req.headers.host;
 
@@ -42,7 +31,7 @@ export default function Login(req: NextApiRequest, res: NextApiResponse) {
 
 	const authorizeURL = makeDiscordURL(Endpoints.OAUTH2_AUTH, {
 		client_id: APP_ID,
-		scope: appliedScope.join(' '),
+		scope: scope.join(' '),
 		redirect_uri: url.origin + '/api/auth/discord',
 		response_type: 'code',
 		state: Buffer.from(

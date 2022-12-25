@@ -16,10 +16,10 @@ import {
 } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import React from 'react';
-import { SubscriptionData } from '../../../../../pages/api/billing/subscriptions/[id]';
 import { one } from '../../../../../utils';
 import useToast from '../../../../../utils/hooks/useToast';
 import { request } from '../../../../../utils/http';
+import { SubscriptionData } from '../../../../../utils/types';
 import SubscriptionHeader from './SubscriptionHeader';
 
 export const Subscription: React.FC = () => {

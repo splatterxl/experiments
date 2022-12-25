@@ -8,8 +8,8 @@ import {
 	VStack
 } from '@chakra-ui/react';
 import Link from 'next/link';
-import type { SubscriptionData } from '../../../../../pages/api/billing/subscriptions/[id]';
 import { Months } from '../../../../../utils/constants/billing';
+import type { SubscriptionData } from '../../../../../utils/types';
 import { GuildIcon } from '../../../GuildIcon';
 
 export default function SubscriptionHeader({
