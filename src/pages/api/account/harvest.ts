@@ -3,6 +3,7 @@ import { sign } from 'jsonwebtoken';
 import { EmailParams, Recipient } from 'mailersend';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { from, mailersend } from '../../../utils/billing/email';
+import { APIEndpoints, makeURL } from '../../../utils/constants';
 import { checkAuth, redis } from '../../../utils/database';
 import { JWT_TOKEN } from '../../../utils/jwt';
 
@@ -62,14 +63,16 @@ export default async function startHarvest(
 				},
 				{
 					var: 'download_url',
-					value: `${url.origin}/api/account/harvest/download?_=${sign(
-						{
-							user: user.id,
-							email: user.email
-						},
-						JWT_TOKEN,
-						{ expiresIn: '30d' }
-					)}`
+					value: `${url.origin}${makeURL(APIEndpoints.DOWNLOAD_HARVEST, {
+						_: sign(
+							{
+								user: user.id,
+								email: user.email
+							},
+							JWT_TOKEN,
+							{ expiresIn: '30d' }
+						)
+					})}`
 				}
 			]
 		}

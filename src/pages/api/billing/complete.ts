@@ -76,10 +76,17 @@ export default async function result(
 						{ upsert: true }
 					);
 
-					await client.collection('customers').insertOne({
-						user_id,
-						customer_id: customer.id
-					});
+					await client.collection('customers').updateOne(
+						{
+							user_id
+						},
+						{
+							$set: {
+								customer_id: customer.id
+							}
+						},
+						{ upsert: true }
+					);
 
 					let payment_method_id =
 						typeof sub.default_payment_method === 'string'

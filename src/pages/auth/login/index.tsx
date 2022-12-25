@@ -13,6 +13,7 @@ import React from 'react';
 import { PrimaryButton } from '../../../components/brand/PrimaryButton';
 import { Link } from '../../../components/Link';
 import { one } from '../../../utils';
+import { APIEndpoints, makeURL } from '../../../utils/constants';
 
 export default function Login({ next }: { next: string }) {
 	let [join, setJoin] = React.useState(false);
@@ -77,7 +78,7 @@ export default function Login({ next }: { next: string }) {
 						label='Login with Discord'
 						href={
 							{
-								pathname: '/api/auth/login',
+								pathname: makeURL(APIEndpoints.LOGIN),
 								query: {
 									join,
 									next
@@ -106,8 +107,6 @@ export async function getServerSideProps(
 			}
 		};
 	}
-
-	console.log(context.query);
 
 	return {
 		props: {

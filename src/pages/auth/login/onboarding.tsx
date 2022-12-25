@@ -10,7 +10,7 @@ import React from 'react';
 import { UserIcon } from '../../../components/account/UserIcon';
 import { GhostButton } from '../../../components/brand/GhostButton';
 import { Link } from '../../../components/Link';
-import { one, sleep } from '../../../utils';
+import { one } from '../../../utils';
 
 export default function LoginOnboarding({ next }: { next: string }) {
 	const [user, setUser] = React.useState<APIUser>(null as any);
@@ -46,23 +46,7 @@ export default function LoginOnboarding({ next }: { next: string }) {
 				return;
 			}
 
-			{
-				let i = 5;
-
-				while (i > 0) {
-					await sleep(1000);
-
-					let _ = 0;
-
-					setSeconds((prev) => {
-						return prev <= 0 ? prev : prev - 1;
-					});
-
-					i--;
-				}
-
-				router.replace(next);
-			}
+			if (next !== '/dashboard') router.replace(next);
 		})();
 	}, [router, next]);
 
@@ -91,8 +75,7 @@ export default function LoginOnboarding({ next }: { next: string }) {
 							We&apos;re glad you could join us.{' '}
 							{next !== '/dashboard' ? (
 								<>
-									You&apos;ll be <Link href={next}>redirected</Link> in{' '}
-									{seconds} seconds.
+									You&apos;ll be <Link href={next}>redirected</Link> soon.
 								</>
 							) : (
 								<>

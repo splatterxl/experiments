@@ -1,4 +1,5 @@
 import { Ratelimit } from '@upstash/ratelimit';
+import { Snowflake } from 'discord-api-types/globals';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { one } from '../../../utils';
 import { stripe } from '../../../utils/billing/stripe';
@@ -107,6 +108,13 @@ export default async function checkout(
 
 	if (!email) return res.status(400).send({ error: 'No email' });
 
+	const customer = await client
+		.collection<{
+			user_id: Snowflake;
+			customer_id: string;
+		}>('customers')
+		.findOne({ user_id: user.id });
+
 	const session = await stripe.checkout.sessions.create({
 		line_items: [
 			{
@@ -119,7 +127,8 @@ export default async function checkout(
 		metadata: { discord_guild_id: guild ?? null, product, user_id: user.id },
 		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: `${url.origin}/premium`,
-		customer_email: email!,
+		customer_email: !customer ? email! : undefined,
+		customer: customer?.customer_id,
 		allow_promotion_codes: true,
 		consent_collection: {
 			terms_of_service: 'required'
