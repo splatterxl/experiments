@@ -5,7 +5,7 @@ use mongodb::{
     options::{ClientOptions, UpdateOptions},
     Client as MongoClient,
 };
-use twilight_http::Client;
+use twilight_http::client::ClientBuilder;
 use twilight_model::{http::attachment::Attachment, id::Id};
 
 mod assignments;
@@ -19,10 +19,7 @@ use database::Experiment;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let http = Client::new(env::token()).await;
-
-    let me = http.current_user().await?.model().await?;
-    println!("[discord] current user: {}#{}", me.name, me.discriminator);
+    let http = ClientBuilder::default().build().await;
 
     let client_options = ClientOptions::parse(&env::mongo()).await?;
 

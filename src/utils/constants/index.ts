@@ -23,7 +23,7 @@ export const APIEndpoints = {
 };
 
 export const makeURL = (endpoint: string, query: Record<string, any> = {}) => {
-	const url = `/api/${endpoint}`;
+	const url = `/api${endpoint}`;
 
 	const search = new URLSearchParams(query).toString();
 
