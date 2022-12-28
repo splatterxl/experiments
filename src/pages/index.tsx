@@ -3,6 +3,7 @@ import {
 	Heading,
 	Highlight,
 	Icon,
+	Link,
 	List,
 	ListItem,
 	Tag,
@@ -10,7 +11,6 @@ import {
 	useMediaQuery,
 } from '@chakra-ui/react';
 import Head from 'next/head';
-import Link from 'next/link';
 import { PrimaryButton } from '../components/brand/PrimaryButton';
 import { RocketIcon } from '../components/brand/RocketIcon';
 import { PremiumBadge } from '../components/premium/PremiumBadge';

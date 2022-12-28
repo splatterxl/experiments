@@ -20,25 +20,22 @@ export default async function startHarvest(
 
 	if (!user) return;
 
+	if (req.method !== 'POST')
+		return res.status(405).send({ message: 'Method Not Allowed' });
+
 	const identifier = 'start_harvest:' + user.id;
 	const result = await ratelimit.limit(identifier);
 
 	if (!result.success) {
-		if (req.method === 'POST') {
-			res.setHeader('X-RateLimit-Limit', result.limit);
-			res.setHeader('X-RateLimit-Remaining', result.remaining);
-			res.setHeader('X-RateLimit-Reset', result.reset);
-			res.setHeader('Retry-After', (result.reset - Date.now()) / 1000);
+		res.setHeader('X-RateLimit-Limit', result.limit);
+		res.setHeader('X-RateLimit-Remaining', result.remaining);
+		res.setHeader('X-RateLimit-Reset', result.reset);
+		res.setHeader('Retry-After', (result.reset - Date.now()) / 1000);
 
-			res.status(429).json({
-				message: 'Data harvest already in progress.',
-			});
-		} else if (req.method === 'GET') {
-			res.status(200).send({ status: true });
-		}
+		res.status(429).json({
+			message: 'Data harvest already in progress.',
+		});
 		return;
-	} else {
-		if (req.method === 'GET') return res.status(200).send({ status: false });
 	}
 
 	const host = req.headers.host;

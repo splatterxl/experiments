@@ -1,25 +1,26 @@
 import { ExternalLinkIcon } from '@chakra-ui/icons';
-import { Box, HStack } from '@chakra-ui/react';
-import NextLink, { LinkProps } from 'next/link';
+import { Box, HStack, Link as ChakraLink, LinkProps } from '@chakra-ui/react';
 import React from 'react';
 
 export const Link: React.FC<
-	Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> &
+	Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps | 'ref'> &
 		LinkProps & {
 			children?: React.ReactNode;
 		} & React.RefAttributes<HTMLAnchorElement>
 > = (props) => {
 	return (
-		<NextLink passHref legacyBehavior {...props}>
-			<HStack as='a' display='inline-flex' spacing={0} gap={1}>
-				<Box as='span' textDecoration='underline'>
-					{props.children}
-				</Box>
-				{props.href?.toString().startsWith('http') ? (
-					<ExternalLinkIcon />
-				) : null}
-			</HStack>
-		</NextLink>
+		<HStack
+			display='inline-flex'
+			spacing={0}
+			gap={1}
+			as={ChakraLink}
+			{...(props as any)}
+		>
+			<Box as='span' textDecoration='underline'>
+				{props.children}
+			</Box>
+			{props.href?.toString().startsWith('http') ? <ExternalLinkIcon /> : null}
+		</HStack>
 	);
 };
 

@@ -24,7 +24,7 @@ declare namespace Intl {
 
 declare module 'mailersend' {
 	export class Recipient {
-		constructor(email: string, name: string);
+		constructor(email: string, name?: string);
 	}
 
 	export class Attachment {

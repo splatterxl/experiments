@@ -1,6 +1,5 @@
-import { Heading, HStack, Image } from '@chakra-ui/react';
+import { Heading, HStack, Image, Link } from '@chakra-ui/react';
 import { Montserrat } from '@next/font/google';
-import Link from 'next/link';
 import React from 'react';
 import { createAnalyticsQuery } from '../../utils/analytics';
 import { Routes } from '../../utils/constants';
@@ -19,6 +18,7 @@ export const Logo: React.FC = () => {
 					from: 'navbar_logo',
 				},
 			})}
+			_hover={{ textDecor: 'none' }}
 		>
 			<HStack spacing={4}>
 				<Image boxSize={sizing.logo} alt='Experiments logo' src={ASSETS.Logo} />

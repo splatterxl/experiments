@@ -22,4 +22,4 @@ export interface SubscriptionData {
 	payment_method?: Stripe.PaymentMethod | null;
 }
 
-export type PaymentMethod = Stripe.PaymentMethod;
+export type PaymentMethod = Stripe.PaymentMethod & { default: boolean };

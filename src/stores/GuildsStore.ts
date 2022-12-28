@@ -22,7 +22,7 @@ export default new (class CurrentUserGuildsStore extends Store<RESTGetAPICurrent
 			const { ok, json } = await request(makeURL(APIEndpoints.GUILDS)).then(
 				async (res) => ({
 					ok: res.ok,
-					json: await res.json(),
+					json: await res.json().catch(() => []),
 				})
 			);
 

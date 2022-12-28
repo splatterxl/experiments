@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import Stripe from 'stripe';
 import { stripe } from '../../../utils/billing/stripe';
 import { Routes } from '../../../utils/constants';
 import { Products } from '../../../utils/constants/billing';
@@ -20,7 +21,9 @@ export default async function result(
 
 	let session;
 	try {
-		session = await stripe.checkout.sessions.retrieve(id);
+		session = await stripe.checkout.sessions.retrieve(id, {
+			expand: ['subscription', 'customer'],
+		});
 	} catch {
 		return res.status(400).send({ error: 'Unknown session' });
 	}
@@ -40,23 +43,8 @@ export default async function result(
 						.send({ error: 'Complete request with unpaid payment' });
 				case 'no_payment_required':
 				case 'paid': {
-					let subscription_id;
-
-					if (typeof session.subscription === 'string') {
-						subscription_id = session.subscription;
-					} else {
-						subscription_id = session.subscription!.id;
-					}
-
-					const sub = await stripe.subscriptions.retrieve(subscription_id);
-
-					let customer;
-
-					if (typeof sub.customer === 'string') {
-						customer = await stripe.customers.retrieve(sub.customer);
-					} else {
-						customer = sub.customer;
-					}
+					const sub: Stripe.Subscription = session.subscription as any;
+					const customer: Stripe.Customer = session.customer as any;
 
 					await client.collection<Subscription>('subscriptions').updateOne(
 						{

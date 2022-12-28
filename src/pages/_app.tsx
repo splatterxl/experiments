@@ -2,24 +2,15 @@ import { Box, ChakraProvider, VStack } from '@chakra-ui/react';
 import '@stripe/stripe-js';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
-import { useRouter } from 'next/router';
-import React from 'react';
 import { RecoilRoot } from 'recoil';
 import { Footer } from '../components/footer/Footer';
 import Navbar from '../components/navbar/Navbar';
 import { Snowflakes } from '../components/Snowflakes';
 import { PersistedStateProvider } from '../providers/PersistedStateProvider';
 import '../styles/globals.css';
-import { cleanURL } from '../utils/analytics';
 import { THEME } from '../utils/constants/theme';
 
 export default function App({ Component, pageProps }: AppProps) {
-	const router = useRouter();
-
-	React.useEffect(() => {
-		cleanURL(router);
-	}, [router]);
-
 	return (
 		<>
 			<RecoilRoot>
@@ -36,7 +27,13 @@ export default function App({ Component, pageProps }: AppProps) {
 							}}
 						>
 							{/* <NavigationProgressBar /> */}
-							<Box role='main' w='100vw' minH='100vh' suppressHydrationWarning>
+							<Box
+								role='main'
+								w='100vw'
+								minH='100vh'
+								pb={16}
+								suppressHydrationWarning
+							>
 								<Navbar />
 								<Snowflakes />
 								<Component {...pageProps} />

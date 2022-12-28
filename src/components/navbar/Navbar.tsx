@@ -1,5 +1,4 @@
-import { HStack, Text, useMediaQuery } from '@chakra-ui/react';
-import Link from 'next/link';
+import { HStack, Link, useMediaQuery } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import CurrentUserStore from '../../stores/CurrentUserStore';
@@ -34,22 +33,16 @@ export default function Navbar() {
 			<Logo />
 			<HStack justify='flex-end' align='center' gap={4}>
 				<Link
+					fontWeight={500}
+					display={{ base: 'none', md: 'inline-block' }}
 					href={createAnalyticsQuery({
 						path: Routes.PREMIUM,
 						analytics: {
 							from: 'navbar',
 						},
 					})}
-					passHref
-					legacyBehavior
 				>
-					<Text
-						as='a'
-						fontWeight={500}
-						display={{ base: 'none', md: 'inline-block' }}
-					>
-						Premium
-					</Text>
+					Premium
 				</Link>
 
 				<PrimaryButton

@@ -4,6 +4,7 @@ import {
 	Center,
 	Heading,
 	HStack,
+	Link,
 	List,
 	ListItem,
 	Spinner,
@@ -11,8 +12,6 @@ import {
 	Tooltip,
 	VStack,
 } from '@chakra-ui/react';
-import { RESTAPIPartialCurrentUserGuild } from 'discord-api-types/v10';
-import Link from 'next/link';
 import React from 'react';
 import GuildsStore from '../../../../../stores/GuildsStore';
 import { APIEndpoints, makeURL, Routes } from '../../../../../utils/constants';
@@ -21,7 +20,7 @@ import type {
 	PaymentMethod,
 	SubscriptionData,
 } from '../../../../../utils/types';
-import PaymentMethodHeader from './payment-methods/PaymentMethodHeader';
+import PaymentMethodSmall from './payment-methods/PaymentMethodSmall';
 import SubscriptionHeader from './subscription/SubscriptionHeader';
 
 export const BillingIndex: React.FC = () => {
@@ -29,11 +28,7 @@ export const BillingIndex: React.FC = () => {
 		null as any
 	);
 	const [paymentMethods, setPMs] = React.useState<PaymentMethod[]>(null as any);
-	const [guilds, setGuilds] = React.useState<RESTAPIPartialCurrentUserGuild[]>(
-		null as any
-	);
-
-	const getGuilds = GuildsStore.useGetFromStorage();
+	const guilds = GuildsStore.useValue();
 
 	React.useEffect(() => {
 		request(makeURL(APIEndpoints.SUBSCRIPTIONS)).then(async (res) => {
@@ -48,8 +43,6 @@ export const BillingIndex: React.FC = () => {
 			if (res.ok) setPMs(json);
 			else console.error(json);
 		});
-
-		setGuilds(getGuilds());
 	}, []);
 
 	return (
@@ -66,7 +59,10 @@ export const BillingIndex: React.FC = () => {
 							{subscriptions.map((subscription, i, a) => {
 								return (
 									<ListItem w='full' key={subscription.id}>
-										<Link href={Routes.SUBSCRIPTION_SETTINGS(subscription.id)}>
+										<Link
+											href={Routes.SUBSCRIPTION_SETTINGS(subscription.id)}
+											_hover={{ textDecor: 'none' }}
+										>
 											<SubscriptionHeader
 												subscription={subscription}
 												index={i}
@@ -120,7 +116,7 @@ export const BillingIndex: React.FC = () => {
 							{paymentMethods.map((pm, i, a) => {
 								return (
 									<ListItem key={i}>
-										<PaymentMethodHeader pm={pm} index={i} length={a.length} />
+										<PaymentMethodSmall pm={pm} index={i} length={a.length} />
 									</ListItem>
 								);
 							})}

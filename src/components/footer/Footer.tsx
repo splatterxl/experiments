@@ -1,5 +1,4 @@
-import { Heading, HStack, List, ListItem, Stack } from '@chakra-ui/react';
-import Link from 'next/link';
+import { Heading, HStack, Link, List, ListItem, Stack } from '@chakra-ui/react';
 import { Routes } from '../../utils/constants';
 
 export const Footer = () => {
