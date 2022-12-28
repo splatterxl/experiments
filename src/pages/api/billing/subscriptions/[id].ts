@@ -71,7 +71,8 @@ export default async function subscription(
 		});
 
 	const data = await stripe.subscriptions.retrieve(
-		subscription.subscription_id
+		subscription.subscription_id,
+		{ expand: ['default_payment_method'] }
 	);
 	const cancelled = subscription.status === SubscriptionStatus.CANCELLED;
 
@@ -300,10 +301,14 @@ export const getSubscriptionData = async (
 ): Promise<SubscriptionData> => {
 	const data =
 		fetched ??
-		(await stripe.subscriptions.retrieve(subscription.subscription_id));
-	const product = await stripe.products.retrieve(
-		data.items.data[0].price.product as string
-	);
+		(await stripe.subscriptions.retrieve(subscription.subscription_id, {
+			expand: ['default_payment_method', 'items.data.price.product'],
+		}));
+	let product = data.items.data[0].price.product as Stripe.Product | string;
+
+	if (typeof product === 'string') {
+		product = await stripe.products.retrieve(product);
+	}
 
 	if ('product' in subscription === false) {
 		// repair on read operation to insert product information into a subscription

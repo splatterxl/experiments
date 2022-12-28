@@ -1,7 +1,3 @@
-pub fn token() -> String {
-    env!("DISCORD_TOKEN").to_string()
-}
-
 pub fn webhook() -> String {
     env!("DISCORD_WEBHOOK").to_string()
 }

@@ -3,12 +3,12 @@ import {
 	Badge,
 	Heading,
 	HStack,
+	Link,
 	Text,
 	VisuallyHidden,
 	VStack,
 } from '@chakra-ui/react';
 import { RESTAPIPartialCurrentUserGuild } from 'discord-api-types/v10';
-import Link from 'next/link';
 import { Routes } from '../../../../../../utils/constants';
 import { Months } from '../../../../../../utils/constants/billing';
 import type { SubscriptionData } from '../../../../../../utils/types';
@@ -28,9 +28,11 @@ export default function SubscriptionHeader({
 	guild?: RESTAPIPartialCurrentUserGuild;
 }) {
 	const date = new Date(
-		(subscription.cancels_at ??
-			subscription.trial_ends_at ??
-			subscription.renews_at!) * 1000
+		Math.max(
+			subscription.cancels_at ?? 0,
+			subscription.trial_ends_at ?? 0,
+			subscription.renews_at!
+		) * 1000
 	);
 
 	return (
@@ -38,9 +40,9 @@ export default function SubscriptionHeader({
 			w='full'
 			spacing={16}
 			justify='space-between'
-			rounded='md'
-			roundedTop={!index || index === 0 ? 'md' : 'none'}
-			roundedBottom={index === length - 1 ? 'md' : 'none'}
+			rounded='lg'
+			roundedTop={!index || index === 0 ? 'lg' : 'none'}
+			roundedBottom={index === length - 1 ? 'lg' : 'none'}
 			p={4}
 			_dark={{
 				border: '2px solid',
@@ -95,9 +97,9 @@ export default function SubscriptionHeader({
 			</HStack>
 			<VStack spacing={0} display={{ base: 'none', md: 'flex' }} pr={2}>
 				<Text as='span' fontWeight={300}>
-					{subscription.cancels_at
+					{subscription.cancels_at === subscription.renews_at
 						? 'Cancels on'
-						: subscription.trial_ends_at
+						: subscription.trial_ends_at === subscription.renews_at
 						? 'Trial ends on'
 						: subscription.payment_method
 						? 'Renews on'

@@ -1,6 +1,5 @@
-import { Box, Heading, Text, VStack } from '@chakra-ui/react';
+import { Box, Heading, Link, Text, VStack } from '@chakra-ui/react';
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { AssignSubscription } from '../../components/premium/AssignSubscription';
 import Sparkles from '../../components/premium/Sparkles';

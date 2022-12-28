@@ -1,5 +1,4 @@
-import { Box, Heading, HStack, Text } from '@chakra-ui/react';
-import Link from 'next/link';
+import { Box, Heading, HStack, Link, Text } from '@chakra-ui/react';
 import React from 'react';
 import CurrentUserStore from '../../../../stores/CurrentUserStore';
 import { Routes } from '../../../../utils/constants';
@@ -30,16 +29,14 @@ export const General: React.FC<{ storage: typeof localStorage }> = ({
 								#{user.discriminator}
 							</Text>
 						</Box>
-						<Link href={Routes.LOGOUT} passHref legacyBehavior>
-							<Text
-								as='a'
-								fontSize='md'
-								fontWeight={200}
-								pt={2}
-								display={{ base: 'none', sm: 'inline-block' }}
-							>
-								Logout?
-							</Text>
+						<Link
+							fontSize='md'
+							fontWeight={200}
+							pt={2}
+							display={{ base: 'none', sm: 'inline-block' }}
+							href={Routes.LOGOUT}
+						>
+							Logout?
 						</Link>
 					</HStack>
 				</HStack>

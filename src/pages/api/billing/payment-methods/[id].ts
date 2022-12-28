@@ -1,9 +1,10 @@
 import { Ratelimit } from '@upstash/ratelimit';
+import { Snowflake } from 'discord-api-types/globals';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { one } from '../../../../utils';
 import { stripe } from '../../../../utils/billing/stripe';
-import { checkAuth, redis } from '../../../../utils/database';
+import { checkAuth, client, redis } from '../../../../utils/database';
 import { PaymentMethod } from '../../../../utils/types';
 
 const ratelimit = new Ratelimit({
@@ -46,7 +47,7 @@ export default async function subscription(
 
 	let result: Stripe.PaymentMethod;
 	try {
-		result = await stripe.paymentMethods.retrieve(id);
+		result = await stripe.paymentMethods.retrieve(id, { expand: ['customer'] });
 	} catch (err: any) {
 		return res
 			.status(err.message.startsWith('No such') ? 404 : 502)
@@ -57,5 +58,58 @@ export default async function subscription(
 		return res.status(403).send({ message: 'Missing Access' });
 	}
 
-	res.status(200).send(result);
+	const coll = client.collection<{
+		customer_id: string;
+		user_id: Snowflake;
+	}>('customers');
+
+	let customer = await coll
+		.findOne({ user_id: user.id })
+		.then((v) => v?.customer_id);
+
+	if (!customer) {
+		if (result.customer) {
+			customer = result.customer as string;
+
+			await coll.insertOne({ user_id: user.id, customer_id: customer });
+		} else {
+			return res.status(500).send({ message: 'Internal Server Error' });
+		}
+	}
+
+	const stripeCustomer =
+		(result.customer as Stripe.Customer) ??
+		(await stripe.customers.retrieve(customer));
+
+	if (stripeCustomer.deleted)
+		return res.status(422).send({ message: 'Deleted customer' });
+
+	switch (req.method) {
+		case 'PATCH': {
+			const { body } = req;
+
+			if ('default' in body) {
+				if (typeof body.default !== 'boolean')
+					return res.status(400).send({ message: 'Invalid request body' });
+
+				try {
+					await stripe.customers.update(customer, {
+						invoice_settings: {
+							default_payment_method: result.id,
+						},
+					});
+				} catch (err: any) {
+					return res.status(422).send({ message: err.message });
+				}
+			}
+		}
+		case 'GET':
+			return res.status(200).send({
+				...result,
+				customer: stripeCustomer.id,
+				default:
+					(stripeCustomer.invoice_settings.default_payment_method as string) ===
+					result.id,
+			});
+	}
 }

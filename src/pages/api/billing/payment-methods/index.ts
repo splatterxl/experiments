@@ -37,23 +37,29 @@ export default async function subscription(
 		return;
 	}
 
-	const customers = await client
+	const customer = await client
 		.collection<{
 			customer_id: string;
 			user_id: Snowflake;
 		}>('customers')
-		.find({ user_id: user.id })
-		.toArray();
+		.findOne({ user_id: user.id });
 
-	const result = [];
+	if (!customer) return res.send([]);
 
-	for (const customer of customers) {
-		result.push(
-			...(await stripe.customers
-				.listPaymentMethods(customer.customer_id, {} as any)
-				.then((res) => res.data))
+	const stripeCustomer = await stripe.customers.retrieve(customer.customer_id);
+
+	if (stripeCustomer.deleted)
+		return res.status(422).send({ message: 'Deleted customer' });
+
+	const result = await stripe.customers
+		.listPaymentMethods(customer.customer_id, {} as any)
+		.then((res) =>
+			res.data.map((v) => ({
+				...v,
+				default:
+					stripeCustomer.invoice_settings.default_payment_method === v.id,
+			}))
 		);
-	}
 
-	res.status(200).send(result);
+	res.send(result);
 }

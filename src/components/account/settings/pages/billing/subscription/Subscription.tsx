@@ -18,11 +18,7 @@ import { useRouter } from 'next/router';
 import React from 'react';
 import GuildsStore from '../../../../../../stores/GuildsStore';
 import { one } from '../../../../../../utils';
-import {
-	APIEndpoints,
-	makeURL,
-	Routes,
-} from '../../../../../../utils/constants';
+import { APIEndpoints, makeURL } from '../../../../../../utils/constants';
 import { PaymentMethods } from '../../../../../../utils/constants/billing';
 import useToast from '../../../../../../utils/hooks/useToast';
 import { request } from '../../../../../../utils/http';
@@ -101,20 +97,14 @@ export const Subscription: React.FC = () => {
 							{new Date(subscription.renews_at! * 1000).toLocaleDateString()}
 						</b>{' '}
 						using{' '}
-						<Link
-							href={Routes.PAYMENT_METHOD_SETTINGS(
-								subscription.payment_method!.id
-							)}
-						>
-							{subscription.payment_method!.type === 'card' ? (
-								<>
-									your card ending in{' '}
-									<b>{subscription.payment_method!.card!.last4}</b>
-								</>
-							) : (
-								<b>{PaymentMethods[subscription.payment_method!.type]}</b>
-							)}
-						</Link>
+						{subscription.payment_method!.type === 'card' ? (
+							<span>
+								your card ending in{' '}
+								<b>{subscription.payment_method!.card!.last4}</b>
+							</span>
+						) : (
+							<b>{PaymentMethods[subscription.payment_method!.type]}</b>
+						)}
 						.{' '}
 						<Link
 							onClick={() => {

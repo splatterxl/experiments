@@ -65,7 +65,7 @@ export default class Store<T, D = T> {
 		if (value != null) value = JSON.parse(value);
 		else value = this.defaultValue;
 
-		setState(value);
+		// setState(value);
 
 		return value;
 	}
