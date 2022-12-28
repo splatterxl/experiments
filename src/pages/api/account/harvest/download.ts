@@ -9,7 +9,7 @@ import { JWT_TOKEN } from '../../../../utils/jwt';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
-	limiter: Ratelimit.fixedWindow(5, '1 d')
+	limiter: Ratelimit.fixedWindow(5, '1 d'),
 });
 
 export default async function downloadHarvest(
@@ -27,7 +27,7 @@ export default async function downloadHarvest(
 
 		if (!payload.exp || Date.now() / 1000 > payload.exp!)
 			throw {
-				message: 'Harvest expiration date invalid'
+				message: 'Harvest expiration date invalid',
 			};
 
 		const identifier =
@@ -38,10 +38,13 @@ export default async function downloadHarvest(
 		res.setHeader('X-RateLimit-Reset', result.reset);
 
 		if (!result.success) {
-			res.status(429).json({
-				message: 'The request has been rate limited.',
-				reset_after: (result.reset - Date.now()) / 1000
-			});
+			res
+				.setHeader('Retry-After', (result.reset - Date.now()) / 1000)
+				.status(429)
+				.json({
+					message: 'The request has been rate limited.',
+					reset_after: (result.reset - Date.now()) / 1000,
+				});
 			return;
 		}
 
@@ -51,7 +54,7 @@ export default async function downloadHarvest(
 	} catch (err) {
 		res.status(404).send({
 			error: 'Unknown data harvest',
-			internal: process.env.NODE_ENV === 'development' ? err : undefined
+			internal: process.env.NODE_ENV === 'development' ? err : undefined,
 		});
 	}
 }

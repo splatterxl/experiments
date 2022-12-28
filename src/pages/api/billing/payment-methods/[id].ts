@@ -8,7 +8,7 @@ import { PaymentMethod } from '../../../../utils/types';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
-	limiter: Ratelimit.fixedWindow(1, '2 s')
+	limiter: Ratelimit.fixedWindow(1, '2 s'),
 });
 
 export default async function subscription(
@@ -28,10 +28,13 @@ export default async function subscription(
 	res.setHeader('X-RateLimit-Reset', rl.reset);
 
 	if (!rl.success) {
-		res.status(429).json({
-			message: 'You are being rate limited.',
-			reset_after: (rl.reset - Date.now()) / 1000
-		});
+		res
+			.setHeader('Retry-After', (rl.reset - Date.now()) / 1000)
+			.status(429)
+			.json({
+				message: 'You are being rate limited.',
+				reset_after: (rl.reset - Date.now()) / 1000,
+			});
 		return;
 	}
 

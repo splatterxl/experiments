@@ -1,5 +1,6 @@
 import { Heading, HStack, List, ListItem, Stack } from '@chakra-ui/react';
 import Link from 'next/link';
+import { Routes } from '../../utils/constants';
 
 export const Footer = () => {
 	return (
@@ -16,12 +17,12 @@ export const Footer = () => {
 			</Heading>
 			<List as={HStack} spacing={0} gap={2}>
 				<ListItem>
-					<Link href='/terms' style={{ fontWeight: 400 }}>
+					<Link href={Routes.TERMS} style={{ fontWeight: 400 }}>
 						Terms of Service
 					</Link>
 				</ListItem>
 				<ListItem>
-					<Link href='/privacy' style={{ fontWeight: 400 }}>
+					<Link href={Routes.PRIVACY} style={{ fontWeight: 400 }}>
 						Privacy Policy
 					</Link>
 				</ListItem>

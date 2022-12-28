@@ -1,5 +1,4 @@
 import { Snowflake } from 'discord-api-types/globals';
-import { APIGuild } from 'discord-api-types/v10';
 import type Stripe from 'stripe';
 import { Products } from './constants/billing';
 import { SubscriptionStatus } from './database';
@@ -9,7 +8,6 @@ export interface SubscriptionData {
 	status: SubscriptionStatus;
 	user_id: Snowflake;
 	guild_id?: Snowflake | null;
-	guild: APIGuild | null;
 	product: {
 		id: string;
 		label: string;
@@ -21,10 +19,7 @@ export interface SubscriptionData {
 	cancels_at: number | null;
 	cancelled: boolean;
 	renews_at: number | null;
-	payment_method?: {
-		type: Stripe.PaymentMethod['type'];
-		last4?: string;
-	} | null;
+	payment_method?: Stripe.PaymentMethod | null;
 }
 
 export type PaymentMethod = Stripe.PaymentMethod;

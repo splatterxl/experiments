@@ -3,19 +3,20 @@ import { Snowflake } from 'discord-api-types/globals';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { one } from '../../../utils';
 import { stripe } from '../../../utils/billing/stripe';
+import { Routes } from '../../../utils/constants';
 import { Prices, Products } from '../../../utils/constants/billing';
 import { checkAuth, client, redis } from '../../../utils/database';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
-	limiter: Ratelimit.fixedWindow(10, '10 m')
+	limiter: Ratelimit.fixedWindow(10, '10 m'),
 });
 
 export default async function checkout(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
-	if (!req.cookies.auth) return res.redirect('/auth/login?next=/premium');
+	if (!req.cookies.auth) return res.redirect(Routes.LOGIN_TO(Routes.PREMIUM));
 
 	const user = await checkAuth(req, res);
 
@@ -32,10 +33,13 @@ export default async function checkout(
 	res.setHeader('X-RateLimit-Reset', result.reset);
 
 	if (!result.success) {
-		res.status(429).json({
-			error: 'You are being rate limited.',
-			reset_after: (result.reset - Date.now()) / 1000
-		});
+		res
+			.setHeader('Retry-After', (result.reset - Date.now()) / 1000)
+			.status(429)
+			.json({
+				error: 'You are being rate limited.',
+				reset_after: (result.reset - Date.now()) / 1000,
+			});
 		return;
 	}
 
@@ -119,8 +123,8 @@ export default async function checkout(
 		line_items: [
 			{
 				price: Prices[product][price.toUpperCase()],
-				quantity: 1
-			}
+				quantity: 1,
+			},
 		],
 		mode: 'subscription',
 		subscription_data: shouldIncludeTrial ? { trial_period_days: 7 } : {},
@@ -131,8 +135,8 @@ export default async function checkout(
 		customer: customer?.customer_id,
 		allow_promotion_codes: true,
 		consent_collection: {
-			terms_of_service: 'required'
-		}
+			terms_of_service: 'required',
+		},
 	});
 
 	return res.redirect(session.url!);

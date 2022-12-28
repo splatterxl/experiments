@@ -1,10 +1,10 @@
 import { Redis } from '@upstash/redis';
 import { Snowflake } from 'discord-api-types/globals';
 import { APIUser } from 'discord-api-types/v10';
-import { verify } from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import { MongoClient } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { destroyCookie } from 'nookies';
+import { destroyCookie, setCookie } from 'nookies';
 import { Products } from './constants/billing';
 import { Endpoints, makeDiscordURL } from './constants/discord';
 import { JWT_TOKEN } from './jwt';
@@ -15,7 +15,7 @@ export const client = new MongoClient(process.env.MONGODB_URI!).db(
 
 export const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,
-	token: process.env.UPSTASH_REDIS_REST_TOKEN!
+	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
 export interface Subscription {
@@ -31,7 +31,7 @@ export interface Subscription {
 export enum SubscriptionStatus {
 	ACTIVE,
 	CANCELLED,
-	FAILED
+	FAILED,
 }
 
 export interface Authorization {
@@ -63,16 +63,24 @@ export const checkAuth = async (
 
 			const auth = await getAuth(id);
 
-			if (!auth) throw new Error('valid authentication token, no stored data');
+			if (!auth) {
+				await logout(res);
+
+				return;
+			}
 
 			const discord = await fetch(makeDiscordURL(Endpoints.ME, {}), {
-				headers: { Authorization: `${auth.token_type} ${auth.access_token}` }
+				headers: { Authorization: `${auth.token_type} ${auth.access_token}` },
 			});
 
 			if (discord.status !== 200) {
 				await logout(res);
 			} else {
-				return { ...(await discord.json()), access_token: auth.access_token };
+				const json = await discord.json();
+
+				setCookie({ res }, 'auth', sign(json, JWT_TOKEN), { path: '/' });
+
+				return { ...json, access_token: auth.access_token };
 			}
 		} catch (err) {
 			console.error(err);
@@ -92,12 +100,10 @@ async function logout(res: NextApiResponse, id?: Snowflake) {
 
 	// TODO: implement refreshing
 
-	console.log('logging out');
-
 	if (id)
 		await client.collection<Authorization>('auth').deleteMany({ user_id: id });
 
 	res.status(401).send({
-		message: 'Authentication token expired, please log in again.'
+		message: 'Authentication token expired, please log in again.',
 	});
 }

@@ -3,18 +3,19 @@ import { webcrypto } from 'crypto';
 import type { APIInteraction } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { Routes } from '../../utils/constants';
 
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
 	if (req.headers['user-agent']?.startsWith('Mozilla'))
-		return res.redirect('/');
+		return res.redirect(Routes.HOME);
 
 	// verify the request
 	const {
 		'x-signature-ed25519': signature,
-		'x-signature-timestamp': timestamp
+		'x-signature-timestamp': timestamp,
 	} = req.headers;
 	const rawBody = JSON.stringify(req.body);
 

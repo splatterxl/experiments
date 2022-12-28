@@ -12,15 +12,21 @@ import {
 	Text,
 	useDisclosure,
 	VisuallyHidden,
-	VStack
+	VStack,
 } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import React from 'react';
-import { one } from '../../../../../utils';
-import { APIEndpoints, makeURL } from '../../../../../utils/constants';
-import useToast from '../../../../../utils/hooks/useToast';
-import { request } from '../../../../../utils/http';
-import { SubscriptionData } from '../../../../../utils/types';
+import GuildsStore from '../../../../../../stores/GuildsStore';
+import { one } from '../../../../../../utils';
+import {
+	APIEndpoints,
+	makeURL,
+	Routes,
+} from '../../../../../../utils/constants';
+import { PaymentMethods } from '../../../../../../utils/constants/billing';
+import useToast from '../../../../../../utils/hooks/useToast';
+import { request } from '../../../../../../utils/http';
+import { SubscriptionData } from '../../../../../../utils/types';
 import SubscriptionHeader from './SubscriptionHeader';
 
 export const Subscription: React.FC = () => {
@@ -53,6 +59,8 @@ export const Subscription: React.FC = () => {
 			});
 	}, [sub_id, router]);
 
+	const guild = GuildsStore.useItem(subscription?.guild_id);
+
 	return subscription ? (
 		<VStack w='full' pt={2} pr={2} align='flex-start'>
 			<SubscriptionHeader
@@ -60,6 +68,7 @@ export const Subscription: React.FC = () => {
 				length={1}
 				index={0}
 				main
+				guild={guild}
 			/>
 			<Text>
 				{subscription.cancels_at ? (
@@ -84,7 +93,7 @@ export const Subscription: React.FC = () => {
 						<b>
 							{new Intl.NumberFormat('en-GB', {
 								style: 'currency',
-								currency: subscription.currency.toUpperCase()
+								currency: subscription.currency.toUpperCase(),
 							}).format(subscription.price! / 100)}
 						</b>{' '}
 						on{' '}
@@ -92,13 +101,20 @@ export const Subscription: React.FC = () => {
 							{new Date(subscription.renews_at! * 1000).toLocaleDateString()}
 						</b>{' '}
 						using{' '}
-						{subscription.payment_method!.type === 'card' ? (
-							<>
-								your card ending in <b>{subscription.payment_method!.last4}</b>
-							</>
-						) : (
-							<b>{subscription.payment_method?.type}</b>
-						)}
+						<Link
+							href={Routes.PAYMENT_METHOD_SETTINGS(
+								subscription.payment_method!.id
+							)}
+						>
+							{subscription.payment_method!.type === 'card' ? (
+								<>
+									your card ending in{' '}
+									<b>{subscription.payment_method!.card!.last4}</b>
+								</>
+							) : (
+								<b>{PaymentMethods[subscription.payment_method!.type]}</b>
+							)}
+						</Link>
 						.{' '}
 						<Link
 							onClick={() => {
@@ -131,12 +147,8 @@ export const Subscription: React.FC = () => {
 								<>You will continue being charged.</>
 							) : (
 								<>
-									{subscription.guild?.name ? (
-										<b>{subscription.guild.name}</b>
-									) : (
-										'Your server'
-									)}{' '}
-									will lose its perks on the next billing cycle.
+									{guild?.name ? <b>{guild.name}</b> : 'Your server'} will lose
+									its perks on the next billing cycle.
 								</>
 							)}
 						</AlertDialogBody>
@@ -162,7 +174,7 @@ export const Subscription: React.FC = () => {
 												...sub,
 												cancels_at: subscription.cancels_at
 													? null
-													: sub.renews_at
+													: sub.renews_at,
 											}));
 										} else {
 											const { message } = await res.json();
@@ -171,7 +183,7 @@ export const Subscription: React.FC = () => {
 												description: message,
 												status: 'error',
 												position: 'bottom-right',
-												isClosable: true
+												isClosable: true,
 											});
 										}
 

@@ -3,6 +3,7 @@ import { Montserrat } from '@next/font/google';
 import Link from 'next/link';
 import React from 'react';
 import { createAnalyticsQuery } from '../../utils/analytics';
+import { Routes } from '../../utils/constants';
 import { ASSETS } from '../../utils/constants/assets';
 
 const montserrat = Montserrat({ subsets: ['latin'] });
@@ -13,10 +14,10 @@ export const Logo: React.FC = () => {
 	return (
 		<Link
 			href={createAnalyticsQuery({
-				path: '/',
+				path: Routes.HOME,
 				analytics: {
-					from: 'navbar_logo'
-				}
+					from: 'navbar_logo',
+				},
 			})}
 		>
 			<HStack spacing={4}>

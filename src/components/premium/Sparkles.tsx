@@ -12,7 +12,7 @@ const generateSparkle = (color: string) => {
 		createdAt: Date.now(),
 		color,
 		size: random(10, 20),
-		style: { top: random(0, 100) + '%', left: random(0, 100) + '%' }
+		style: { top: random(0, 100) + '%', left: random(0, 100) + '%' },
 	};
 	return sparkle;
 };

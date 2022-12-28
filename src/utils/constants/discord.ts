@@ -6,7 +6,7 @@ export const Endpoints = {
 	REVOKE_TOKEN: '/oauth2/token/revoke',
 	ACCEPT_INVITE: (invite: string) => `/invites/${invite}`,
 	ME: '/users/@me',
-	GUILDS: '/users/@me/guilds'
+	GUILDS: '/users/@me/guilds',
 };
 
 export const Domains = {
@@ -14,10 +14,10 @@ export const Domains = {
 		process.env.NODE_ENV === 'development'
 			? 'canary.discord.com'
 			: 'discord.com',
-	CDN: 'cdn.discordapp.com'
+	CDN: 'cdn.discordapp.com',
 };
 
-export function makeDiscordURL(endpoint: string, query: any) {
+export function makeDiscordURL(endpoint: string, query?: any) {
 	return `https://${Domains.API}/api/v10${endpoint}?${new URLSearchParams(
 		query ?? {}
 	).toString()}`;

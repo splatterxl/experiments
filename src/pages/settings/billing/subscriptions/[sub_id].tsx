@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import {
 	SettingsPage,
-	SettingsPages
+	SettingsPages,
 } from '../../../../components/account/settings/Settings';
 
 export default function Subscription() {

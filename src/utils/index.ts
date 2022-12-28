@@ -42,10 +42,10 @@ export function paginate<T>(
 				? {
 						start: cursor,
 						end: sliced.length + cursor,
-						remaining: result.length - (sliced.length + cursor)
+						remaining: result.length - (sliced.length + cursor),
 				  }
 				: null,
-		results: sliced
+		results: sliced,
 	};
 }
 

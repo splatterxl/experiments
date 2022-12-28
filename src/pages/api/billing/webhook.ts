@@ -5,7 +5,7 @@ import { stripe } from '../../../utils/billing/stripe';
 import {
 	client,
 	Subscription,
-	SubscriptionStatus
+	SubscriptionStatus,
 } from '../../../utils/database';
 
 export const config = { api: { bodyParser: false } };
@@ -61,8 +61,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 				{ subscription_id: subId },
 				{
 					$set: {
-						status: SubscriptionStatus.FAILED
-					}
+						status: SubscriptionStatus.FAILED,
+					},
 				}
 			);
 		}

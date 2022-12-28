@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from '../../../brand/Button';
 
 export const PageList: React.FC<{ setIndex: (i: number) => void }> = ({
-	setIndex
+	setIndex,
 }) => {
 	const router = useRouter();
 

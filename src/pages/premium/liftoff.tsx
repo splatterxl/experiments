@@ -1,24 +1,17 @@
-import { Box, Code, Heading, Text, VStack } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack } from '@chakra-ui/react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { AssignSubscription } from '../../components/premium/AssignSubscription';
 import Sparkles from '../../components/premium/Sparkles';
 import { one } from '../../utils';
+import { Routes } from '../../utils/constants';
 
 export default function Liftoff() {
 	const router = useRouter();
 	const product = one(router.query.product);
 	const subscription = one(router.query.subscription);
 	const alreadyAssigned = one(router.query.prev_guild_id);
-
-	// React.useEffect(() => {
-	// 	if (!subscription) router.replace('/premium');
-	// }, []);
-
-	// if (!subscription) {
-	// 	return <></>;
-	// }
 
 	return (
 		<>
@@ -49,12 +42,7 @@ export default function Liftoff() {
 						) : (
 							<>
 								Now, let&apos;s apply your subscription. You subscribed to:{' '}
-								<Link
-									href={{
-										pathname: '/settings/billing/subscriptions/[sub_id]',
-										query: { sub_id: subscription }
-									}}
-								>
+								<Link href={Routes.SUBSCRIPTION_SETTINGS(subscription!)}>
 									{product ?? 'Premium'}
 								</Link>
 							</>

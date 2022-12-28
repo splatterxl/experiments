@@ -9,12 +9,33 @@ const nextConfig = {
 		// https://webpack.js.org/configuration/devtool/ and
 		// https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#use-hidden-source-map
 		// for more information.
-		hideSourceMaps: true
-	}
+		hideSourceMaps: true,
+	},
+	headers: async () => {
+		return [
+			{
+				source: '/:path*',
+				headers: [
+					{
+						key: 'Strict-Transport-Security',
+						value: 'max-age=63072000; includeSubDomains; preload',
+					},
+					{
+						key: 'X-XSS-Protection',
+						value: '0',
+					},
+					{
+						key: 'X-Content-Type-Options',
+						value: 'nosniff',
+					},
+				],
+			},
+		];
+	},
 };
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
-	enabled: process.env.ANALYZE === 'true'
+	enabled: process.env.ANALYZE === 'true',
 });
 
 // This file sets a custom webpack configuration to use your Next.js app
@@ -31,7 +52,7 @@ const sentryWebpackPluginOptions = {
 	//   release, url, org, project, authToken, configFile, stripPrefix,
 	//   urlPrefix, include, ignore
 
-	silent: true // Suppresses all logs
+	silent: true, // Suppresses all logs
 	// For all available options, see:
 	// https://github.com/getsentry/sentry-webpack-plugin#options.
 };
