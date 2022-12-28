@@ -4,7 +4,7 @@ import { createContext, useContext, useState } from 'react';
 
 const NavigationProgressBarProvider = createContext({
 	setVisible: (value: boolean) => {},
-	visible: false
+	visible: false,
 });
 
 export const NavigationProgressBar = () => {
@@ -23,7 +23,7 @@ export const NavigationProgressBar = () => {
 		<NavigationProgressBarProvider.Provider
 			value={{
 				setVisible,
-				visible
+				visible,
 			}}
 		>
 			<Progress

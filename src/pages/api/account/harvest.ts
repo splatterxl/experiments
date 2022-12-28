@@ -9,7 +9,7 @@ import { JWT_TOKEN } from '../../../utils/jwt';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
-	limiter: Ratelimit.fixedWindow(1, '30 d')
+	limiter: Ratelimit.fixedWindow(1, '30 d'),
 });
 
 export default async function startHarvest(
@@ -28,9 +28,10 @@ export default async function startHarvest(
 			res.setHeader('X-RateLimit-Limit', result.limit);
 			res.setHeader('X-RateLimit-Remaining', result.remaining);
 			res.setHeader('X-RateLimit-Reset', result.reset);
+			res.setHeader('Retry-After', (result.reset - Date.now()) / 1000);
 
 			res.status(429).json({
-				message: 'Data harvest already in progress.'
+				message: 'Data harvest already in progress.',
 			});
 		} else if (req.method === 'GET') {
 			res.status(200).send({ status: true });
@@ -59,7 +60,7 @@ export default async function startHarvest(
 			substitutions: [
 				{
 					var: 'name',
-					value: user.username
+					value: user.username,
 				},
 				{
 					var: 'download_url',
@@ -67,15 +68,15 @@ export default async function startHarvest(
 						_: sign(
 							{
 								user: user.id,
-								email: user.email
+								email: user.email,
 							},
 							JWT_TOKEN,
 							{ expiresIn: '30d' }
-						)
-					})}`
-				}
-			]
-		}
+						),
+					})}`,
+				},
+			],
+		},
 	];
 
 	const emailParams = new EmailParams()
@@ -93,7 +94,7 @@ export default async function startHarvest(
 		message:
 			email.status === 202
 				? 'We have sent your data to your Discord email address.'
-				: 'An unknown error occured. Sorry!'
+				: 'An unknown error occured. Sorry!',
 	});
 
 	if (!email.ok) {

@@ -1,17 +1,24 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { parseCookies } from 'nookies';
 import { one } from '../../../utils';
-import { APIEndpoints, makeURL } from '../../../utils/constants';
+import { APIEndpoints, makeURL, Routes } from '../../../utils/constants';
 import {
 	APP_ID,
 	Endpoints,
-	makeDiscordURL
+	makeDiscordURL,
 } from '../../../utils/constants/discord';
 
 export default function Login(req: NextApiRequest, res: NextApiResponse) {
 	const cookies = parseCookies({ req });
 
-	if (cookies.auth) return res.redirect('/dashboard');
+	let nextURL = Routes.DASHBOARD;
+
+	if (req.query.next)
+		try {
+			nextURL = new URL(one(req.query.next), 'https://google.com').pathname;
+		} catch {}
+
+	if (cookies.auth) return res.redirect(nextURL);
 
 	const join = Boolean(one(req.query.join));
 
@@ -35,10 +42,8 @@ export default function Login(req: NextApiRequest, res: NextApiResponse) {
 		scope: scope.join(' '),
 		redirect_uri: url.origin + makeURL(APIEndpoints.DISCORD_CALLBACK),
 		response_type: 'code',
-		state: Buffer.from(
-			JSON.stringify({ next: one(req.query.next) ?? '/dashboard' })
-		).toString('base64'),
-		prompt: 'none'
+		state: Buffer.from(JSON.stringify({ next: nextURL })).toString('base64'),
+		prompt: 'none',
 	});
 
 	return res.redirect(authorizeURL);

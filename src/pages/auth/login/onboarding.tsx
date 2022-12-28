@@ -1,61 +1,39 @@
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 import { Center, Heading, HStack, Spinner, Text } from '@chakra-ui/react';
-import type { APIUser } from 'discord-api-types/v10';
-import { decode } from 'jsonwebtoken';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { destroyCookie, parseCookies } from 'nookies';
 import React from 'react';
 import { UserIcon } from '../../../components/account/UserIcon';
 import { GhostButton } from '../../../components/brand/GhostButton';
 import { Link } from '../../../components/Link';
+import CurrentUserStore from '../../../stores/CurrentUserStore';
 import { one } from '../../../utils';
+import { Routes } from '../../../utils/constants';
 
 export default function LoginOnboarding({ next }: { next: string }) {
-	const [user, setUser] = React.useState<APIUser>(null as any);
+	const [, setUser, user] = CurrentUserStore.useStateFromStorage();
 
 	const router = useRouter();
 
-	const [seconds, setSeconds] = React.useState(5);
-
 	React.useEffect(() => {
 		(async () => {
-			const { auth } = parseCookies();
-			const scope = one(router.query.scope)?.split('+') ?? [
-				'identify',
-				'email'
-			];
-
-			if (!auth) return router.replace('/auth/login/try-again');
-
-			try {
-				const user = (decode(auth) as APIUser)!;
-
-				localStorage.setItem('user', JSON.stringify(user));
-				localStorage.setItem('scope', JSON.stringify(scope));
-
-				setUser(user);
-			} catch (err) {
-				console.error(err);
-
-				destroyCookie(null, 'auth', { path: '/' });
-
-				router.replace('/auth/login/try-again');
-
-				return;
-			}
-
-			if (next !== '/dashboard') router.replace(next);
+			if (next !== Routes.DASHBOARD) router.replace(next);
 		})();
-	}, [router, next]);
+	}, [router, next, setUser]);
 
 	return (
 		<>
 			<Head>
 				<title>Login | Experiments</title>
 			</Head>
-			<Center h='85vh' pb='20vh' flexDirection='column' textAlign='center'>
+			<Center
+				h='85vh'
+				pb='20vh'
+				flexDirection='column'
+				textAlign='center'
+				suppressHydrationWarning
+			>
 				{user ? (
 					<>
 						<Heading>
@@ -73,7 +51,7 @@ export default function LoginOnboarding({ next }: { next: string }) {
 						</Heading>
 						<Text fontSize='lg' px={16} textAlign='center'>
 							We&apos;re glad you could join us.{' '}
-							{next !== '/dashboard' ? (
+							{next !== Routes.DASHBOARD ? (
 								<>
 									You&apos;ll be <Link href={next}>redirected</Link> soon.
 								</>
@@ -84,14 +62,14 @@ export default function LoginOnboarding({ next }: { next: string }) {
 								</>
 							)}
 						</Text>
-						{next === '/dashboard' ? (
+						{next === Routes.DASHBOARD ? (
 							<GhostButton
 								label='Go to Dashboard'
 								icon={<ArrowForwardIcon />}
 								iconPos='right'
 								iconOnly={false}
 								mt={3}
-								href='/dashboard'
+								href={Routes.DASHBOARD}
 							/>
 						) : null}
 					</>
@@ -106,18 +84,12 @@ export default function LoginOnboarding({ next }: { next: string }) {
 export async function getServerSideProps(
 	context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<{ next: string }>> {
-	console.log(context);
-
-	let next: string;
+	let next = Routes.DASHBOARD;
 
 	if (context.query.next) {
 		try {
 			next = new URL(one(context.query.next), 'https://google.com').pathname;
-		} catch {
-			next = '/dashboard';
-		}
-	} else {
-		next = '/dashboard';
+		} catch {}
 	}
 
 	return { props: { next } };

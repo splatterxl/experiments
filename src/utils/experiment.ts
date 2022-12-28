@@ -40,7 +40,7 @@ export enum FilterType {
 	ID = 3013771838,
 	HubType = 4148745523,
 	VanityURL = 188952590, // format unknown
-	RangeByHash = 2294888943
+	RangeByHash = 2294888943,
 }
 
 type FeatureFilter = [FilterType.Feature, [[_: number, features: string[]]]];

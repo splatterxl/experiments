@@ -2,7 +2,7 @@ import { GetStaticPropsContext } from 'next';
 import Head from 'next/head';
 import {
 	SettingsPage,
-	SettingsPages
+	SettingsPages,
 } from '../../components/account/settings/Settings';
 import { one } from '../../utils';
 
@@ -27,7 +27,7 @@ export async function getStaticPaths() {
 		paths: Object.values(SettingsPages)
 			.filter((v) => typeof v === 'string')
 			.map((v) => ({ params: { page: v.toString().toLowerCase() } })),
-		fallback: false
+		fallback: false,
 	};
 }
 
@@ -39,7 +39,7 @@ export async function getStaticProps({ params }: GetStaticPropsContext) {
 	return {
 		props: {
 			page: SettingsPages[page.toUpperCase() as keyof typeof SettingsPages],
-			title: page[0].toUpperCase() + page.slice(1).toLowerCase()
-		}
+			title: page[0].toUpperCase() + page.slice(1).toLowerCase(),
+		},
 	};
 }

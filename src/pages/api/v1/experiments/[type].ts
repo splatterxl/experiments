@@ -91,7 +91,7 @@ export async function getExperiments(
 	let json = await client
 		.collection<Experiment>('experiments')
 		.find({
-			type: options.type ?? { $exists: !withRollouts ? true : undefined }
+			type: options.type ?? { $exists: !withRollouts ? true : undefined },
 		})
 		.skip(options.cursor ?? 0)
 		.limit(options.limit ?? 50)
@@ -110,7 +110,7 @@ export async function getExperiments(
 						...v,
 						description:
 							v.description?.replace(/^(Control|Treatment \d+)(: )?/, '') ||
-							null
+							null,
 					}));
 
 					if (!withRollouts && doc.type === 'guild') {

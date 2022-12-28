@@ -2,7 +2,7 @@ import { HStack, Select } from '@chakra-ui/react';
 import { APIGuild, PermissionFlagsBits } from 'discord-api-types/v10';
 import router from 'next/router';
 import React from 'react';
-import { APIEndpoints, makeURL } from '../../utils/constants';
+import { APIEndpoints, makeURL, Routes } from '../../utils/constants';
 import useToast from '../../utils/hooks/useToast';
 import { getGuilds, request } from '../../utils/http';
 import { PrimaryButton } from '../brand/PrimaryButton';
@@ -54,28 +54,29 @@ export const AssignSubscription: React.FC<
 							{
 								method: 'PATCH',
 								headers: {
-									'Content-Type': 'application/json'
+									'Content-Type': 'application/json',
 								},
 								body: JSON.stringify({
-									guild_id: ref.current.value
-								})
+									guild_id: ref.current.value,
+								}),
 							}
 						);
 
 						if (res.ok) {
 							router.push(
 								prev
-									? `/settings/billing/subscriptions/${subscription}`
-									: `/dashboard/guilds/${ref.current.value}/${
+									? Routes.SUBSCRIPTION_SETTINGS(subscription)
+									: Routes.SERVER_LIFTOFF(
+											ref.current.value,
 											product === 'Mailing List' ? 'mailing-list' : 'premium'
-									  }/liftoff`
+									  )
 							);
 						} else {
 							const json = await res.json();
 
 							toast({
 								status: 'error',
-								description: json.message
+								description: json.message,
 							});
 						}
 					}

@@ -13,8 +13,8 @@ export const cleanURL = (router: NextRouter) => {
 		router.replace({
 			pathname: router.pathname,
 			query: {
-				...router.query
-			}
+				...router.query,
+			},
 		});
 	}
 };
@@ -24,8 +24,8 @@ export const createAnalyticsQuery = (options: Partial<RoutingOptions>) => {
 		pathname: options.path,
 		query: new URLSearchParams({
 			...options.analytics,
-			...options.query
-		}).toString()
+			...options.query,
+		}).toString(),
 	};
 };
 

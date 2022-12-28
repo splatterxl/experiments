@@ -29,7 +29,7 @@ export async function getBySearch(options: GetExperimentsOptions) {
 	if (search) {
 		const fuzzy = new FuzzySearch(experiments, ['title', 'id'], {
 			caseSensitive: false,
-			sort: true
+			sort: true,
 		});
 
 		result = fuzzy.search(search);

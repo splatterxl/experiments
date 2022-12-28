@@ -1,23 +1,21 @@
 import type {
 	APIUser,
-	RESTPostOAuth2AccessTokenResult
+	RESTGetAPICurrentUserGuildsResult,
+	RESTPostOAuth2AccessTokenResult,
 } from 'discord-api-types/v10';
 import { sign } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { setCookie } from 'nookies';
-import { APIEndpoints, makeURL } from '../../../utils/constants';
+import { APIEndpoints, makeURL, Routes } from '../../../utils/constants';
 import {
 	APP_ID,
 	Endpoints,
 	GUILD_INVITE,
-	makeDiscordURL
+	makeDiscordURL,
 } from '../../../utils/constants/discord';
 import { Authorization, client } from '../../../utils/database';
+import { request } from '../../../utils/http';
 import { JWT_TOKEN } from '../../../utils/jwt';
-
-const ErrorUrls = {
-	TRY_AGAIN: '/auth/login/try-again'
-};
 
 export default async function handleDiscordAuth(
 	req: NextApiRequest,
@@ -51,9 +49,9 @@ export default async function handleDiscordAuth(
 					client_secret: process.env.DISCORD_CLIENT_SECRET,
 					grant_type: 'authorization_code',
 					code: code,
-					redirect_uri: redirectURL
+					redirect_uri: redirectURL,
 				} as any).toString(),
-				method: 'POST'
+				method: 'POST',
 			}
 		).then((res) => res.json());
 
@@ -65,7 +63,7 @@ export default async function handleDiscordAuth(
 				refresh_token,
 				scope: discordScope,
 				token_type,
-				expires_in
+				expires_in,
 			} = json;
 			const scope = discordScope.split(' ');
 
@@ -77,22 +75,46 @@ export default async function handleDiscordAuth(
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
-								Authorization: `${token_type} ${access_token}`
+								Authorization: `${token_type} ${access_token}`,
 							},
-							body: JSON.stringify({})
+							body: JSON.stringify({}),
 						}
 					);
 				} catch {}
 			}
 
-			const me: APIUser = await fetch(makeDiscordURL(Endpoints.ME, {}), {
+			if (!scope.includes('guilds')) {
+				return res.status(400).send({
+					message:
+						'To prevent spam and fraud across our services, we ask for read-only access to your servers list.',
+				});
+			}
+
+			const me: APIUser = await request(makeDiscordURL(Endpoints.ME, {}), {
 				method: 'GET',
 				headers: {
-					Authorization: `${token_type} ${access_token}`
-				}
+					Authorization: `${token_type} ${access_token}`,
+				},
 			}).then((res) => res.json());
 
 			if (!me.id) throw 'Unknown error';
+
+			const guilds: RESTGetAPICurrentUserGuildsResult = await request(
+				makeDiscordURL(Endpoints.GUILDS, {}),
+				{
+					method: 'GET',
+					headers: {
+						Authorization: `${token_type} ${access_token}`,
+					},
+				}
+			).then((res) => res.json());
+
+			if (!guilds?.length || guilds.length < 5) {
+				return res.status(403).send({
+					message:
+						'To prevent spam and fraud across our systems, we require Discord accounts to be legitimate to log in.',
+				});
+			}
 
 			const coll = client.collection<Authorization>('auth');
 
@@ -105,11 +127,11 @@ export default async function handleDiscordAuth(
 						expires: new Date(Date.now() + expires_in * 1000),
 						token_type,
 						scope,
-						user_id: me.id
-					}
+						user_id: me.id,
+					},
 				},
 				{
-					upsert: true
+					upsert: true,
 				}
 			);
 
@@ -117,20 +139,19 @@ export default async function handleDiscordAuth(
 				{ res },
 				'auth',
 				sign(me, JWT_TOKEN, {
-					expiresIn: expires_in
+					expiresIn: expires_in,
 				}),
 				{
-					path: '/'
+					path: '/',
 				}
 			);
 			res.redirect(
-				`/auth/login/onboarding?scope=${scope.join(
-					'+'
-				)}&next=${encodeURIComponent(nextURL)}`
+				Routes.LOGIN_ONBOARDING(encodeURIComponent(nextURL), scope.join('+'))
 			);
 		}
 	} catch (err) {
 		console.log(err);
-		return res.redirect(ErrorUrls.TRY_AGAIN);
+
+		return res.redirect(Routes.LOGIN_TRY_AGAIN);
 	}
 }

@@ -1,15 +1,14 @@
 import { Box, Heading, HStack, Text } from '@chakra-ui/react';
 import Link from 'next/link';
 import React from 'react';
+import CurrentUserStore from '../../../../stores/CurrentUserStore';
+import { Routes } from '../../../../utils/constants';
 import { UserIcon } from '../../UserIcon';
 
 export const General: React.FC<{ storage: typeof localStorage }> = ({
-	storage: localStorage
+	storage: localStorage,
 }) => {
-	const user = JSON.parse(localStorage.getItem('user')!);
-	const scopes = JSON.parse(
-		localStorage.getItem('scope') ?? JSON.stringify(['guilds', 'email'])
-	);
+	const user = CurrentUserStore.useValue()!;
 
 	if (!user) return <></>;
 
@@ -31,7 +30,7 @@ export const General: React.FC<{ storage: typeof localStorage }> = ({
 								#{user.discriminator}
 							</Text>
 						</Box>
-						<Link href='/auth/logout' passHref legacyBehavior>
+						<Link href={Routes.LOGOUT} passHref legacyBehavior>
 							<Text
 								as='a'
 								fontSize='md'
@@ -45,7 +44,6 @@ export const General: React.FC<{ storage: typeof localStorage }> = ({
 					</HStack>
 				</HStack>
 			</Heading>
-			{!scopes.includes('guilds')}
 		</>
 	);
 };

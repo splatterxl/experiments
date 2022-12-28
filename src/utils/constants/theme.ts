@@ -6,8 +6,8 @@ export const THEME = extendTheme({
 	styles: {
 		global: (props) => ({
 			body: {
-				bg: mode('#f3f2ef', '#1f1b1a')(props)
-			}
-		})
-	}
+				bg: mode('#f3f2ef', '#1f1b1a')(props),
+			},
+		}),
+	},
 } as Partial<ChakraTheme>);

@@ -1,11 +1,11 @@
 import { HStack, Text, useMediaQuery } from '@chakra-ui/react';
-import type { APIUser } from 'discord-api-types/v10';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
-import React from 'react';
+import CurrentUserStore from '../../stores/CurrentUserStore';
 import { login } from '../../utils/actions/login';
 import { createAnalyticsQuery } from '../../utils/analytics';
+import { Routes } from '../../utils/constants';
 import { UserIcon } from '../account/UserIcon';
 import { PrimaryButton } from '../brand/PrimaryButton';
 import { Logo } from './Logo';
@@ -13,14 +13,7 @@ import { Logo } from './Logo';
 export default function Navbar() {
 	const cookies = parseCookies();
 
-	const [user, setUser] = React.useState<APIUser>(null as any);
-
-	React.useEffect(() => {
-		const item = localStorage.getItem('user');
-
-		if (!cookies.auth) localStorage.removeItem('user');
-		else if (item) setUser(JSON.parse(item));
-	}, [cookies.auth]);
+	const user = CurrentUserStore.useValue();
 
 	const router = useRouter();
 
@@ -36,15 +29,16 @@ export default function Navbar() {
 			paddingTop={6}
 			paddingBottom={4}
 			minH={{ base: 'auto', md: '13vh' }}
+			suppressHydrationWarning
 		>
 			<Logo />
 			<HStack justify='flex-end' align='center' gap={4}>
 				<Link
 					href={createAnalyticsQuery({
-						path: '/premium',
+						path: Routes.PREMIUM,
 						analytics: {
-							from: 'navbar'
-						}
+							from: 'navbar',
+						},
 					})}
 					passHref
 					legacyBehavior
@@ -61,11 +55,11 @@ export default function Navbar() {
 				<PrimaryButton
 					onClick={() => {
 						if (!cookies.auth) login('navbar', router.asPath);
-						else if (router.pathname !== '/dashboard')
+						else if (router.pathname !== Routes.DASHBOARD)
 							router.push(
 								createAnalyticsQuery({
-									path: '/dashboard',
-									analytics: { from: 'navbar' }
+									path: Routes.DASHBOARD,
+									analytics: { from: 'navbar' },
 								})
 							);
 					}}

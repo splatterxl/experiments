@@ -1,6 +1,7 @@
 import { Heading, List, ListItem, Text, VStack } from '@chakra-ui/react';
 import Head from 'next/head';
 import { Link } from '../components/Link';
+import { Routes } from '../utils/constants';
 
 export default function Privacy() {
 	return (
@@ -13,7 +14,7 @@ export default function Privacy() {
 					Privacy Policy
 				</Heading>
 				<Text fontWeight={300}>
-					Last modified and effective: December 24, 2022.
+					Last modified and effective: December 28, 2022.
 				</Text>
 				<Heading fontWeight='extrabold'>Overview</Heading>
 				<Text>
@@ -32,7 +33,7 @@ export default function Privacy() {
 						Transport Layer Security (TLS)
 					</Link>{' '}
 					and is encrypted at rest. Your account information is stored securely
-					by <Link href='https://mongodb.com'>MongoDB Inc.</Link>.
+					on our servers.
 				</Text>
 				<List styleType='initial' px={6}>
 					<ListItem>
@@ -43,8 +44,8 @@ export default function Privacy() {
 					<ListItem>
 						We collect your email address to contact you about important changes
 						to your account and subscription, and to provide our{' '}
-						<Link href='/premium'>Mailing List</Link> services. We will never
-						send you promotional content without prior and active consent.
+						<Link href={Routes.PREMIUM}>Mailing List</Link> services. We will
+						never send you promotional content without prior and active consent.
 					</ListItem>
 					<ListItem>
 						If you use our online dashboard or Discord bot to view experiment
@@ -63,18 +64,18 @@ export default function Privacy() {
 				<Text>
 					You may request a copy of your data through the online dashboard by
 					navigating to your{' '}
-					<Link href='/settings/account'>Account Settings</Link> and clicking on
-					the button labelled &quot;Request My Data&quot;. It may take up to 30
-					days for us to process your request.
+					<Link href={Routes.ACCOUNT_SETTINGS}>Account Settings</Link> and
+					clicking on the button labelled &quot;Request My Data&quot;. It may
+					take up to 30 days for us to process your request.
 				</Text>
 				<Heading id='delete-your-data'>03. Delete Your Data</Heading>
 				<Text>
 					You may remove our records of your data and billing subscription
 					history by deleting your account through{' '}
-					<Link href='/settings/account'>Account Settings</Link>. Unfortunately
-					due to technical limitations beyond our control we are unable to
-					delete your data after you disconnect our OAuth2 Application through
-					your Discord settings, you must immediately navigate to our
+					<Link href={Routes.ACCOUNT_SETTINGS}>Account Settings</Link>.
+					Unfortunately due to technical limitations beyond our control we are
+					unable to delete your data after you disconnect our OAuth2 Application
+					through your Discord settings, you must immediately navigate to our
 					website&apos;s Account Settings page.
 				</Text>
 				<Heading id='further-information'>04. Further Information</Heading>

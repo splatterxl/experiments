@@ -7,7 +7,7 @@ import {
 	ListItem,
 	Tag,
 	Text,
-	useMediaQuery
+	useMediaQuery,
 } from '@chakra-ui/react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ import { PrimaryButton } from '../components/brand/PrimaryButton';
 import { RocketIcon } from '../components/brand/RocketIcon';
 import { PremiumBadge } from '../components/premium/PremiumBadge';
 import { createAnalyticsQuery } from '../utils/analytics';
+import { Routes } from '../utils/constants';
 
 export default function Home() {
 	return (
@@ -26,12 +27,20 @@ export default function Home() {
 				pt={useMediaQuery('(max-height: 500px)')[0] ? 30 : 36}
 				pb={{
 					base: '30vh',
-					md: '10vh'
+					md: '10vh',
 				}}
 				flexDirection='column'
 				gap={{ base: 1, md: 1 }}
 			>
-				<Link href='/updates'>
+				<Link
+					href={createAnalyticsQuery({
+						path: Routes.UPDATES,
+						analytics: {
+							from: 'home-mailing-list-cta',
+							campaign: 'mailing-list',
+						},
+					})}
+				>
 					{/* // TODO */}
 					<Tag rounded='lg' display='none'>
 						<b>NEW</b>: Get monthly email updates for only $1
@@ -49,7 +58,7 @@ export default function Home() {
 						styles={{
 							background: 'linear-gradient(90deg, #ec9c3a 0%, 	#e6893e 100%)',
 							WebkitTextFillColor: 'transparent',
-							backgroundClip: 'text'
+							backgroundClip: 'text',
 						}}
 					>
 						Your key to new features.
@@ -87,8 +96,8 @@ export default function Home() {
 					pr={5}
 					size='lg'
 					href={createAnalyticsQuery({
-						path: '/get-started',
-						analytics: { from: 'home-cta' }
+						path: Routes.GET_STARTED,
+						analytics: { from: 'home-main-cta' },
 					})}
 					label='Get Started'
 					icon={<Icon as={RocketIcon} />}

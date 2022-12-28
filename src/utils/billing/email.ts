@@ -1,12 +1,12 @@
 import { Attachment, EmailParams, Recipient } from 'mailersend';
 
 export const mailersend = new (require('mailersend'))({
-	api_key: process.env.MAILER_KEY
+	api_key: process.env.MAILER_KEY,
 });
 
 export const from = {
 	email: 'noreply@splt.dev',
-	name: 'Experiments'
+	name: 'Experiments',
 };
 
 interface IRecipient {
@@ -60,7 +60,7 @@ export function sendEmail(recipient: IRecipient, content: EmailContent) {
 	return mailersend.send(params).then(async (res: Response) => {
 		const resp = {
 			status: `${res.status} ${res.statusText}`,
-			json: null as any
+			json: null as any,
 		};
 
 		if (!res.ok) {

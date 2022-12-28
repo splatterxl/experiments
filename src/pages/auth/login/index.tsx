@@ -5,7 +5,7 @@ import {
 	Heading,
 	HStack,
 	Text,
-	VStack
+	VStack,
 } from '@chakra-ui/react';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
@@ -13,7 +13,7 @@ import React from 'react';
 import { PrimaryButton } from '../../../components/brand/PrimaryButton';
 import { Link } from '../../../components/Link';
 import { one } from '../../../utils';
-import { APIEndpoints, makeURL } from '../../../utils/constants';
+import { APIEndpoints, makeURL, Routes } from '../../../utils/constants';
 
 export default function Login({ next }: { next: string }) {
 	let [join, setJoin] = React.useState(false);
@@ -33,7 +33,7 @@ export default function Login({ next }: { next: string }) {
 					maxW={{
 						base: '100vw',
 						sm: '60vw',
-						lg: '30vw'
+						lg: '30vw',
 					}}
 					align='flex-start'
 					justify='flex-start'
@@ -42,8 +42,8 @@ export default function Login({ next }: { next: string }) {
 						base: {},
 						md: {
 							bgColor: 'orange.50',
-							boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;'
-						}
+							boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;',
+						},
 					}}
 					padding={{ base: 10, sm: 8 }}
 					rounded='lg'
@@ -53,8 +53,8 @@ export default function Login({ next }: { next: string }) {
 						<Heading fontWeight={800}>Login</Heading>
 						<Text>
 							By logging in, you agree to our{' '}
-							<Link href='/terms'>Terms of Service</Link> and{' '}
-							<Link href='/privacy'>Privacy Policy.</Link>
+							<Link href={Routes.TERMS}>Terms of Service</Link> and{' '}
+							<Link href={Routes.PRIVACY}>Privacy Policy.</Link>
 						</Text>
 					</VStack>
 					<Checkbox
@@ -81,8 +81,8 @@ export default function Login({ next }: { next: string }) {
 								pathname: makeURL(APIEndpoints.LOGIN),
 								query: {
 									join,
-									next
-								}
+									next,
+								},
 							} as any
 						}
 					/>
@@ -98,19 +98,19 @@ export async function getServerSideProps(
 	if (context.req.cookies['auth']) {
 		return {
 			redirect: {
-				destination: `/auth/login/onboarding${
+				destination: Routes.LOGIN_ONBOARDING(
 					context.query.next
-						? `?next=${encodeURIComponent(one(context.query.next))}`
-						: ''
-				}`,
-				statusCode: 302 /* Found */
-			}
+						? encodeURIComponent(one(context.query.next))
+						: undefined
+				),
+				statusCode: 302 /* Found */,
+			},
 		};
 	}
 
 	return {
 		props: {
-			next: one(context.query.next) ?? '/dashboard'
-		}
+			next: one(context.query.next) ?? Routes.DASHBOARD,
+		},
 	};
 }

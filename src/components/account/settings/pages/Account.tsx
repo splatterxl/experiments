@@ -8,7 +8,7 @@ import { PrimaryButton } from '../../../brand/PrimaryButton';
 enum RequestState {
 	LOADING,
 	AVAILABLE,
-	SENT
+	SENT,
 }
 
 export const Account: React.FC = () => {
@@ -49,7 +49,7 @@ export const Account: React.FC = () => {
 						const { message, ok } = await request(
 							makeURL(APIEndpoints.HARVEST),
 							{
-								method: 'POST'
+								method: 'POST',
 							}
 						).then(async (res) => ({ ok: res.ok, ...(await res.json()) }));
 
@@ -58,7 +58,7 @@ export const Account: React.FC = () => {
 							// title: ok ? 'Collection started' : 'Error',
 							description: message,
 							position: 'bottom-right',
-							isClosable: true
+							isClosable: true,
 						});
 
 						setState(RequestState.SENT);

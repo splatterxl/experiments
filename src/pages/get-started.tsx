@@ -2,6 +2,7 @@ import { ArrowBackIcon } from '@chakra-ui/icons';
 import { Center, Heading, Text } from '@chakra-ui/react';
 import Head from 'next/head';
 import { GhostButton } from '../components/brand/GhostButton';
+import { Routes } from '../utils/constants';
 
 export default function ComingSoon() {
 	return (
@@ -15,7 +16,12 @@ export default function ComingSoon() {
 					This page is still under construction. We&apos;re cooking up something
 					good!
 				</Text>
-				<GhostButton label='Go Home' icon={<ArrowBackIcon />} mt={3} href='/' />
+				<GhostButton
+					label='Go Home'
+					icon={<ArrowBackIcon />}
+					mt={3}
+					href={Routes.HOME}
+				/>
 			</Center>
 		</>
 	);

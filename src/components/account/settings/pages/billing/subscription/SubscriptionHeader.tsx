@@ -5,23 +5,27 @@ import {
 	HStack,
 	Text,
 	VisuallyHidden,
-	VStack
+	VStack,
 } from '@chakra-ui/react';
+import { RESTAPIPartialCurrentUserGuild } from 'discord-api-types/v10';
 import Link from 'next/link';
-import { Months } from '../../../../../utils/constants/billing';
-import type { SubscriptionData } from '../../../../../utils/types';
-import { GuildIcon } from '../../../GuildIcon';
+import { Routes } from '../../../../../../utils/constants';
+import { Months } from '../../../../../../utils/constants/billing';
+import type { SubscriptionData } from '../../../../../../utils/types';
+import { GuildIcon } from '../../../../GuildIcon';
 
 export default function SubscriptionHeader({
 	subscription,
 	index,
 	length,
-	main
+	main,
+	guild,
 }: {
 	subscription: SubscriptionData;
 	index: number;
 	length: number;
 	main?: boolean;
+	guild?: RESTAPIPartialCurrentUserGuild;
 }) {
 	const date = new Date(
 		(subscription.cancels_at ??
@@ -41,15 +45,21 @@ export default function SubscriptionHeader({
 			_dark={{
 				border: '2px solid',
 				borderBottom: index === length - 1 ? undefined : 'none',
-				borderColor: 'gray.500'
+				borderColor: 'gray.600',
+			}}
+			_light={{
+				border: '2px solid',
+				borderBottom: index === length - 1 ? undefined : 'none',
+				borderColor: 'gray.400',
+				bgColor: 'gray.100',
 			}}
 		>
 			<HStack spacing={4}>
-				{subscription.guild ? (
+				{guild ? (
 					<GuildIcon
-						name={subscription.guild.name}
-						hash={subscription.guild.icon!}
-						id={subscription.guild.id!}
+						name={guild.name}
+						hash={guild.icon!}
+						id={guild.id!}
 						size='lg'
 					/>
 				) : null}
@@ -63,32 +73,27 @@ export default function SubscriptionHeader({
 						) : null}
 					</HStack>
 					<HStack align='center'>
-						<Text fontWeight={400}>
-							{subscription.guild?.name ?? 'Unassigned'}
+						<Text fontWeight={400} fontSize='lg'>
+							{guild?.name ?? 'Unassigned'}
 						</Text>
 						{main && !subscription.cancels_at ? (
 							<Link
-								href={{
-									pathname: '/premium/liftoff',
-									query: {
-										product: subscription.product.label,
-										subscription: subscription.id,
-										prev_guild_id: subscription.guild?.id
-									}
-								}}
+								href={Routes.REASSIGN_SUBSCRIPTION(
+									subscription.id,
+									subscription.product.label,
+									guild?.id
+								)}
 							>
 								<EditIcon />
 								<VisuallyHidden>
-									{subscription.guild?.name
-										? 'Change server'
-										: 'Apply to server'}
+									{guild?.name ? 'Change server' : 'Apply to server'}
 								</VisuallyHidden>
 							</Link>
 						) : null}
 					</HStack>
 				</VStack>
 			</HStack>
-			<VStack spacing={0} display={{ base: 'none', md: 'flex' }}>
+			<VStack spacing={0} display={{ base: 'none', md: 'flex' }} pr={2}>
 				<Text as='span' fontWeight={300}>
 					{subscription.cancels_at
 						? 'Cancels on'

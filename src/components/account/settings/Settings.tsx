@@ -9,7 +9,7 @@ import {
 	TabPanels,
 	Tabs,
 	useMediaQuery,
-	VisuallyHidden
+	VisuallyHidden,
 } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
@@ -26,7 +26,7 @@ export enum SettingsPages {
 	GENERAL,
 	SERVERS,
 	ACCOUNT,
-	BILLING
+	BILLING,
 }
 
 export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
@@ -35,7 +35,7 @@ export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
 	const [xs, sm, md] = useMediaQuery([
 		'(max-width: 250px)',
 		'(max-width: 325px)',
-		'(max-width: 450px)'
+		'(max-width: 450px)',
 	]);
 
 	const maxLength = { xs: 1, sm: 2, md: 3 };
@@ -90,7 +90,7 @@ export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
 									router.push(
 										{
 											pathname: '/settings/[page]',
-											query: { page: v.toLowerCase() }
+											query: { page: v.toLowerCase() },
 										},
 										`/settings/${v.toLowerCase()}`,
 										{ scroll: true, shallow: true }

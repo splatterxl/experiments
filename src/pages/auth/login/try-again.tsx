@@ -3,6 +3,7 @@ import { Center, Heading, Text } from '@chakra-ui/react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { GhostButton } from '../../../components/brand/GhostButton';
+import { Routes } from '../../../utils/constants';
 
 export default function TryAgain() {
 	const router = useRouter();
@@ -22,7 +23,7 @@ export default function TryAgain() {
 					label='Back to Login'
 					icon={<ArrowBackIcon />}
 					mt={3}
-					href='/auth/login'
+					href={Routes.LOGIN}
 				/>
 			</Center>
 		</>

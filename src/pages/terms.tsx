@@ -154,7 +154,7 @@ export default function TOS() {
 					card numbers and expiration dates, so that we can complete your
 					transactions and contact you as needed.{' '}
 					{/* For more detail, please review
-					our <Link href='/returns'>Returns Policy</Link>. */}
+					our <Link href={Routes.RETURNS}>Returns Policy</Link>. */}
 				</Text>
 				<Heading>Section 6: Optional Tools</Heading>
 				<Text>

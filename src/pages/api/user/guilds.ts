@@ -23,7 +23,7 @@ export const getGuilds = async (
 ): Promise<APIGuild[] | undefined> => {
 	function get() {
 		return fetch(makeDiscordURL(Endpoints.GUILDS, {}), {
-			headers: { Authorization: `Bearer ${access_token}` }
+			headers: { Authorization: `Bearer ${access_token}` },
 		});
 	}
 

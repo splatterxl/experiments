@@ -7,7 +7,7 @@ import {
 	Box,
 	Heading,
 	HStack,
-	useColorMode
+	useColorMode,
 } from '@chakra-ui/react';
 import { destroyCookie } from 'nookies';
 import React from 'react';

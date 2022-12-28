@@ -1,10 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '../../../utils/billing/stripe';
+import { Routes } from '../../../utils/constants';
 import { Products } from '../../../utils/constants/billing';
 import {
 	client,
 	Subscription,
-	SubscriptionStatus
+	SubscriptionStatus,
 } from '../../../utils/database';
 
 // Navigated to directly
@@ -30,7 +31,7 @@ export default async function result(
 		case 'open':
 			return res.redirect(session.url!);
 		case 'expired':
-			return res.redirect('/billing/premium');
+			return res.redirect(Routes.PREMIUM);
 		case 'complete': {
 			switch (session.payment_status) {
 				case 'unpaid':
@@ -60,7 +61,7 @@ export default async function result(
 					await client.collection<Subscription>('subscriptions').updateOne(
 						{
 							user_id: user_id,
-							session_id: session.id
+							session_id: session.id,
 						},
 						{
 							$set: {
@@ -70,20 +71,20 @@ export default async function result(
 								session_id: session.id,
 								customer_id: customer.id,
 								subscription_id: sub.id,
-								product: +session.metadata!.product
-							}
+								product: +session.metadata!.product,
+							},
 						},
 						{ upsert: true }
 					);
 
 					await client.collection('customers').updateOne(
 						{
-							user_id
+							user_id,
 						},
 						{
 							$set: {
-								customer_id: customer.id
-							}
+								customer_id: customer.id,
+							},
 						},
 						{ upsert: true }
 					);
@@ -96,25 +97,25 @@ export default async function result(
 					if (payment_method_id) {
 						await stripe.paymentMethods.update(payment_method_id, {
 							metadata: {
-								user_id
-							}
+								user_id,
+							},
 						});
 					}
 
 					return res.redirect(
 						!session.metadata?.discord_guild_id
-							? `/premium/liftoff?subscription=${sub.id}&product=${
+							? Routes.LIFTOFF(
+									sub.id,
 									+session.metadata!.product === Products.MAILING_LIST
 										? 'Mailing List'
-										: +session.metadata!.product === Products.PREMIUM
-										? 'Premium'
-										: 'Unknown'
-							  }`
-							: `/dashboard/guild/${session.metadata!.discord_guild_id}/${
+										: 'Premium'
+							  )
+							: Routes.SERVER_LIFTOFF(
+									session.metadata!.discord_guild_id,
 									+session.metadata!.product === Products.MAILING_LIST
 										? 'mailing-list'
 										: 'premium'
-							  }/liftoff`
+							  )
 					);
 				}
 			}
