@@ -1,4 +1,4 @@
-import { Heading, List, ListItem, Text, VStack } from '@chakra-ui/react';
+import { Code, Heading, List, ListItem, Text, VStack } from '@chakra-ui/react';
 import Head from 'next/head';
 import { Link } from '../components/Link';
 import { Routes } from '../utils/constants';
@@ -58,6 +58,13 @@ export default function Privacy() {
 						payment gateway <Link href='https://stripe.com'>Stripe</Link>, they
 						may collect and store your personal data as detailed in their{' '}
 						<Link href='https://stripe.com/privacy'>Privacy Policy</Link>.
+					</ListItem>
+					<ListItem>
+						We store log data including your request IP address, user ID and
+						email address for 1 year to assist in debugging errors. Every HTTP
+						response is appended with an <Code>X-Req-Id</Code> response header
+						that maps directly to these logs. If you encounter an error and
+						contact us, please provide us with this value to assist debugging.
 					</ListItem>
 				</List>
 				<Heading id='request-your-data'>02. Request Your Data</Heading>

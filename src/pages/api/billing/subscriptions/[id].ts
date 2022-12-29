@@ -184,6 +184,14 @@ export default async function subscription(
 					}
 				);
 
+				user.logger.info(
+					{
+						subscription: subscription.subscription_id,
+						customer: subscription.customer_id,
+					},
+					'User cancelled subscription'
+				);
+
 				const recipients = [new Recipient(user.email!, user.username)];
 
 				const variables = [

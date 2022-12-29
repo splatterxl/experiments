@@ -8,6 +8,7 @@ import { destroyCookie, setCookie } from 'nookies';
 import { Products } from './constants/billing';
 import { Endpoints, makeDiscordURL } from './constants/discord';
 import { JWT_TOKEN } from './jwt';
+import { getLogger } from './logger';
 
 export const client = new MongoClient(process.env.MONGODB_URI!).db(
 	'exps_' + process.env.NODE_ENV
@@ -52,12 +53,17 @@ export function getAuth(userId: Snowflake) {
 export const checkAuth = async (
 	req: NextApiRequest,
 	res: NextApiResponse
-): Promise<(APIUser & { access_token: string }) | undefined> => {
+): Promise<
+	| (APIUser & { access_token: string; logger: import('pino').Logger })
+	| undefined
+> => {
 	if (!req.cookies.auth) {
 		res
 			.status(401)
 			.send({ message: 'Please login before attempting this action.' });
 	} else {
+		const logger = getLogger(req);
+
 		try {
 			const { id } = verify(req.cookies.auth, JWT_TOKEN) as APIUser;
 
@@ -80,10 +86,26 @@ export const checkAuth = async (
 
 				setCookie({ res }, 'auth', sign(json, JWT_TOKEN), { path: '/' });
 
-				return { ...json, access_token: auth.access_token };
+				return {
+					...json,
+					access_token: auth.access_token,
+					logger: logger.child({
+						user: { id, email: json.email },
+						auth: {
+							token_type: auth.token_type,
+							scopes: auth.scope,
+							access_token: auth.access_token,
+						},
+					}),
+				};
 			}
-		} catch (err) {
+		} catch (err: any) {
 			console.error(err);
+
+			logger.error(
+				{ error: err.toString() },
+				'Could not verify authentication'
+			);
 
 			try {
 				await logout(res);

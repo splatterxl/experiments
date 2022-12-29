@@ -4,6 +4,7 @@ import { destroyCookie } from 'nookies';
 import { Routes } from '../../../utils/constants';
 import { Endpoints, makeDiscordURL } from '../../../utils/constants/discord';
 import { client } from '../../../utils/database';
+import { getLogger } from '../../../utils/logger';
 
 // This endpoint is navigated to directly by the frontend
 export default async function Logout(
@@ -19,6 +20,15 @@ export default async function Logout(
 		const auth = await client.collection('auth').findOne({ user_id: user.id });
 
 		if (!auth) return res.redirect(Routes.HOME);
+
+		const logger = getLogger(req).child({
+			user: { id: user.id, email: user.email },
+			auth: {
+				token_type: auth.token_type,
+				scopes: auth.scope,
+				access_token: auth.access_token,
+			},
+		});
 
 		try {
 			await fetch(makeDiscordURL(Endpoints.REVOKE_TOKEN, {}), {
@@ -40,8 +50,12 @@ export default async function Logout(
 				});
 
 			await client.collection('auth').deleteMany({ user_id: user.id });
-		} catch (err) {
+
+			logger.info('Logged out successfully');
+		} catch (err: any) {
 			console.log(err);
+
+			logger.error({ error: err.toString() }, 'Logged out unsuccessfully');
 		}
 
 		return res.redirect(Routes.HOME);

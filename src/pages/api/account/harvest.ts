@@ -84,7 +84,7 @@ export default async function startHarvest(
 		.setTemplateId('3z0vkloq0wx47qrx')
 		.setVariables(variables as any);
 
-	const email = await mailersend.send(emailParams);
+	const email = (await mailersend.send(emailParams)) as Response;
 
 	res.send({
 		email: email.status === 202 ? 'sent' : 'error',
@@ -95,6 +95,13 @@ export default async function startHarvest(
 	});
 
 	if (!email.ok) {
-		console.log(await email.json());
+		const json = await email.json();
+
+		user.logger.error(
+			{
+				error: json,
+			},
+			'Could not send user data to email'
+		);
 	}
 }

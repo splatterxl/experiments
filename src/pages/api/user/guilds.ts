@@ -12,6 +12,8 @@ export default async function getMyGuilds(
 
 	if (!auth) return;
 
+	auth.logger.debug('Fetched guilds for user');
+
 	const resp = await getGuilds(auth.access_token);
 
 	if (!resp) res.status(502).send('Bad Gateway');

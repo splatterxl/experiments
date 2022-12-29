@@ -14,6 +14,7 @@ if (process.env.NODE_ENV !== 'development')
 			'https://352f8e9b23364aa284aaf79fd69cf727@o917511.ingest.sentry.io/4504368705830912',
 		tracesSampleRate: 1.0,
 		autoSessionTracking: false,
+
 		// ...
 		// Note: if you want to override the automatic release value, do not set a
 		// `release` value here - use the environment variable `SENTRY_RELEASE`, so

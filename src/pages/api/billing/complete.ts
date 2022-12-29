@@ -2,12 +2,13 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { stripe } from '../../../utils/billing/stripe';
 import { Routes } from '../../../utils/constants';
-import { Products } from '../../../utils/constants/billing';
+import { ProductLabels, Products } from '../../../utils/constants/billing';
 import {
 	client,
 	Subscription,
 	SubscriptionStatus,
 } from '../../../utils/database';
+import { getLogger } from '../../../utils/logger';
 
 // Navigated to directly
 export default async function result(
@@ -89,6 +90,19 @@ export default async function result(
 							},
 						});
 					}
+
+					getLogger(req).info(
+						{
+							user: { id: user_id, email: customer.email },
+							payment_method_id,
+							product: Products[+session.metadata!.product],
+							guild_id: session.metadata?.discord_guild_id || null,
+							subscription_id: sub.id,
+						},
+						`User subscribed to ${
+							ProductLabels[+session.metadata!.product as Products]
+						}`
+					);
 
 					return res.redirect(
 						!session.metadata?.discord_guild_id

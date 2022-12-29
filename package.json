@@ -35,6 +35,8 @@
 		"mongodb": "^4.12.1",
 		"next": "13.0.6",
 		"nookies": "^2.5.2",
+		"pino": "^8.8.0",
+		"pino-mongodb": "^4.3.0",
 		"react": "18.2.0",
 		"react-dom": "18.2.0",
 		"recoil": "^0.7.6",

@@ -16,12 +16,15 @@ import {
 import { Authorization, client } from '../../../utils/database';
 import { request } from '../../../utils/http';
 import { JWT_TOKEN } from '../../../utils/jwt';
+import { getLogger } from '../../../utils/logger';
 
 export default async function handleDiscordAuth(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
 	let { code, state }: { code: string; state: string } = req.query as any;
+
+	const logger = getLogger(req);
 
 	try {
 		const nextURL = new URL(
@@ -135,6 +138,14 @@ export default async function handleDiscordAuth(
 				}
 			);
 
+			logger.info(
+				{
+					user: { id: me.id, email: me.email },
+					auth: { token_type: token_type, scopes: scope, access_token },
+				},
+				`Successfully logged in for user ${me.username}#${me.discriminator}`
+			);
+
 			setCookie(
 				{ res },
 				'auth',
@@ -149,8 +160,10 @@ export default async function handleDiscordAuth(
 				Routes.LOGIN_ONBOARDING(encodeURIComponent(nextURL), scope.join('+'))
 			);
 		}
-	} catch (err) {
-		console.log(err);
+	} catch (err: any) {
+		console.error(err);
+
+		logger.error({ error: err.toString() }, 'Could not log in');
 
 		return res.redirect(Routes.LOGIN_TRY_AGAIN);
 	}
