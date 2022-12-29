@@ -98,6 +98,7 @@ export default async function result(
 							product: Products[+session.metadata!.product],
 							guild_id: session.metadata?.discord_guild_id || null,
 							subscription_id: sub.id,
+							has_trial: !!sub.trial_end,
 						},
 						`User subscribed to ${
 							ProductLabels[+session.metadata!.product as Products]
