@@ -12,6 +12,8 @@ const nextConfig = {
 		hideSourceMaps: true,
 	},
 	headers: async () => {
+		const isDev = process.env.NODE_ENV === 'development';
+
 		return [
 			{
 				source: '/:path*',
@@ -29,6 +31,21 @@ const nextConfig = {
 						value: 'nosniff',
 					},
 				],
+			},
+			{
+				source: '/api/:path*',
+				headers: [
+					{
+						key: 'Access-Control-Allow-Origin',
+						value: isDev ? '*' : 'https://exps.splt.dev',
+					},
+					{ key: 'Accept-Post', value: 'application/json' },
+					{ key: 'Accept-Patch', value: 'application/json' },
+				],
+			},
+			{
+				source: '/api/v1/:path*',
+				headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }],
 			},
 		];
 	},

@@ -86,7 +86,7 @@ export default async function startHarvest(
 
 	const email = (await mailersend.send(emailParams)) as Response;
 
-	res.send({
+	res.status(202).send({
 		email: email.status === 202 ? 'sent' : 'error',
 		message:
 			email.status === 202
