@@ -11,6 +11,8 @@ export default async function getMyGuilds(
 
 	// @ts-ignore
 	delete auth.access_token;
+	// @ts-ignore
+	delete auth.logger;
 
 	res.send(auth);
 }

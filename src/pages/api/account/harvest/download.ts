@@ -6,6 +6,7 @@ import { getClientIp } from 'request-ip';
 import { one } from '../../../../utils';
 import { client, redis } from '../../../../utils/database';
 import { JWT_TOKEN } from '../../../../utils/jwt';
+import { getLogger } from '../../../../utils/logger';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
@@ -47,6 +48,11 @@ export default async function downloadHarvest(
 				});
 			return;
 		}
+
+		getLogger(req).debug(
+			{ user: { id: payload.user } },
+			'User downloaded data harvest'
+		);
 
 		res.setHeader('Content-Disposition', 'attachment; filename=package.json;');
 
