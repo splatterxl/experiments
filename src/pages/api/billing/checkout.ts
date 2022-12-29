@@ -23,7 +23,9 @@ export default async function checkout(
 	if (!user) return;
 
 	if (process.env.NODE_ENV !== 'development')
-		return res.status(400).send('The Maze was not meant for you.');
+		return res
+			.status(400)
+			.send({ message: 'This feature has been temporarily disabled.' });
 
 	// rate limits
 	const identifier = 'checkout:' + user.id;
