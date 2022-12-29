@@ -1,0 +1,23 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Contact: mailto:splatterxl@duck.com
+Expires: 2025-01-01T00:00:00.000Z
+Acknowledgments: https://exps.splt.dev/security
+Preferred-Languages: en
+Canonical: https://exps.splt.dev/.well-known/security.txt
+Policy: https://exps.splt.dev/security
+-----BEGIN PGP SIGNATURE-----
+
+iQGzBAEBCAAdFiEE8zgNXpXPPUMx/tW5QEeSKH4bvfoFAmOuD4AACgkQQEeSKH4b
+vfpepwwAhKZfPJRhQKxRafbJ+ziKNloVNKelPy4oHYoT3+Pg+M6B83OI9idGjjak
+4rA4/5jGNXW84JzngO5qtppGelpS2i/brzPct6y+3PjJu8M0YQT1LwRwG+2s0x+C
+2jDBMzM/HKynJrtvt3dl0MlEgIgFpdEJv2HdcCBcy/6liES6kfZMrsKIZePmfy5v
+GBKSWuTkSbXdvywrM5FX+B4PAhvIuhsxHXkPrRfxbx62//ylKhRQvll1tC6WpW0C
+EPv86zdU862okHykP1LNYFWcaO93mRdiyLIVlEvshmXsNxRQPXGz77R8PjqFoznB
+L8kNT2l69Nyl/R02cEh208rHgL4tWaYLVjBEdRJF6V8uJGXP/2gefgPn97Q6Q6WN
+V82p6yQECiJTNWpVoAYa0ufj7MweiZbzrjSXp+tciMXv8mhXQY5So8Pjl7fVqmBn
+grfowCSqgI81GGkjGqLE5XIbCYQTC9I61/qEed0IKp84x/5duevfb5R8FcqU1bca
+1c7w478F
+=Smtb
+-----END PGP SIGNATURE-----
