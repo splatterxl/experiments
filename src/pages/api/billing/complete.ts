@@ -109,9 +109,7 @@ export default async function result(
 						!session.metadata?.discord_guild_id
 							? Routes.LIFTOFF(
 									sub.id,
-									+session.metadata!.product === Products.MAILING_LIST
-										? 'Mailing List'
-										: 'Premium'
+									ProductLabels[+session.metadata!.product as Products]
 							  )
 							: Routes.SERVER_LIFTOFF(
 									session.metadata!.discord_guild_id,

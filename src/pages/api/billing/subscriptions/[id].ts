@@ -7,7 +7,7 @@ import Stripe from 'stripe';
 import { one } from '../../../../utils';
 import { from, mailersend } from '../../../../utils/billing/email';
 import { stripe } from '../../../../utils/billing/stripe';
-import { Products } from '../../../../utils/constants/billing';
+import { ProductLabels, Products } from '../../../../utils/constants/billing';
 import { Templates } from '../../../../utils/constants/email';
 import {
 	checkAuth,
@@ -200,10 +200,7 @@ export default async function subscription(
 						substitutions: [
 							{
 								var: 'product',
-								value:
-									subscription.product === Products.MAILING_LIST
-										? 'Mailing List'
-										: 'Premium',
+								value: ProductLabels[subscription.product],
 							},
 							{
 								var: 'expires_on',
@@ -233,9 +230,7 @@ export default async function subscription(
 					.setRecipients(recipients)
 					.setSubject(
 						`Your ${
-							subscription.product === Products.MAILING_LIST
-								? 'Mailing List'
-								: 'Premium'
+							ProductLabels[subscription.product]
 						} subscription has been cancelled`
 					)
 					.setTemplateId(Templates.SUBSCRIPTION_CANCEL)
