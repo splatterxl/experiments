@@ -106,7 +106,7 @@ export default async function checkout(
 	if (price === 'yearly' && product === Products.MAILING_LIST)
 		return res
 			.status(404)
-			.send({ error: 'Mailing list does not have yearly billing' });
+			.send({ error: 'Mailing list does not support yearly billing' });
 
 	// failsafe to link customers
 
