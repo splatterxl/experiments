@@ -14,7 +14,7 @@ export default function Privacy() {
 					Privacy Policy
 				</Heading>
 				<Text fontWeight={300}>
-					Last modified and effective: December 28, 2022.
+					Last modified and effective: December 30, 2022.
 				</Text>
 				<Heading fontWeight='extrabold'>Overview</Heading>
 				<Text>
@@ -31,9 +31,8 @@ export default function Privacy() {
 					transmitted under{' '}
 					<Link href='https://en.wikipedia.org/wiki/Transport_Layer_Security'>
 						Transport Layer Security (TLS)
-					</Link>{' '}
-					and is encrypted at rest. Your account information is stored securely
-					on our servers.
+					</Link>
+					. Your account information is stored securely on our servers.
 				</Text>
 				<List styleType='initial' px={6}>
 					<ListItem>
@@ -79,7 +78,7 @@ export default function Privacy() {
 					details to Stripe to handle our subscription billing, but any other
 					information will never leave our servers. We will never share, sell or
 					analyse any personally identifiable information. Your data is securely
-					stored behind a firewall
+					stored behind a firewall.
 				</Text>
 				<Heading id='manage-your-data'>03. Manage Your Data</Heading>
 				<Heading size='md'>Request Your Data</Heading>
