@@ -59,6 +59,7 @@ export enum ErrorCodes {
 
 	// misc
 	FRAUD = 11e3,
+	FEATURE_DISABLED,
 
 	// http
 	NOT_FOUND = 404,
@@ -206,6 +207,10 @@ export const Errors = {
 	),
 
 	[ErrorCodes.FRAUD]: new Error(undefined as any, ErrorCodes.FRAUD),
+	[ErrorCodes.FEATURE_DISABLED]: new Error(
+		'This feature has been temporarily disabled',
+		ErrorCodes.FEATURE_DISABLED
+	),
 
 	[ErrorCodes.NOT_FOUND]: new Error('404: Not Found'),
 	[ErrorCodes.METHOD_NOT_ALLOWED]: new Error('405: Method Not Allowed'),
