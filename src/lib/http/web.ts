@@ -1,5 +1,5 @@
-import { sleep } from '.';
-import { APIEndpoints, makeURL } from './constants';
+import { sleep } from '../../utils';
+import { APIEndpoints, makeURL } from '../../utils/constants';
 
 export const request = async (url: string, init?: RequestInit) => {
 	async function get() {

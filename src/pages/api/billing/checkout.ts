@@ -1,11 +1,14 @@
+import { checkAuth } from '@/lib/auth/request';
+import { Prices, Products } from '@/lib/billing/constants';
+import { stripe } from '@/lib/billing/stripe';
+import { getSubscriptionCount } from '@/lib/billing/subscriptions';
+import { getCustomer, redis } from '@/lib/db';
+import { ErrorCodes, Errors } from '@/lib/errors';
+import { getOrigin } from '@/lib/util';
 import { Ratelimit } from '@upstash/ratelimit';
-import { Snowflake } from 'discord-api-types/globals';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { one } from '../../../utils';
-import { stripe } from '../../../utils/billing/stripe';
 import { Routes } from '../../../utils/constants';
-import { Prices, Products } from '../../../utils/constants/billing';
-import { checkAuth, client, redis } from '../../../utils/database';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
@@ -38,35 +41,18 @@ export default async function checkout(
 		res
 			.setHeader('Retry-After', (result.reset - Date.now()) / 1000)
 			.status(429)
-			.json({
-				error: 'You are being rate limited.',
-				reset_after: (result.reset - Date.now()) / 1000,
-			});
+			.json(Errors[ErrorCodes.USER_LIMIT](result.reset - Date.now()));
 		return;
 	}
 
 	// make sure the user can only have 25 subscriptions
 
-	const count = await client
-		.collection('subscriptions')
-		.countDocuments({ user_id: user.id });
-
-	if (count >= 25)
-		res
-			.status(429)
-			.send({ error: 'A user can only have a max of 25 subscriptions' });
+	if ((await getSubscriptionCount(user.id)) >= 25)
+		res.status(429).send(Errors[ErrorCodes.MAX_SUBSCRIPTIONS]);
 
 	// get redirection url
-	const host = req.headers.host;
-
-	if (!host) return res.status(400).send({ error: 'Invalid host' });
-
-	const url = new URL(
-		req.url!,
-		process.env.NODE_ENV === 'development'
-			? `http://${host}`
-			: `https://${host}`
-	);
+	const origin = getOrigin(req, res);
+	if (!origin) return;
 
 	let { discord_guild_id: guild, price = 'monthly' } = req.query;
 	guild = one(guild);
@@ -76,7 +62,7 @@ export default async function checkout(
 	let product: Products = one(req.query.product)?.toUpperCase() as any;
 
 	if (guild && isNaN(parseInt(guild)))
-		return res.status(400).send({ error: 'Invalid guild' });
+		return res.status(400).send(Errors[ErrorCodes.INVALID_GUILD_ID]);
 
 	if (product) {
 		const str = product.toString();
@@ -88,38 +74,29 @@ export default async function checkout(
 			product = Products[str.toString() as keyof typeof Products];
 		}
 
-		if (!product) return res.status(400).send({ error: 'Invalid product' });
+		if (!product)
+			return res.status(400).send(Errors[ErrorCodes.INVALID_PRODUCT]);
 	} else {
 		product = Products.PREMIUM;
 	}
 
 	if (!['monthly', 'yearly'].includes(price))
-		return res.status(400).send({ error: 'Invalid price' });
+		return res.status(400).send(Errors[ErrorCodes.INVALID_PRICE]);
 
 	const trial = one(req.query.trial) ?? 'true';
-
 	if (!['true', 'false'].includes(trial))
 		return res.status(400).send({ error: 'Invalid trial' });
-
 	const shouldIncludeTrial = trial === 'true';
 
 	if (price === 'yearly' && product === Products.MAILING_LIST)
-		return res
-			.status(404)
-			.send({ error: 'Mailing list does not support yearly billing' });
+		return res.status(400).send(Errors[ErrorCodes.INVALID_PRICE]);
 
 	// failsafe to link customers
 
 	const { email } = user;
+	if (!email) return res.status(400).send(Errors[ErrorCodes.EMAIL_REQUIRED]);
 
-	if (!email) return res.status(400).send({ error: 'No email' });
-
-	const customer = await client
-		.collection<{
-			user_id: Snowflake;
-			customer_id: string;
-		}>('customers')
-		.findOne({ user_id: user.id });
+	const customer = await getCustomer(user.id);
 
 	const session = await stripe.checkout.sessions.create({
 		line_items: [
@@ -131,8 +108,8 @@ export default async function checkout(
 		mode: 'subscription',
 		subscription_data: shouldIncludeTrial ? { trial_period_days: 7 } : {},
 		metadata: { discord_guild_id: guild ?? null, product, user_id: user.id },
-		success_url: `${url.origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
-		cancel_url: `${url.origin}/premium`,
+		success_url: `${origin}/api/billing/complete?session_id={CHECKOUT_SESSION_ID}`,
+		cancel_url: `${origin}/premium`,
 		customer_email: !customer ? email! : undefined,
 		customer: customer?.customer_id,
 		allow_promotion_codes: true,

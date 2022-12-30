@@ -1,5 +1,5 @@
 import React from 'react';
-import { random } from '..';
+import { random } from '../utils';
 
 export const useRandomInterval = (
 	callback: () => any,

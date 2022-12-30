@@ -1,16 +1,14 @@
-import { EmailParams, Recipient } from 'mailersend';
+import { ProductLabels } from '@/lib/billing/constants';
+import { stripe } from '@/lib/billing/stripe';
+import { updateSubscriptionState } from '@/lib/billing/subscriptions';
+import { subscriptions } from '@/lib/db/collections';
+import { Subscription, SubscriptionStatus } from '@/lib/db/models';
+import { sendEmail } from '@/lib/email';
+import { Templates } from '@/lib/email/constants';
+import { getOrigin } from '@/lib/util';
 import { buffer } from 'micro';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-import { from, mailersend } from '../../../utils/billing/email';
-import { stripe } from '../../../utils/billing/stripe';
-import { ProductLabels } from '../../../utils/constants/billing';
-import { Templates } from '../../../utils/constants/email';
-import {
-	client,
-	Subscription,
-	SubscriptionStatus,
-} from '../../../utils/database';
 
 export const config = { api: { bodyParser: false } };
 
@@ -31,7 +29,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 		return res.status(400).send(`Webhook error: ${error.message}`);
 	}
 
-	const subColl = client.collection<Subscription>('subscriptions');
+	const subColl = subscriptions();
 
 	switch (event.type) {
 		case 'customer.subscription.trial_will_end': {
@@ -39,14 +37,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
 			const host = req.headers.host;
 
-			if (!host) return res.status(400).send({ message: 'Invalid host' });
-
-			const url = new URL(
-				req.url!,
-				process.env.NODE_ENV === 'development'
-					? `http://${host}`
-					: `https://${host}`
-			);
+			const origin = getOrigin(req, res);
+			if (!origin) return;
 
 			const customer =
 				typeof subscription.customer === 'string'
@@ -65,58 +57,54 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
 			if (!data) break;
 
-			const recipients = [new Recipient(customer.email)];
-
 			const price = subscription.items.data[0].price;
 
-			const variables = [
+			const resp = await sendEmail(
 				{
 					email: customer.email,
-					substitutions: [
-						{
-							var: 'product',
-							value: ProductLabels[data.product],
-						},
-						{
-							var: 'expires_on',
-							value: new Date(
-								subscription.current_period_end * 1000
-							).toLocaleDateString(),
-						},
-						{
-							var: 'settings_page',
-							value: `${url.origin}/settings/billing`,
-						},
-						{
-							var: 'cancel_url',
-							value: `${url.origin}/settings/billing/subscriptions/${subscription.id}`,
-						},
-						{
-							var: 'cycle',
-							value: price.recurring!.interval,
-						},
-						{
-							var: 'price',
-							value: new Intl.NumberFormat(undefined, {
-								style: 'currency',
-								currency: price.currency.toUpperCase(),
-							}).format(price.unit_amount! / 100),
-						},
-					],
+					name: customer.name ?? 'Customer',
 				},
-			];
+				{
+					subject: `Your ${ProductLabels[data.product]} trial will end soon`,
+					template: Templates.SUBSCRIPTION_TRIAL_WILL_END,
+					variables: {
+						email: customer.email,
+						substitutions: [
+							{
+								var: 'product',
+								value: ProductLabels[data.product],
+							},
+							{
+								var: 'expires_on',
+								value: new Date(
+									subscription.current_period_end * 1000
+								).toLocaleDateString(),
+							},
+							{
+								var: 'settings_page',
+								value: `${origin}/settings/billing`,
+							},
+							{
+								var: 'cancel_url',
+								value: `${origin}/settings/billing/subscriptions/${subscription.id}`,
+							},
+							{
+								var: 'cycle',
+								value: price.recurring!.interval,
+							},
+							{
+								var: 'price',
+								value: new Intl.NumberFormat(undefined, {
+									style: 'currency',
+									currency: price.currency.toUpperCase(),
+								}).format(price.unit_amount! / 100),
+							},
+						],
+					},
+				}
+			);
 
-			const emailParams = new EmailParams()
-				.setFrom(from.email)
-				.setFromName(from.name)
-				.setRecipients(recipients)
-				.setSubject(`Your ${ProductLabels[data.product]} trial will end soon`)
-				.setTemplateId(Templates.SUBSCRIPTION_TRIAL_WILL_END)
-				.setVariables(variables as any);
-
-			const resp = await mailersend.send(emailParams);
-
-			if (!resp.ok) console.log(await resp.json());
+			if (resp.status !== 202) console.log(await resp.json());
 
 			break;
 		}
@@ -176,14 +164,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
 			if (!subId) break;
 
-			await subColl.updateOne(
-				{ subscription_id: subId },
-				{
-					$set: {
-						status: SubscriptionStatus.FAILED,
-					},
-				}
-			);
+			await updateSubscriptionState(subId, SubscriptionStatus.FAILED);
 
 			break;
 		}

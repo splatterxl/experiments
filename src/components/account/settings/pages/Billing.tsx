@@ -10,12 +10,7 @@ export const Billing: React.FC = () => {
 		case '/settings/billing/subscriptions/[sub_id]':
 			return <Subscription />;
 		case '/settings/[page]':
-			return <BillingIndex />;
 		default:
-			return (
-				<Center w='full' h='60vh'>
-					<Spinner size='lg' />
-				</Center>
-			);
+			return <BillingIndex />;
 	}
 };

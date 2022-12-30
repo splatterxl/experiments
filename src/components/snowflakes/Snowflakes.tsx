@@ -1,7 +1,7 @@
 import { Box, useColorModeValue } from '@chakra-ui/react';
 import { css } from '@emotion/react';
 import React from 'react';
-import { Snowflake } from './snowflakes/Snowflake';
+import { Snowflake } from './Snowflake';
 
 export const Snowflakes: React.FC = () => {
 	return useColorModeValue(

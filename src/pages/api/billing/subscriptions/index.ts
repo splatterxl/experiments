@@ -1,13 +1,13 @@
+import { checkAuth } from '@/lib/auth/request';
+import {
+	getDbSubscriptions,
+	getSubscriptionData,
+} from '@/lib/billing/subscriptions';
+import { SubscriptionData } from '@/lib/billing/types';
+import { redis } from '@/lib/db';
+import { ErrorCodes, Errors } from '@/lib/errors';
 import { Ratelimit } from '@upstash/ratelimit';
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-	checkAuth,
-	client,
-	redis,
-	Subscription,
-} from '../../../../utils/database';
-import { SubscriptionData } from '../../../../utils/types';
-import { getSubscriptionData } from './[id]';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
@@ -34,24 +34,15 @@ export default async function subscription(
 		res
 			.setHeader('Retry-After', (result.reset - Date.now()) / 1000)
 			.status(429)
-			.json({
-				message: 'You are being rate limited.',
-				reset_after: (result.reset - Date.now()) / 1000,
-			});
+			.json(Errors[ErrorCodes.USER_LIMIT]((result.reset - Date.now()) / 1000));
 		return;
 	}
 
-	const coll = client.collection<Subscription>('subscriptions');
-
-	let subscriptions = await coll
-		.find({
-			user_id: user.id,
-		})
-		.toArray();
+	const subscriptions = await getDbSubscriptions(user.id);
 
 	if (subscriptions.length) {
 		const subs = await Promise.all(
-			subscriptions.map((sub) => getSubscriptionData(sub, false, coll))
+			subscriptions.map((sub) => getSubscriptionData(sub, false))
 		);
 
 		return res.send(subs.filter((v) => !v.cancelled));

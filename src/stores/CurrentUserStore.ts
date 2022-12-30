@@ -1,6 +1,6 @@
+import { request } from '@/lib/http/web';
 import { APIUser } from 'discord-api-types/v10';
 import { APIEndpoints, makeURL } from '../utils/constants';
-import { request } from '../utils/http';
 import Store from './Store';
 
 export default new (class CurrentUserStore extends Store<APIUser> {

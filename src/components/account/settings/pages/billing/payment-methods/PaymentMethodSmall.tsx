@@ -1,3 +1,14 @@
+import { CardIcon } from '@/components/brand/icons/CardIcon';
+import {
+	CardBrands,
+	EpsBanks,
+	IdealBanks,
+	PaymentMethodIcons,
+	PaymentMethods,
+	WalletIcons,
+	Wallets,
+} from '@/lib/billing/constants';
+import { PaymentMethod } from '@/lib/billing/types';
 import {
 	Badge,
 	Heading,
@@ -9,17 +20,6 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import Stripe from 'stripe';
-import {
-	CardBrands,
-	EpsBanks,
-	IdealBanks,
-	PaymentMethodIcons,
-	PaymentMethods,
-	WalletIcons,
-	Wallets,
-} from '../../../../../../utils/constants/billing';
-import { PaymentMethod } from '../../../../../../utils/types';
-import { CardIcon } from '../../../../../brand/icons/CardIcon';
 
 export default function PaymentMethodSmall({
 	pm,

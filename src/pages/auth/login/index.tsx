@@ -1,3 +1,4 @@
+import { getDiscordAuthURL } from '@/lib/auth/discord';
 import {
 	Badge,
 	Center,
@@ -13,7 +14,7 @@ import React from 'react';
 import { PrimaryButton } from '../../../components/brand/PrimaryButton';
 import { Link } from '../../../components/Link';
 import { one } from '../../../utils';
-import { APIEndpoints, makeURL, Routes } from '../../../utils/constants';
+import { Routes } from '../../../utils/constants';
 
 export default function Login({ next }: { next: string }) {
 	let [join, setJoin] = React.useState(false);
@@ -76,15 +77,12 @@ export default function Login({ next }: { next: string }) {
 					<PrimaryButton
 						marginTop={1}
 						label='Login with Discord'
-						href={
-							{
-								pathname: makeURL(APIEndpoints.LOGIN),
-								query: {
-									join,
-									next,
-								},
-							} as any
-						}
+						href={getDiscordAuthURL(
+							['email', 'identify', 'guilds'].concat(
+								join ? ['guilds.join'] : []
+							),
+							next
+						)}
 					/>
 				</VStack>
 			</Center>

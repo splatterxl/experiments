@@ -1,10 +1,12 @@
-import { decode, JwtPayload } from 'jsonwebtoken';
+import { client } from '@/lib/db';
+import { authorizations } from '@/lib/db/collections';
+import { getLoggerForRequest, getLoggerForUser } from '@/lib/logger/api';
+import { APIUser } from 'discord-api-types/v10';
+import { decode } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { destroyCookie } from 'nookies';
 import { Routes } from '../../../utils/constants';
 import { Endpoints, makeDiscordURL } from '../../../utils/constants/discord';
-import { client } from '../../../utils/database';
-import { getLogger } from '../../../utils/logger';
 
 // This endpoint is navigated to directly by the frontend
 export default async function Logout(
@@ -13,23 +15,17 @@ export default async function Logout(
 ) {
 	if (!req.cookies.auth) return res.redirect(Routes.HOME);
 	else {
-		const user = decode(req.cookies.auth) as JwtPayload;
+		const user = decode(req.cookies.auth) as APIUser;
 
 		destroyCookie({ res }, 'auth', { path: '/' });
 
-		const auth = await client.collection('auth').findOne({ user_id: user.id });
+		const auth = await authorizations().findOne({ user_id: user.id });
 
 		if (!auth) return res.redirect(Routes.HOME);
 
-		const logger = getLogger(req).child({
-			user: { id: user.id, email: user.email },
-			auth: {
-				token_type: auth.token_type,
-				scopes: auth.scope,
-				access_token: auth.access_token,
-			},
-		});
+		const logger = getLoggerForUser(getLoggerForRequest(req), user, auth);
 
+		// TODO: move this to @/lib/auth/discord.ts
 		try {
 			await fetch(makeDiscordURL(Endpoints.REVOKE_TOKEN, {}), {
 				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

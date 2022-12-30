@@ -1,3 +1,7 @@
+import { GuildIcon } from '@/components/account/GuildIcon';
+import { Months } from '@/lib/billing/constants';
+import { SubscriptionData } from '@/lib/billing/types';
+import { Routes } from '@/utils/constants';
 import { EditIcon } from '@chakra-ui/icons';
 import {
 	Badge,
@@ -9,10 +13,6 @@ import {
 	VStack,
 } from '@chakra-ui/react';
 import { RESTAPIPartialCurrentUserGuild } from 'discord-api-types/v10';
-import { Routes } from '../../../../../../utils/constants';
-import { Months } from '../../../../../../utils/constants/billing';
-import type { SubscriptionData } from '../../../../../../utils/types';
-import { GuildIcon } from '../../../../GuildIcon';
 
 export default function SubscriptionHeader({
 	subscription,

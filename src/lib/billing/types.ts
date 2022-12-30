@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types/globals';
 import type Stripe from 'stripe';
-import { Products } from './constants/billing';
-import { SubscriptionStatus } from './database';
+import { SubscriptionStatus } from '../db/models';
+import { Products } from './constants';
 
 export interface SubscriptionData {
 	id: string;

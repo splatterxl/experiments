@@ -1,9 +1,9 @@
+import { createAnalyticsQuery } from '@/lib/analytics/web';
+import { login } from '@/lib/analytics/web/actions/login';
 import { HStack, Link, useMediaQuery } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import CurrentUserStore from '../../stores/CurrentUserStore';
-import { login } from '../../utils/actions/login';
-import { createAnalyticsQuery } from '../../utils/analytics';
 import { Routes } from '../../utils/constants';
 import { UserIcon } from '../account/UserIcon';
 import { PrimaryButton } from '../brand/PrimaryButton';

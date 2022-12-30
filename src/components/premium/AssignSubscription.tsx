@@ -1,10 +1,10 @@
+import { getGuilds, request } from '@/lib/http/web';
 import { HStack, Select } from '@chakra-ui/react';
 import { APIGuild, PermissionFlagsBits } from 'discord-api-types/v10';
 import router from 'next/router';
 import React from 'react';
+import useToast from '../../hooks/useToast';
 import { APIEndpoints, makeURL, Routes } from '../../utils/constants';
-import useToast from '../../utils/hooks/useToast';
-import { getGuilds, request } from '../../utils/http';
 import { PrimaryButton } from '../brand/PrimaryButton';
 
 export const AssignSubscription: React.FC<

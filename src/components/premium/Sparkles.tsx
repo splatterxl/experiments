@@ -2,8 +2,8 @@ import { usePrefersReducedMotion } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import styled from '@emotion/styled';
 import React from 'react';
+import { useRandomInterval } from '../../hooks/useRandomInterval';
 import { random } from '../../utils';
-import { useRandomInterval } from '../../utils/hooks/useRandomInterval';
 
 export const DEFAULT_COLOR = '#FFC700';
 const generateSparkle = (color: string) => {

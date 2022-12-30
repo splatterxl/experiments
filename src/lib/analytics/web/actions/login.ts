@@ -1,6 +1,6 @@
 import Router from 'next/router';
-import { createAnalyticsQuery } from '../analytics';
-import { Routes } from '../constants';
+import { createAnalyticsQuery } from '..';
+import { Routes } from '../../../../utils/constants';
 
 export const login = (from: string, next: string) => {
 	Router.push(

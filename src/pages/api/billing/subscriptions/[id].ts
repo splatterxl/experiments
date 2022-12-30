@@ -1,26 +1,32 @@
+import { getGuilds } from '@/lib/auth';
+import { checkAuth } from '@/lib/auth/request';
+import { ProductLabels } from '@/lib/billing/constants';
+import {
+	editSubscriptionCancelStatus,
+	getSubscription,
+} from '@/lib/billing/stripe/subscriptions';
+import {
+	getDbSubscription,
+	getSubscriptionCountByProduct,
+	getSubscriptionData,
+	setSubscriptionGuild,
+	updateSubscriptionState,
+} from '@/lib/billing/subscriptions';
+import { SubscriptionData } from '@/lib/billing/types';
+import { redis } from '@/lib/db';
+import { subscriptions } from '@/lib/db/collections';
+import { SubscriptionStatus } from '@/lib/db/models';
+import { sendEmail } from '@/lib/email';
+import { Templates } from '@/lib/email/constants';
+import { ErrorCodes, Errors } from '@/lib/errors';
+import { getOrigin } from '@/lib/util';
+import { one } from '@/utils';
 import { Ratelimit } from '@upstash/ratelimit';
 import { APIGuild, PermissionFlagsBits } from 'discord-api-types/v10';
-import { EmailParams, Recipient } from 'mailersend';
-import { Collection, WithId } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
-import Stripe from 'stripe';
-import { one } from '../../../../utils';
-import { from, mailersend } from '../../../../utils/billing/email';
-import { stripe } from '../../../../utils/billing/stripe';
-import { ProductLabels, Products } from '../../../../utils/constants/billing';
-import { Templates } from '../../../../utils/constants/email';
-import {
-	checkAuth,
-	client,
-	redis,
-	Subscription,
-	SubscriptionStatus,
-} from '../../../../utils/database';
-import { SubscriptionData } from '../../../../utils/types';
-import { getGuilds } from '../../user/guilds';
 
 const baseRatelimit = new Ratelimit({
-	redis: redis,
+	redis,
 	limiter: Ratelimit.fixedWindow(1, '2 s'),
 });
 
@@ -49,53 +55,43 @@ export default async function subscription(
 		res
 			.setHeader('Retry-After', (result.reset - Date.now()) / 1000)
 			.status(429)
-			.json({
-				message: 'You are being rate limited.',
-				reset_after: (result.reset - Date.now()) / 1000,
-			});
+			.json(Errors[ErrorCodes.USER_LIMIT]((result.reset - Date.now()) / 1000));
 		return;
 	}
 
 	const id = one(req.query.id);
 
-	const coll = client.collection<Subscription>('subscriptions');
+	if (!id?.startsWith('sub_'))
+		return res.status(400).send(Errors[ErrorCodes.INVALID_SUBSCRIPTION_ID]);
 
-	const subscription = await coll.findOne({
-		user_id: user.id,
-		subscription_id: id,
-	});
+	const coll = subscriptions();
+
+	const subscription = await getDbSubscription(user.id, id);
 
 	if (!subscription)
-		return res.status(404).send({
-			message: 'Unknown subscription',
-		});
+		return res.status(404).send(Errors[ErrorCodes.UNKNOWN_SUBSCRIPTION]);
 
-	const data = await stripe.subscriptions.retrieve(
-		subscription.subscription_id,
-		{ expand: ['default_payment_method'] }
-	);
+	const data = await getSubscription(id, ['default_payment_method']);
 	const cancelled = subscription.status === SubscriptionStatus.CANCELLED;
 
 	switch (req.method) {
 		case 'PATCH': {
 			if (cancelled) {
-				return res
-					.status(403)
-					.send({ message: 'Cannot update a cancelled subscription' });
+				return res.status(403).send(Errors[ErrorCodes.UPDATE_CANCELLED_SUB]);
 			}
 
 			const { body } = req;
 
 			if ('guild_id' in body) {
 				if (typeof body.guild_id !== 'string') {
-					return res.status(400).send({ message: 'Invalid guild id' });
+					return res.status(400).send(Errors[ErrorCodes.INVALID_GUILD_ID]);
 				}
 
 				if (body.guild_id !== subscription.guild_id) {
 					const userGuilds = await getGuilds(user.access_token);
 
 					if (!Array.isArray(userGuilds))
-						return res.status(502).send({ message: 'Bad Gateway' });
+						return res.status(502).send(Errors[ErrorCodes.BAD_GATEWAY]);
 
 					if (
 						!userGuilds.find(
@@ -106,28 +102,21 @@ export default async function subscription(
 									PermissionFlagsBits.ManageGuild
 						)
 					)
-						return res
-							.status(422)
-							.send({ message: 'User is not an admin of the target guild' });
+						return res.status(422).send(Errors[ErrorCodes.USER_NOT_ADMIN]);
 
-					const count = await coll.countDocuments({
-						guild_id: body.guild_id,
-						product: subscription.product,
-					});
+					const count = await getSubscriptionCountByProduct(
+						body.guild_id,
+						subscription.product
+					);
 
 					if (count)
-						return res.status(409).send({
-							message:
-								'A subscription of this type has already been applied to the guild',
-						});
+						return res
+							.status(409)
+							.send(Errors[ErrorCodes.SUBSCRIPTION_ALREADY_APPLIED]);
 
-					coll.updateOne(
-						{ user_id: user.id, subscription_id: id },
-						{
-							$set: {
-								guild_id: body.guild_id,
-							},
-						}
+					await setSubscriptionGuild(
+						subscription.subscription_id,
+						body.guild_id
 					);
 
 					subscription.guild_id = body.guild_id;
@@ -137,7 +126,7 @@ export default async function subscription(
 		case 'GET':
 			return res
 				.status(200)
-				.send(await getSubscriptionData(subscription, true, coll, data));
+				.send(await getSubscriptionData(subscription, true, data));
 		case 'DELETE': {
 			if (cancelled || subscription.status === SubscriptionStatus.FAILED)
 				return res.status(204).send('' as any);
@@ -159,29 +148,15 @@ export default async function subscription(
 				return;
 			}
 
-			const host = req.headers.host;
+			const origin = getOrigin(req, res);
 
-			if (!host) return res.status(400).send({ message: 'Invalid host' });
-
-			const url = new URL(
-				req.url!,
-				process.env.NODE_ENV === 'development'
-					? `http://${host}`
-					: `https://${host}`
-			);
+			if (!origin) return;
 
 			try {
-				await stripe.subscriptions.update(subscription.subscription_id, {
-					cancel_at_period_end: true,
-				});
-
-				await coll.updateOne(
-					{ subscription_id: subscription.subscription_id },
-					{
-						$set: {
-							status: SubscriptionStatus.CANCELLED,
-						},
-					}
+				await editSubscriptionCancelStatus(subscription.subscription_id, true);
+				await updateSubscriptionState(
+					subscription.subscription_id,
+					SubscriptionStatus.CANCELLED
 				);
 
 				user.logger.info(
@@ -192,51 +167,46 @@ export default async function subscription(
 					'User cancelled subscription'
 				);
 
-				const recipients = [new Recipient(user.email!, user.username)];
-
-				const variables = [
+				await sendEmail(
 					{
 						email: user.email!,
-						substitutions: [
-							{
-								var: 'product',
-								value: ProductLabels[subscription.product],
-							},
-							{
-								var: 'expires_on',
-								value: new Date(
-									data.current_period_end * 1000
-								).toLocaleDateString(),
-							},
-							{
-								var: 'name',
-								value: user.username,
-							},
-							{
-								var: 'settings_page',
-								value: `${url.origin}/settings/billing`,
-							},
-							{
-								var: 'reinstate_url',
-								value: `${url.origin}/settings/billing/subscriptions/${subscription.subscription_id}`,
-							},
-						],
+						name: user.username,
 					},
-				];
-
-				const emailParams = new EmailParams()
-					.setFrom(from.email)
-					.setFromName(from.name)
-					.setRecipients(recipients)
-					.setSubject(
-						`Your ${
+					{
+						subject: `Your ${
 							ProductLabels[subscription.product]
-						} subscription has been cancelled`
-					)
-					.setTemplateId(Templates.SUBSCRIPTION_CANCEL)
-					.setVariables(variables as any);
-
-				const resp = await mailersend.send(emailParams);
+						} subscription has been cancelled`,
+						template: Templates.SUBSCRIPTION_CANCEL,
+						attachments: [],
+						variables: {
+							email: user.email!,
+							substitutions: [
+								{
+									var: 'product',
+									value: ProductLabels[subscription.product],
+								},
+								{
+									var: 'expires_on',
+									value: new Date(
+										data.current_period_end * 1000
+									).toLocaleDateString(),
+								},
+								{
+									var: 'name',
+									value: user.username,
+								},
+								{
+									var: 'settings_page',
+									value: `${origin}/settings/billing`,
+								},
+								{
+									var: 'reinstate_url',
+									value: `${origin}/settings/billing/subscriptions/${subscription.subscription_id}`,
+								},
+							],
+						},
+					}
+				);
 
 				return res.status(204).send('' as any);
 			} catch (err: any) {
@@ -249,9 +219,7 @@ export default async function subscription(
 			if (!cancelled) return res.status(201).send('' as any);
 
 			if (subscription.status === SubscriptionStatus.FAILED)
-				return res
-					.status(403)
-					.send({ message: 'Cannot reinstate a failed subscription' });
+				return res.status(403).send(Errors[ErrorCodes.REINSTATE_FAILED_SUB]);
 
 			const identifier = 'subscription_cancel:' + user.id;
 			const result = await cancelRatelimit.limit(identifier);
@@ -271,17 +239,10 @@ export default async function subscription(
 			}
 
 			try {
-				await stripe.subscriptions.update(subscription.subscription_id, {
-					cancel_at_period_end: false,
-				});
-
-				await coll.updateOne(
-					{ subscription_id: subscription.subscription_id },
-					{
-						$set: {
-							status: SubscriptionStatus.ACTIVE,
-						},
-					}
+				await editSubscriptionCancelStatus(subscription.subscription_id, false);
+				await updateSubscriptionState(
+					subscription.subscription_id,
+					SubscriptionStatus.ACTIVE
 				);
 
 				return res.status(201).send('' as any);
@@ -292,75 +253,6 @@ export default async function subscription(
 			}
 		}
 		default:
-			return res.status(405).send({ message: 'Method Not Allowed' });
+			return res.status(405).send(Errors[ErrorCodes.METHOD_NOT_ALLOWED]);
 	}
 }
-
-export const getSubscriptionData = async (
-	subscription: WithId<Subscription>,
-	extended = false,
-	collection: Collection<Subscription>,
-	fetched?: Stripe.Response<Stripe.Subscription>
-): Promise<SubscriptionData> => {
-	const data =
-		fetched ??
-		(await stripe.subscriptions.retrieve(subscription.subscription_id, {
-			expand: ['default_payment_method', 'items.data.price.product'],
-		}));
-	let product = data.items.data[0].price.product as Stripe.Product | string;
-
-	if (typeof product === 'string') {
-		product = await stripe.products.retrieve(product);
-	}
-
-	if ('product' in subscription === false) {
-		// repair on read operation to insert product information into a subscription
-		await collection.updateOne(
-			{ _id: subscription._id },
-			{
-				$set: {
-					product:
-						product.name === 'Premium'
-							? Products.PREMIUM
-							: Products.MAILING_LIST,
-				},
-			}
-		);
-	}
-
-	const payment_method =
-		typeof data.default_payment_method === 'string'
-			? await stripe.paymentMethods.retrieve(data.default_payment_method)
-			: data.default_payment_method;
-
-	const base: SubscriptionData = {
-		id: data.id,
-		status: subscription.status,
-		user_id: subscription.user_id,
-		guild_id: subscription.guild_id,
-		product: {
-			id: product.id,
-			label: product.name,
-			type:
-				product.name === 'Premium' ? Products.PREMIUM : Products.MAILING_LIST,
-		},
-		currency: data.currency,
-		price: data.items.data[0].price.unit_amount,
-		trial_ends_at: data.trial_end,
-		cancels_at:
-			data.canceled_at ?? data.cancel_at_period_end ?? data.cancel_at
-				? data.cancel_at ?? data.current_period_end
-				: null,
-		cancelled: !!data.ended_at,
-		renews_at: data.current_period_end,
-		payment_method,
-	};
-
-	if (extended) {
-		return {
-			...base,
-		};
-	} else {
-		return base;
-	}
-};
