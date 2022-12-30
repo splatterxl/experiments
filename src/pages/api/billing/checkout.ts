@@ -26,9 +26,7 @@ export default async function checkout(
 	if (!user) return;
 
 	if (process.env.NODE_ENV !== 'development')
-		return res
-			.status(400)
-			.send({ message: 'This feature has been temporarily disabled.' });
+		return res.status(400).send(Errors[ErrorCodes.FEATURE_DISABLED]);
 
 	// rate limits
 	const identifier = 'checkout:' + user.id;
