@@ -33,7 +33,7 @@
 		"mailersend": "^1.4.5",
 		"micro": "^10.0.1",
 		"mongodb": "^4.12.1",
-		"next": "13.0.6",
+		"next": "^13.1.1",
 		"nookies": "^2.5.2",
 		"pino": "^8.8.0",
 		"pino-mongodb": "^4.3.0",

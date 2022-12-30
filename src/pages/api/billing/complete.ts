@@ -1,14 +1,12 @@
+import { ProductLabels, Products } from '@/lib/billing/constants';
+import { stripe } from '@/lib/billing/stripe';
+import { customers, subscriptions } from '@/lib/db/collections';
+import { SubscriptionStatus } from '@/lib/db/models';
+import { ErrorCodes, Errors } from '@/lib/errors';
+import { getLoggerForRequest } from '@/lib/logger/api';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-import { stripe } from '../../../utils/billing/stripe';
 import { Routes } from '../../../utils/constants';
-import { ProductLabels, Products } from '../../../utils/constants/billing';
-import {
-	client,
-	Subscription,
-	SubscriptionStatus,
-} from '../../../utils/database';
-import { getLogger } from '../../../utils/logger';
 
 // Navigated to directly
 export default async function result(
@@ -18,7 +16,8 @@ export default async function result(
 	const { searchParams } = new URL(req.url!, 'https://google.com');
 	const id = searchParams.get('session_id');
 
-	if (!id) return res.status(400).send({ error: 'Invalid session' });
+	if (!id?.startsWith('cs_'))
+		return res.status(400).send(Errors[ErrorCodes.INVALID_SESSION]);
 
 	let session;
 	try {
@@ -26,7 +25,7 @@ export default async function result(
 			expand: ['subscription', 'customer'],
 		});
 	} catch {
-		return res.status(400).send({ error: 'Unknown session' });
+		return res.status(400).send(Errors[ErrorCodes.UNKNOWN_SESSION]);
 	}
 
 	const { user_id } = session.metadata!;
@@ -39,15 +38,13 @@ export default async function result(
 		case 'complete': {
 			switch (session.payment_status) {
 				case 'unpaid':
-					return res
-						.status(400)
-						.send({ error: 'Complete request with unpaid payment' });
+					return res.status(400).send(Errors[ErrorCodes.COMPLETE_UNPAID]);
 				case 'no_payment_required':
 				case 'paid': {
 					const sub: Stripe.Subscription = session.subscription as any;
 					const customer: Stripe.Customer = session.customer as any;
 
-					await client.collection<Subscription>('subscriptions').updateOne(
+					await subscriptions().updateOne(
 						{
 							user_id: user_id,
 							session_id: session.id,
@@ -66,7 +63,7 @@ export default async function result(
 						{ upsert: true }
 					);
 
-					await client.collection('customers').updateOne(
+					await customers().updateOne(
 						{
 							user_id,
 						},
@@ -91,7 +88,7 @@ export default async function result(
 						});
 					}
 
-					getLogger(req).info(
+					getLoggerForRequest(req).info(
 						{
 							user: { id: user_id, email: customer.email },
 							payment_method_id,

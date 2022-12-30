@@ -1,3 +1,15 @@
+import { JWT_TOKEN } from '@/lib/crypto/jwt';
+import { authorizations } from '@/lib/db/collections';
+import { ErrorCodes, Errors } from '@/lib/errors';
+import { request } from '@/lib/http/web';
+import { getLoggerForRequest } from '@/lib/logger/api';
+import { APIEndpoints, makeURL, Routes } from '@/utils/constants';
+import {
+	APP_ID,
+	Endpoints,
+	GUILD_INVITE,
+	makeDiscordURL,
+} from '@/utils/constants/discord';
 import type {
 	APIUser,
 	RESTGetAPICurrentUserGuildsResult,
@@ -6,17 +18,6 @@ import type {
 import { sign } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { setCookie } from 'nookies';
-import { APIEndpoints, makeURL, Routes } from '../../../utils/constants';
-import {
-	APP_ID,
-	Endpoints,
-	GUILD_INVITE,
-	makeDiscordURL,
-} from '../../../utils/constants/discord';
-import { Authorization, client } from '../../../utils/database';
-import { request } from '../../../utils/http';
-import { JWT_TOKEN } from '../../../utils/jwt';
-import { getLogger } from '../../../utils/logger';
 
 export default async function handleDiscordAuth(
 	req: NextApiRequest,
@@ -24,7 +25,7 @@ export default async function handleDiscordAuth(
 ) {
 	let { code, state }: { code: string; state: string } = req.query as any;
 
-	const logger = getLogger(req);
+	const logger = getLoggerForRequest(req);
 
 	try {
 		const nextURL = new URL(
@@ -70,6 +71,13 @@ export default async function handleDiscordAuth(
 			} = json;
 			const scope = discordScope.split(' ');
 
+			if (!scope.includes('guilds')) {
+				return res.status(400).send(Errors[ErrorCodes.GUILDS_REQUIRED]);
+			}
+
+			if (!scope.includes('email'))
+				return res.status(400).send(Errors[ErrorCodes.EMAIL_REQUIRED]);
+
 			if (scope.includes('guilds.join')) {
 				try {
 					await fetch(
@@ -84,13 +92,6 @@ export default async function handleDiscordAuth(
 						}
 					);
 				} catch {}
-			}
-
-			if (!scope.includes('guilds')) {
-				return res.status(400).send({
-					message:
-						'To prevent spam and fraud across our services, we ask for read-only access to your servers list.',
-				});
 			}
 
 			const me: APIUser = await request(makeDiscordURL(Endpoints.ME, {}), {
@@ -113,13 +114,10 @@ export default async function handleDiscordAuth(
 			).then((res) => res.json());
 
 			if (!guilds?.length || guilds.length < 5) {
-				return res.status(403).send({
-					message:
-						'To prevent spam and fraud across our systems, we require Discord accounts to be legitimate to log in.',
-				});
+				return res.status(403).send(Errors[ErrorCodes.ANTI_SPAM_CHECK_FAILED]);
 			}
 
-			const coll = client.collection<Authorization>('auth');
+			const coll = authorizations();
 
 			await coll.updateOne(
 				{ user_id: me.id },

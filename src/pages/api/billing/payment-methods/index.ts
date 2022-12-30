@@ -1,9 +1,13 @@
+import { checkAuth } from '@/lib/auth/request';
+import {
+	getCustomer,
+	listPaymentMethods,
+} from '@/lib/billing/stripe/customers';
+import { PaymentMethod } from '@/lib/billing/types';
+import { getCustomer as getDbCustomer, redis } from '@/lib/db';
+import { ErrorCodes, Errors } from '@/lib/errors';
 import { Ratelimit } from '@upstash/ratelimit';
-import { Snowflake } from 'discord-api-types/globals';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { stripe } from '../../../../utils/billing/stripe';
-import { checkAuth, client, redis } from '../../../../utils/database';
-import { PaymentMethod } from '../../../../utils/types';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
@@ -30,36 +34,29 @@ export default async function subscription(
 		res
 			.setHeader('Retry-After', (rl.reset - Date.now()) / 1000)
 			.status(429)
-			.json({
-				message: 'You are being rate limited.',
-				reset_after: (rl.reset - Date.now()) / 1000,
-			});
+			.json(Errors[ErrorCodes.USER_LIMIT]((rl.reset - Date.now()) / 1000));
 		return;
 	}
 
-	const customer = await client
-		.collection<{
-			customer_id: string;
-			user_id: Snowflake;
-		}>('customers')
-		.findOne({ user_id: user.id });
+	const customer = await getDbCustomer(user.id);
 
 	if (!customer) return res.send([]);
 
-	const stripeCustomer = await stripe.customers.retrieve(customer.customer_id);
+	const stripeCustomer = await getCustomer(customer.customer_id, []);
 
 	if (stripeCustomer.deleted)
 		return res.status(422).send({ message: 'Deleted customer' });
 
-	const result = await stripe.customers
-		.listPaymentMethods(customer.customer_id, {} as any)
-		.then((res) =>
-			res.data.map((v) => ({
-				...v,
-				default:
-					stripeCustomer.invoice_settings.default_payment_method === v.id,
-			}))
-		);
+	const result = await listPaymentMethods(
+		stripeCustomer.id,
+		undefined as any,
+		[]
+	).then((res) =>
+		res.data.map((v) => ({
+			...v,
+			default: stripeCustomer.invoice_settings.default_payment_method === v.id,
+		}))
+	);
 
 	res.send(result);
 }

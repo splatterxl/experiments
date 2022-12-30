@@ -1,5 +1,4 @@
 import { Center, Flex } from '@chakra-ui/react';
-import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
 import { PrimaryButton } from '../../components/brand/PrimaryButton';
 import { Routes } from '../../utils/constants';
@@ -17,15 +16,4 @@ export default function Premium() {
 			</Center>
 		</>
 	);
-}
-
-export async function getServerSideProps({
-	req,
-}: GetServerSidePropsContext): Promise<GetServerSidePropsResult<{}>> {
-	switch (true) {
-		case req.cookies.auth == undefined || !req.cookies.auth:
-			return { redirect: { destination: Routes.LOGIN, permanent: false } };
-		default:
-			return { props: {} };
-	}
 }

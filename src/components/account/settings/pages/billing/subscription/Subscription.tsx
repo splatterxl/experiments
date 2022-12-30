@@ -1,3 +1,10 @@
+import useToast from '@/hooks/useToast';
+import { PaymentMethods } from '@/lib/billing/constants';
+import { SubscriptionData } from '@/lib/billing/types';
+import { request } from '@/lib/http/web';
+import GuildsStore from '@/stores/GuildsStore';
+import { one } from '@/utils';
+import { APIEndpoints, makeURL } from '@/utils/constants';
 import {
 	AlertDialog,
 	AlertDialogBody,
@@ -16,13 +23,6 @@ import {
 } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import React from 'react';
-import GuildsStore from '../../../../../../stores/GuildsStore';
-import { one } from '../../../../../../utils';
-import { APIEndpoints, makeURL } from '../../../../../../utils/constants';
-import { PaymentMethods } from '../../../../../../utils/constants/billing';
-import useToast from '../../../../../../utils/hooks/useToast';
-import { request } from '../../../../../../utils/http';
-import { SubscriptionData } from '../../../../../../utils/types';
 import SubscriptionHeader from './SubscriptionHeader';
 
 export const Subscription: React.FC = () => {

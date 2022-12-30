@@ -1,3 +1,7 @@
+import type { PaymentMethod, SubscriptionData } from '@/lib/billing/types';
+import { request } from '@/lib/http/web';
+import GuildsStore from '@/stores/GuildsStore';
+import { APIEndpoints, makeURL, Routes } from '@/utils/constants';
 import { LockIcon } from '@chakra-ui/icons';
 import {
 	Box,
@@ -13,13 +17,6 @@ import {
 	VStack,
 } from '@chakra-ui/react';
 import React from 'react';
-import GuildsStore from '../../../../../stores/GuildsStore';
-import { APIEndpoints, makeURL, Routes } from '../../../../../utils/constants';
-import { request } from '../../../../../utils/http';
-import type {
-	PaymentMethod,
-	SubscriptionData,
-} from '../../../../../utils/types';
 import PaymentMethodSmall from './payment-methods/PaymentMethodSmall';
 import SubscriptionHeader from './subscription/SubscriptionHeader';
 
@@ -115,7 +112,7 @@ export const BillingIndex: React.FC = () => {
 						<List pt={5} w='full' display='flex' flexDir='column' gap={3}>
 							{paymentMethods.map((pm, i, a) => {
 								return (
-									<ListItem key={i}>
+									<ListItem key={pm.id}>
 										<PaymentMethodSmall pm={pm} index={i} length={a.length} />
 									</ListItem>
 								);

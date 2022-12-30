@@ -1,11 +1,17 @@
+import { checkAuth } from '@/lib/auth/request';
+import {
+	getCustomer,
+	setCustomerDefaultPaymentMethod,
+} from '@/lib/billing/stripe/customers';
+import { getPaymentMethod } from '@/lib/billing/stripe/paymentMethods';
+import { PaymentMethod } from '@/lib/billing/types';
+import { redis } from '@/lib/db';
+import { customers } from '@/lib/db/collections';
+import { ErrorCodes, Errors } from '@/lib/errors';
 import { Ratelimit } from '@upstash/ratelimit';
-import { Snowflake } from 'discord-api-types/globals';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { one } from '../../../../utils';
-import { stripe } from '../../../../utils/billing/stripe';
-import { checkAuth, client, redis } from '../../../../utils/database';
-import { PaymentMethod } from '../../../../utils/types';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
@@ -32,36 +38,36 @@ export default async function subscription(
 		res
 			.setHeader('Retry-After', (rl.reset - Date.now()) / 1000)
 			.status(429)
-			.json({
-				message: 'You are being rate limited.',
-				reset_after: (rl.reset - Date.now()) / 1000,
-			});
+			.json(Errors[ErrorCodes.USER_LIMIT]((rl.reset - Date.now()) / 1000));
 		return;
 	}
 
 	const id = one(req.query.id);
 
-	if (!id) {
-		return res.status(400).send({ message: 'Invalid payment method ID' });
+	if (!id?.startsWith('pm_')) {
+		return res.status(400).send(Errors[ErrorCodes.INVALID_PAYMENT_METHOD_ID]);
 	}
 
 	let result: Stripe.PaymentMethod;
 	try {
-		result = await stripe.paymentMethods.retrieve(id, { expand: ['customer'] });
+		result = await getPaymentMethod(id, ['customer']);
 	} catch (err: any) {
+		const status = err.message.startsWith('No such') ? 404 : 502;
+
 		return res
-			.status(err.message.startsWith('No such') ? 404 : 502)
-			.send({ message: err.message });
+			.status(status)
+			.send(
+				status === 404
+					? Errors[ErrorCodes.UNKNOWN_PAYMENT_METHOD]
+					: Errors[ErrorCodes.BAD_GATEWAY]
+			);
 	}
 
 	if (result.metadata?.user_id !== user.id) {
-		return res.status(403).send({ message: 'Missing Access' });
+		return res.status(404).send(Errors[ErrorCodes.UNKNOWN_PAYMENT_METHOD]);
 	}
 
-	const coll = client.collection<{
-		customer_id: string;
-		user_id: Snowflake;
-	}>('customers');
+	const coll = customers();
 
 	let customer = await coll
 		.findOne({ user_id: user.id })
@@ -73,13 +79,12 @@ export default async function subscription(
 
 			await coll.insertOne({ user_id: user.id, customer_id: customer });
 		} else {
-			return res.status(500).send({ message: 'Internal Server Error' });
+			return res.status(500).send(Errors[ErrorCodes.INTERNAL_SERVER_ERROR]);
 		}
 	}
 
 	const stripeCustomer =
-		(result.customer as Stripe.Customer) ??
-		(await stripe.customers.retrieve(customer));
+		(result.customer as Stripe.Customer) ?? (await getCustomer(customer, []));
 
 	if (stripeCustomer.deleted)
 		return res.status(422).send({ message: 'Deleted customer' });
@@ -93,11 +98,7 @@ export default async function subscription(
 					return res.status(400).send({ message: 'Invalid request body' });
 
 				try {
-					await stripe.customers.update(customer, {
-						invoice_settings: {
-							default_payment_method: result.id,
-						},
-					});
+					await setCustomerDefaultPaymentMethod(customer, id);
 				} catch (err: any) {
 					return res.status(422).send({ message: err.message });
 				}

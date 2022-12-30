@@ -1,11 +1,14 @@
+import { checkAuth } from '@/lib/auth/request';
+import { JWT_TOKEN } from '@/lib/crypto/jwt';
+import { redis } from '@/lib/db';
+import { sendEmail } from '@/lib/email';
+import { Templates } from '@/lib/email/constants';
+import { ErrorCodes, Errors } from '@/lib/errors';
+import { getOrigin } from '@/lib/util';
 import { Ratelimit } from '@upstash/ratelimit';
 import { sign } from 'jsonwebtoken';
-import { EmailParams, Recipient } from 'mailersend';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { from, mailersend } from '../../../utils/billing/email';
 import { APIEndpoints, makeURL } from '../../../utils/constants';
-import { checkAuth, redis } from '../../../utils/database';
-import { JWT_TOKEN } from '../../../utils/jwt';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
@@ -21,7 +24,7 @@ export default async function startHarvest(
 	if (!user) return;
 
 	if (req.method !== 'POST')
-		return res.status(405).send({ message: 'Method Not Allowed' });
+		return res.status(405).send(Errors[ErrorCodes.METHOD_NOT_ALLOWED]);
 
 	const identifier = 'start_harvest:' + user.id;
 	const result = await ratelimit.limit(identifier);
@@ -32,76 +35,46 @@ export default async function startHarvest(
 		res.setHeader('X-RateLimit-Reset', result.reset);
 		res.setHeader('Retry-After', (result.reset - Date.now()) / 1000);
 
-		res.status(429).json({
-			message: 'Data harvest already in progress.',
-		});
+		res.status(429).json(Errors[ErrorCodes.HARVEST_ALREADY_IN_PROGRESS]);
 		return;
 	}
 
-	const host = req.headers.host;
+	const origin = getOrigin(req, res);
 
-	if (!host) return res.status(400).send({ error: 'Invalid host' });
+	if (!origin) return;
 
-	const url = new URL(
-		req.url!,
-		process.env.NODE_ENV === 'development'
-			? `http://${host}`
-			: `https://${host}`
-	);
-
-	const recipients = [new Recipient(user.email!, user.username)];
-
-	const variables = [
+	const email = await sendEmail(
 		{
 			email: user.email!,
-			substitutions: [
-				{
-					var: 'name',
-					value: user.username,
-				},
-				{
-					var: 'download_url',
-					value: `${url.origin}${makeURL(APIEndpoints.DOWNLOAD_HARVEST, {
-						_: sign(
-							{
-								user: user.id,
-								email: user.email,
-							},
-							JWT_TOKEN,
-							{ expiresIn: '30d' }
-						),
-					})}`,
-				},
-			],
+			name: user.username,
 		},
-	];
-
-	const emailParams = new EmailParams()
-		.setFrom(from.email)
-		.setFromName(from.name)
-		.setRecipients(recipients)
-		.setSubject('Your data is ready!')
-		.setTemplateId('3z0vkloq0wx47qrx')
-		.setVariables(variables as any);
-
-	const email = (await mailersend.send(emailParams)) as Response;
-
-	res.status(202).send({
-		email: email.status === 202 ? 'sent' : 'error',
-		message:
-			email.status === 202
-				? 'We have sent your data to your Discord email address.'
-				: 'An unknown error occured. Sorry!',
-	});
-
-	if (!email.ok) {
-		const json = await email.json();
-
-		user.logger.error(
-			{
-				error: json,
+		{
+			template: Templates.HARVEST,
+			subject: 'Your data is ready!',
+			variables: {
+				email: user.email!,
+				substitutions: [
+					{
+						var: 'name',
+						value: user.username,
+					},
+					{
+						var: 'download_url',
+						value: `${origin}${makeURL(APIEndpoints.DOWNLOAD_HARVEST, {
+							_: sign(
+								{
+									user: user.id,
+									email: user.email,
+								},
+								JWT_TOKEN,
+								{ expiresIn: '30d' }
+							),
+						})}`,
+					},
+				],
 			},
-			'Could not send user data to email'
-		);
-	}
+		}
+	);
+
+	res.status(email.status).send(email);
 }

@@ -1,7 +1,7 @@
+import { createAnalyticsQuery } from '@/lib/analytics/web';
 import { Heading, HStack, Image, Link } from '@chakra-ui/react';
 import { Montserrat } from '@next/font/google';
 import React from 'react';
-import { createAnalyticsQuery } from '../../utils/analytics';
 import { Routes } from '../../utils/constants';
 import { ASSETS } from '../../utils/constants/assets';
 

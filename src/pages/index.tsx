@@ -1,3 +1,4 @@
+import { createAnalyticsQuery } from '@/lib/analytics/web';
 import {
 	Center,
 	Heading,
@@ -14,7 +15,6 @@ import Head from 'next/head';
 import { PrimaryButton } from '../components/brand/PrimaryButton';
 import { RocketIcon } from '../components/brand/RocketIcon';
 import { PremiumBadge } from '../components/premium/PremiumBadge';
-import { createAnalyticsQuery } from '../utils/analytics';
 import { Routes } from '../utils/constants';
 
 export default function Home() {

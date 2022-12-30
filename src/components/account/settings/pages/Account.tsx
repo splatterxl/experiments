@@ -1,7 +1,7 @@
 import { Box, Heading, Text, VStack } from '@chakra-ui/react';
 import React from 'react';
+import useToast from '../../../../hooks/useToast';
 import { APIEndpoints, makeURL } from '../../../../utils/constants';
-import useToast from '../../../../utils/hooks/useToast';
 import { PrimaryButton } from '../../../brand/PrimaryButton';
 
 enum RequestState {

@@ -1,3 +1,4 @@
+import { login } from '@/lib/analytics/web/actions/login';
 import { ChevronRightIcon } from '@chakra-ui/icons';
 import {
 	Box,
@@ -14,7 +15,6 @@ import {
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
 import React from 'react';
-import { login } from '../../../utils/actions/login';
 import { Account } from './pages/Account';
 import { Billing } from './pages/Billing';
 import { Debug } from './pages/Debug';
@@ -57,7 +57,7 @@ export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
 	const cookies = parseCookies();
 
 	React.useEffect(() => {
-		if (!cookies.auth) {
+		if (!window.localStorage.getItem('user')) {
 			login('settings', router.asPath);
 			return;
 		}

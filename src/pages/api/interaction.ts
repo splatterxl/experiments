@@ -1,4 +1,5 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import { ErrorCodes, Errors } from '@/lib/errors';
 import { webcrypto } from 'crypto';
 import type { APIInteraction } from 'discord-api-types/v10';
 import { verify } from 'discord-verify/node';
@@ -28,7 +29,7 @@ export default async function handler(
 	);
 
 	if (!isValid) {
-		return res.status(401).send('Invalid signature' as any);
+		return res.status(401).send(Errors[ErrorCodes.INVALID_SIGNATURE]);
 	}
 
 	let { body }: { body: APIInteraction } = req;

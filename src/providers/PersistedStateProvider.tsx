@@ -18,8 +18,9 @@ export const PersistedStateProvider: React.FC<React.PropsWithChildren<{}>> = ({
 		GuildsStore.fetch(setGuilds);
 
 		if (cookies.auth) setUser(decode(one(cookies.auth)) as APIUser);
+		else setUser(null as any);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [cookies]);
+	}, []);
 
 	return <>{children}</>;
 };

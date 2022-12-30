@@ -48,6 +48,12 @@ export default function Privacy() {
 						never send you promotional content without prior and active consent.
 					</ListItem>
 					<ListItem>
+						We ask for read-only access to your Discord server list, a) to
+						employ anti-spam measures across our services and ensure you&apos;re
+						not a malicious actor; b) to provide easy and intuitive selection of
+						servers for analytics and to apply subscription settings.
+					</ListItem>
+					<ListItem>
 						If you use our online dashboard or Discord bot to view experiment
 						rollout data, we collect information about your server(s) including
 						their numeric identifier, member count, and other miscellaneous data
@@ -67,7 +73,16 @@ export default function Privacy() {
 						contact us, please provide us with this value to assist debugging.
 					</ListItem>
 				</List>
-				<Heading id='request-your-data'>02. Request Your Data</Heading>
+				<Heading>02. Data Shared</Heading>
+				<Text>
+					<b>We do not sell your personal information.</b> We share your billing
+					details to Stripe to handle our subscription billing, but any other
+					information will never leave our servers. We will never share, sell or
+					analyse any personally identifiable information. Your data is securely
+					stored behind a firewall
+				</Text>
+				<Heading id='manage-your-data'>03. Manage Your Data</Heading>
+				<Heading size='md'>Request Your Data</Heading>
 				<Text>
 					You may request a copy of your data through the online dashboard by
 					navigating to your{' '}
@@ -75,7 +90,7 @@ export default function Privacy() {
 					clicking on the button labelled &quot;Request My Data&quot;. It may
 					take up to 30 days for us to process your request.
 				</Text>
-				<Heading id='delete-your-data'>03. Delete Your Data</Heading>
+				<Heading size='md'>Delete Your Data</Heading>
 				<Text>
 					You may remove our records of your data and billing subscription
 					history by deleting your account through{' '}

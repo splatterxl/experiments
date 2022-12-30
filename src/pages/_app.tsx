@@ -1,11 +1,11 @@
 import { Box, ChakraProvider, VStack } from '@chakra-ui/react';
-import '@stripe/stripe-js';
+// import '@stripe/stripe-js';
 import { Analytics } from '@vercel/analytics/react';
 import type { AppProps } from 'next/app';
 import { RecoilRoot } from 'recoil';
 import { Footer } from '../components/footer/Footer';
 import Navbar from '../components/navbar/Navbar';
-import { Snowflakes } from '../components/Snowflakes';
+import { Snowflakes } from '../components/snowflakes/Snowflakes';
 import { PersistedStateProvider } from '../providers/PersistedStateProvider';
 import '../styles/globals.css';
 import { THEME } from '../utils/constants/theme';

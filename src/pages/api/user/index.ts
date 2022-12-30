@@ -1,5 +1,5 @@
+import { checkAuth } from '@/lib/auth/request';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkAuth } from '../../../utils/database';
 
 export default async function getMyGuilds(
 	req: NextApiRequest,

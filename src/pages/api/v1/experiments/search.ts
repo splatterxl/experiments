@@ -1,6 +1,7 @@
+import { Experiment } from '@/lib/db/models';
+import { getExperiments, GetExperimentsOptions } from '@/lib/experiments';
 import FuzzySearch from 'fuzzy-search';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Experiment, getExperiments, GetExperimentsOptions } from './[type]';
 
 export default async function searchExperiments(
 	req: NextApiRequest,

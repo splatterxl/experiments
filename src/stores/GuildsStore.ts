@@ -1,9 +1,9 @@
+import { request } from '@/lib/http/web';
 import {
 	RESTGetAPICurrentUserGuildsResult,
 	Snowflake,
 } from 'discord-api-types/v10';
 import { APIEndpoints, makeURL } from '../utils/constants';
-import { request } from '../utils/http';
 import Store from './Store';
 
 export default new (class CurrentUserGuildsStore extends Store<RESTGetAPICurrentUserGuildsResult> {
