@@ -1,4 +1,7 @@
-import { getDiscordAuthURL } from '@/lib/auth/discord';
+import { PrimaryButton } from '@/components/brand/PrimaryButton';
+import { Link } from '@/components/Link';
+import { one } from '@/utils';
+import { APP_ID, Endpoints, makeDiscordURL } from '@/utils/constants/discord';
 import {
 	Badge,
 	Center,
@@ -11,10 +14,18 @@ import {
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
 import React from 'react';
-import { PrimaryButton } from '../../../components/brand/PrimaryButton';
-import { Link } from '../../../components/Link';
-import { one } from '../../../utils';
-import { Routes } from '../../../utils/constants';
+import { APIEndpoints, makeURL, Routes } from '../../../utils/constants';
+
+function getDiscordAuthURL(scope: string[], next: string) {
+	return makeDiscordURL(Endpoints.OAUTH2_AUTH, {
+		client_id: APP_ID,
+		scope: scope.join(' '),
+		redirect_uri: origin + makeURL(APIEndpoints.DISCORD_CALLBACK),
+		response_type: 'code',
+		state: Buffer.from(JSON.stringify({ next })).toString('base64'),
+		prompt: 'none',
+	});
+}
 
 export default function Login({ next }: { next: string }) {
 	let [join, setJoin] = React.useState(false);

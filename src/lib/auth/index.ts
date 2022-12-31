@@ -1,5 +1,4 @@
 import { authorizations } from '@/lib/db/collections';
-import { Authorization } from '@/lib/db/models';
 import { sleep } from '@/utils';
 import { Endpoints, makeDiscordURL } from '@/utils/constants/discord';
 import { Snowflake } from 'discord-api-types/globals';
@@ -19,12 +18,12 @@ export async function getAccessToken(userId: Snowflake, scope?: string) {
 }
 
 export async function getUserProfile(
-	userId: Snowflake,
-	access?: Authorization
+	userId: Snowflake | null,
+	access?: { token_type: string; access_token: string }
 ) {
 	const auth = access
 		? `${access.token_type} ${access.access_token}`
-		: await getAccessToken(userId, 'identify');
+		: await getAccessToken(userId!, 'identify');
 
 	if (!auth) return null;
 
