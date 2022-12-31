@@ -1,7 +1,11 @@
 export class Error {
 	#baggage: any;
 
-	constructor(public message: string, public code = 0, baggage?: any) {
+	constructor(
+		public message: string,
+		public code: ErrorCodes = ErrorCodes.UNKNOWN,
+		baggage?: any
+	) {
 		this.#baggage = baggage ?? {};
 	}
 
@@ -67,6 +71,8 @@ export enum ErrorCodes {
 	UNPROCESSABLE_ENTITY = 422,
 	BAD_GATEWAY = 502,
 	INTERNAL_SERVER_ERROR = 500,
+
+	UNKNOWN = 0,
 }
 
 export const Errors = {
@@ -206,7 +212,10 @@ export const Errors = {
 		ErrorCodes.MAX_SUBSCRIPTIONS
 	),
 
-	[ErrorCodes.FRAUD]: new Error(undefined as any, ErrorCodes.FRAUD),
+	[ErrorCodes.FRAUD]: (area: string) =>
+		new Error('Request blocked', ErrorCodes.FRAUD, {
+			area: process.env.NODE_ENV === 'development' ? area : undefined,
+		}),
 	[ErrorCodes.FEATURE_DISABLED]: new Error(
 		'This feature has been temporarily disabled',
 		ErrorCodes.FEATURE_DISABLED
@@ -217,6 +226,8 @@ export const Errors = {
 	[ErrorCodes.UNPROCESSABLE_ENTITY]: new Error('422: Unprocessable Entity'),
 	[ErrorCodes.BAD_GATEWAY]: new Error('502: Bad Gateway'),
 	[ErrorCodes.INTERNAL_SERVER_ERROR]: new Error('500: Internal Server Error'),
+
+	[ErrorCodes.UNKNOWN]: new Error('500: Internal Server Error'),
 };
 
 const _: Record<ErrorCodes, Error | ((_: any) => Error)> = Errors;

@@ -1,7 +1,11 @@
 import { handleAuthorization, refreshToken } from '@/lib/auth/discord';
 import { ErrorCodes, Errors } from '@/lib/errors';
 import { APIUser, Snowflake } from 'discord-api-types/v10';
-import { NextApiRequest, NextApiResponse } from 'next';
+import {
+	GetServerSidePropsContext,
+	NextApiRequest,
+	NextApiResponse,
+} from 'next';
 import { destroyCookie, setCookie } from 'nookies';
 import { getAuthorization, getUserProfile } from '.';
 import { sign, verify } from '../crypto/jwt';
@@ -22,68 +26,79 @@ export const checkAuth = async (
 	} else if (req.cookies.auth) {
 		const logger = getLoggerForRequest(req);
 
-		try {
-			const { id } = verify<APIUser>(req.cookies.auth);
+		const arr = await checkAuthRaw(req);
 
-			const auth = await getAuthorization(id);
-
-			if (!auth) {
-				await logout(res);
-
-				return;
-			}
-
-			let json = await getUserProfile(id, auth);
-
-			if (!json) {
-				// try refreshing
-
-				try {
-					const refreshed = await refreshToken(auth.refresh_token);
-
-					await handleAuthorization(refreshed, id);
-
-					json = await getUserProfile(id, refreshed);
-
-					if (!json) throw new Error('new refreshed access is invalid'); // what?
-				} catch {
-					await logout(res);
-
-					return;
-				}
-			}
-
-			setCookie({ res }, 'auth', sign(json), { path: '/' });
-
-			return {
-				...json,
-				access_token: auth.access_token,
-				logger: getLoggerForUser(logger, json, auth),
-			};
-		} catch (err: any) {
-			console.error(err);
-
-			logger.error(
-				{ error: err.toString() },
-				'Could not verify authentication'
-			);
-
-			try {
-				await logout(res);
-			} catch {
-				// there's a chance the response will already have been sent
-			}
+		if (!arr) {
+			await logout(res);
+			return;
 		}
+
+		const [json, auth] = arr;
+
+		setCookie({ res }, 'auth', sign(json), { path: '/' });
+
+		return {
+			...json,
+			access_token: auth.access_token,
+			logger: getLoggerForUser(logger, json, auth),
+		};
 	}
 };
 
 async function logout(res: NextApiResponse, userId?: Snowflake) {
 	destroyCookie({ res }, 'auth', { path: '/' });
-	destroyCookie({ res }, 'refresh', { path: '/' });
 
 	// TODO: implement refreshing
 
 	if (userId) await authorizations().deleteMany({ user_id: userId });
 
 	res.status(401).send(Errors[ErrorCodes.AUTH_EXPIRED]);
+}
+
+export async function checkAuthRaw(req: GetServerSidePropsContext['req']) {
+	if (!req.cookies.auth) {
+		return null;
+	}
+
+	try {
+		const { id } = verify<APIUser>(req.cookies.auth);
+
+		let auth = await getAuthorization(id);
+
+		if (!auth) return null;
+
+		let json = await getUserProfile(id, auth);
+
+		if (!json) {
+			// try refreshing
+
+			try {
+				const refreshed = await refreshToken(auth.refresh_token);
+
+				auth = await handleAuthorization(refreshed, id);
+
+				json = await getUserProfile(id, refreshed);
+
+				if (!json) return null;
+			} catch {
+				return null;
+			}
+		}
+
+		return json ? [json, auth] : null;
+	} catch {
+		return null;
+	}
+}
+
+export async function checkAuthProps(context: GetServerSidePropsContext) {
+	const arr = await checkAuthRaw(context.req);
+
+	if (!arr) {
+		destroyCookie(context, 'auth', { path: '/' });
+
+		return null;
+	} else {
+		return arr;
+	}
 }

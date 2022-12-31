@@ -2,7 +2,7 @@ import { checkAuth } from '@/lib/auth/request';
 import { Prices, Products } from '@/lib/billing/constants';
 import { stripe } from '@/lib/billing/stripe';
 import { getSubscriptionCount } from '@/lib/billing/subscriptions';
-import { getCustomer, redis } from '@/lib/db';
+import { getDbCustomer, redis } from '@/lib/db';
 import { ErrorCodes, Errors } from '@/lib/errors';
 import { getOrigin } from '@/lib/util';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -94,7 +94,7 @@ export default async function checkout(
 	const { email } = user;
 	if (!email) return res.status(400).send(Errors[ErrorCodes.EMAIL_REQUIRED]);
 
-	const customer = await getCustomer(user.id);
+	const customer = await getDbCustomer(user.id);
 
 	const session = await stripe.checkout.sessions.create({
 		line_items: [

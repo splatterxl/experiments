@@ -4,7 +4,7 @@ import {
 	listPaymentMethods,
 } from '@/lib/billing/stripe/customers';
 import { PaymentMethod } from '@/lib/billing/types';
-import { getCustomer as getDbCustomer, redis } from '@/lib/db';
+import { getDbCustomer, redis } from '@/lib/db';
 import { ErrorCodes, Errors } from '@/lib/errors';
 import { Ratelimit } from '@upstash/ratelimit';
 import { NextApiRequest, NextApiResponse } from 'next';

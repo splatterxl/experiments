@@ -114,3 +114,13 @@ export const getSubscriptionData = async (
 		return base;
 	}
 };
+
+export function getSubscriptions(userId: Snowflake) {
+	return getDbSubscriptions(userId).then((subs) =>
+		subs.length
+			? Promise.all(subs.map((sub) => getSubscriptionData(sub, false))).then(
+					(promise) => promise.filter((v) => !v.cancelled)
+			  )
+			: ([] as SubscriptionData[])
+	);
+}

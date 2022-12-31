@@ -1,8 +1,6 @@
-import { login } from '@/lib/analytics/web/actions/login';
 import { ChevronRightIcon } from '@chakra-ui/icons';
 import {
 	Box,
-	Center,
 	Spinner,
 	Tab,
 	TabList,
@@ -13,14 +11,7 @@ import {
 	VisuallyHidden,
 } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
-import { parseCookies } from 'nookies';
 import React from 'react';
-import { Account } from './pages/Account';
-import { Billing } from './pages/Billing';
-import { Debug } from './pages/Debug';
-import { General } from './pages/General';
-import { PageList } from './pages/PageList';
-import { Servers } from './pages/Servers';
 
 export enum SettingsPages {
 	GENERAL,
@@ -29,7 +20,9 @@ export enum SettingsPages {
 	BILLING,
 }
 
-export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
+export const SettingsPage: React.FC<
+	React.PropsWithChildren<{ page: SettingsPages }>
+> = (props) => {
 	const router = useRouter();
 
 	const [xs, sm, md] = useMediaQuery([
@@ -50,34 +43,11 @@ export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
 		? maxLength.md
 		: keys.length + 1;
 
-	const [localStorage, setLocalStorage] = React.useState<
-		typeof window.localStorage
-	>(null as any);
-
-	const cookies = parseCookies();
-
-	React.useEffect(() => {
-		if (!window.localStorage.getItem('user')) {
-			login('settings', router.asPath);
-			return;
-		}
-
-		setLocalStorage(window.localStorage);
-	}, [cookies.auth, router]);
-
-	const [index, setIndex] = React.useState(props.page);
-
-	if (!localStorage) {
-		return (
-			<Center w='full' h='60vh'>
-				<Spinner size='lg' />
-			</Center>
-		);
-	}
+	const [loading, setLoading] = React.useState(-1);
 
 	return (
 		<Box px={10}>
-			<Tabs index={index} onChange={setIndex} colorScheme='orange' isLazy>
+			<Tabs index={props.page} colorScheme='orange' isLazy>
 				<TabList
 					_selected={{ _light: { color: 'orange.300 !important' } }}
 					_light={{ borderColor: 'blackAlpha.300' }}
@@ -87,17 +57,23 @@ export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
 							<Tab
 								key={v}
 								onClick={() => {
+									setLoading(i);
+
 									router.push(
 										{
 											pathname: '/settings/[page]',
 											query: { page: v.toLowerCase() },
 										},
 										`/settings/${v.toLowerCase()}`,
-										{ scroll: true, shallow: true }
+										{ scroll: true, shallow: false }
 									);
 								}}
 							>
-								{`${v[0].toUpperCase()}${v.slice(1).toLowerCase()}`}
+								{loading === i && props.page !== (i as SettingsPages) ? (
+									<Spinner />
+								) : (
+									`${v[0].toUpperCase()}${v.slice(1).toLowerCase()}`
+								)}
 							</Tab>
 						);
 
@@ -117,23 +93,10 @@ export const SettingsPage: React.FC<{ page: SettingsPages }> = (props) => {
 				</TabList>
 
 				<TabPanels>
-					{[General, Servers, Account, Billing, Debug].map((V, i) => (
-						<TabPanel key={i}>
-							{localStorage ? (
-								// @ts-ignore
-								<V storage={localStorage} />
-							) : (
-								<Center w='full' h='60vh'>
-									<Spinner size='lg' />
-								</Center>
-							)}
-						</TabPanel>
+					{Array.from(Array(props.page), (_, v) => (
+						<TabPanel key={v} />
 					))}
-					{md ? (
-						<TabPanel>
-							<PageList setIndex={setIndex} />
-						</TabPanel>
-					) : null}
+					<TabPanel>{props.children}</TabPanel>
 				</TabPanels>
 			</Tabs>
 		</Box>
