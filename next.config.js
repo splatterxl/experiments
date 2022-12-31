@@ -1,4 +1,6 @@
-/** @type {import('next').NextConfig} */
+const { version } = require('./package.json');
+
+/** @type { import('next').NextConfig } */
 const nextConfig = {
 	reactStrictMode: true,
 	swcMinify: true,
@@ -10,6 +12,18 @@ const nextConfig = {
 		// https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#use-hidden-source-map
 		// for more information.
 		hideSourceMaps: true,
+	},
+	publicRuntimeConfig: {
+		version,
+	},
+	redirects: async () => {
+		return [
+			{
+				destination: '/settings/general',
+				source: '/settings',
+				permanent: false,
+			},
+		];
 	},
 	headers: async () => {
 		const isDev = process.env.NODE_ENV === 'development';

@@ -1,5 +1,6 @@
 import { PrimaryButton } from '@/components/brand/PrimaryButton';
 import { Link } from '@/components/Link';
+import { getOrigin } from '@/lib/util';
 import { one } from '@/utils';
 import { APP_ID, Endpoints, makeDiscordURL } from '@/utils/constants/discord';
 import {
@@ -16,7 +17,7 @@ import Head from 'next/head';
 import React from 'react';
 import { APIEndpoints, makeURL, Routes } from '../../../utils/constants';
 
-function getDiscordAuthURL(scope: string[], next: string) {
+function getDiscordAuthURL(scope: string[], next: string, origin: string) {
 	return makeDiscordURL(Endpoints.OAUTH2_AUTH, {
 		client_id: APP_ID,
 		scope: scope.join(' '),
@@ -27,7 +28,12 @@ function getDiscordAuthURL(scope: string[], next: string) {
 	});
 }
 
-export default function Login({ next }: { next: string }) {
+interface LoginProps {
+	next: string;
+	origin: string;
+}
+
+export default function Login({ next, origin }: LoginProps) {
 	let [join, setJoin] = React.useState(false);
 
 	return (
@@ -92,7 +98,8 @@ export default function Login({ next }: { next: string }) {
 							['email', 'identify', 'guilds'].concat(
 								join ? ['guilds.join'] : []
 							),
-							next
+							next,
+							origin
 						)}
 					/>
 				</VStack>
@@ -103,7 +110,7 @@ export default function Login({ next }: { next: string }) {
 
 export async function getServerSideProps(
 	context: GetServerSidePropsContext
-): Promise<GetServerSidePropsResult<{ next: string }>> {
+): Promise<GetServerSidePropsResult<LoginProps>> {
 	if (context.req.cookies['auth']) {
 		return {
 			redirect: {
@@ -120,6 +127,7 @@ export async function getServerSideProps(
 	return {
 		props: {
 			next: one(context.query.next) ?? Routes.DASHBOARD,
+			origin: getOrigin(context.req),
 		},
 	};
 }

@@ -1,9 +1,9 @@
-import { request } from '@/lib/http/web';
+import HTTPClient from '@/lib/http';
 import {
 	RESTGetAPICurrentUserGuildsResult,
 	Snowflake,
 } from 'discord-api-types/v10';
-import { APIEndpoints, makeURL } from '../utils/constants';
+import { APIEndpoints } from '../utils/constants';
 import Store from './Store';
 
 export default new (class CurrentUserGuildsStore extends Store<RESTGetAPICurrentUserGuildsResult> {
@@ -19,14 +19,12 @@ export default new (class CurrentUserGuildsStore extends Store<RESTGetAPICurrent
 
 	async fetch(set: ReturnType<CurrentUserGuildsStore['useSetInStorage']>) {
 		try {
-			const { ok, json } = await request(makeURL(APIEndpoints.GUILDS)).then(
-				async (res) => ({
-					ok: res.ok,
-					json: await res.json().catch(() => []),
-				})
-			);
+			const { ok, data } =
+				await HTTPClient.get<RESTGetAPICurrentUserGuildsResult>(
+					APIEndpoints.GUILDS
+				);
 
-			if (ok) set(json);
+			if (ok) set(data);
 			else set([]);
 		} catch (err) {
 			console.error(err);

@@ -18,7 +18,7 @@ export function getAuth(userId: Snowflake) {
 	return coll.findOne({ user_id: userId });
 }
 
-export function getCustomer(userId: Snowflake) {
+export function getDbCustomer(userId: Snowflake) {
 	const coll = customers();
 
 	return coll.findOne({

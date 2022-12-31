@@ -1,3 +1,4 @@
+import { getAuth } from '@/lib/db';
 import { authorizations } from '@/lib/db/collections';
 import { Authorization } from '@/lib/db/models';
 import {
@@ -105,4 +106,6 @@ export async function handleAuthorization(
 			upsert: true,
 		}
 	);
+
+	return getAuth(userId);
 }

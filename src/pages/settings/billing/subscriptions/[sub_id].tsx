@@ -1,8 +1,8 @@
-import Head from 'next/head';
 import {
 	SettingsPage,
 	SettingsPages,
-} from '../../../../components/account/settings/Settings';
+} from '@/components/account/settings/Settings';
+import Head from 'next/head';
 
 export default function Subscription() {
 	return (
@@ -10,7 +10,7 @@ export default function Subscription() {
 			<Head>
 				<title>Settings | Experiments</title>
 			</Head>
-			<SettingsPage page={SettingsPages.BILLING} />
+			<SettingsPage page={SettingsPages.BILLING}></SettingsPage>
 		</>
 	);
 }

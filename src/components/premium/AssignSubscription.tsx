@@ -1,10 +1,13 @@
-import { getGuilds, request } from '@/lib/http/web';
+import HTTPClient, { getGuilds } from '@/lib/http';
 import { HStack, Select } from '@chakra-ui/react';
-import { APIGuild, PermissionFlagsBits } from 'discord-api-types/v10';
+import {
+	PermissionFlagsBits,
+	RESTGetAPICurrentUserGuildsResult,
+} from 'discord-api-types/v10';
 import router from 'next/router';
 import React from 'react';
 import useToast from '../../hooks/useToast';
-import { APIEndpoints, makeURL, Routes } from '../../utils/constants';
+import { APIEndpoints, Routes } from '../../utils/constants';
 import { PrimaryButton } from '../brand/PrimaryButton';
 
 export const AssignSubscription: React.FC<
@@ -16,7 +19,9 @@ export const AssignSubscription: React.FC<
 > = ({ subscription, product, prev }) => {
 	const ref = React.useRef<HTMLSelectElement>(null as any);
 
-	const [guilds, setGuilds] = React.useState<APIGuild[]>([]);
+	const [guilds, setGuilds] = React.useState<RESTGetAPICurrentUserGuildsResult>(
+		[]
+	);
 
 	React.useEffect(() => {
 		(async () => setGuilds((await getGuilds()) ?? []))();
@@ -49,16 +54,10 @@ export const AssignSubscription: React.FC<
 				px={7}
 				onClick={async () => {
 					if (ref.current.value) {
-						const res = await request(
-							makeURL(APIEndpoints.SUBSCRIPTION(subscription)),
+						const res = await HTTPClient.patch(
+							APIEndpoints.SUBSCRIPTION(subscription),
 							{
-								method: 'PATCH',
-								headers: {
-									'Content-Type': 'application/json',
-								},
-								body: JSON.stringify({
-									guild_id: ref.current.value,
-								}),
+								guild_id: ref.current.value,
 							}
 						);
 

@@ -1,5 +1,7 @@
+import { AppProperties } from '@/lib/analytics/web';
 import { ErrorCodes, Errors } from '@/lib/errors';
 import * as Sentry from '@sentry/nextjs';
+import { detect } from 'detect-browser';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const config = {
@@ -35,13 +37,95 @@ export function middleware(request: NextRequest) {
 				'host',
 				'accept-encoding',
 				'accept-language',
-				'connection',
-			])
-				if (!request.headers.has(header))
-					return new NextResponse(JSON.stringify(Errors[ErrorCodes.FRAUD]), {
+				'user-agent',
+				'x-app-props',
+			]) {
+				if (!request.headers.has(header) || !request.headers.get(header))
+					return new NextResponse(
+						JSON.stringify(Errors[ErrorCodes.FRAUD]('headers')),
+						{
+							status: 403,
+							headers: { 'content-type': 'application/json' },
+						}
+					);
+			}
+
+			if (!request.headers.get('user-agent')?.startsWith('Mozilla/5.0')) {
+				return new NextResponse(
+					JSON.stringify(Errors[ErrorCodes.FRAUD]('user_agent')),
+					{
 						status: 403,
 						headers: { 'content-type': 'application/json' },
-					});
+					}
+				);
+			}
+
+			{
+				const navigator = detect(request.headers.get('user-agent')!);
+
+				switch (navigator && navigator.type) {
+					case 'browser':
+						break;
+					default: {
+						return new NextResponse(
+							JSON.stringify(Errors[ErrorCodes.FRAUD]('fingerprint')),
+							{
+								status: 403,
+								headers: { 'content-type': 'application/json' },
+							}
+						);
+					}
+				}
+			}
+
+			try {
+				const appProps: AppProperties | null = request.headers.get(
+					'x-app-props'
+				)
+					? JSON.parse(
+							Buffer.from(
+								request.headers.get('x-app-props')!,
+								'base64'
+							).toString()
+					  )
+					: null;
+
+				const bail = () =>
+					new NextResponse(
+						JSON.stringify(Errors[ErrorCodes.FRAUD]('app_props')),
+						{
+							status: 403,
+							headers: { 'content-type': 'application/json' },
+						}
+					);
+
+				if (!appProps) return bail();
+
+				for (const prop of [
+					'browser_user_agent',
+					'app_version',
+					'app_environment',
+				]) {
+					if (!appProps?.[prop as keyof AppProperties]) {
+						return bail();
+					}
+				}
+
+				if (
+					appProps.app_environment !== process.env.NODE_ENV ||
+					appProps.browser_user_agent !== request.headers.get('user-agent')
+				) {
+					return bail();
+				}
+			} catch (err: any) {
+				return new NextResponse(
+					JSON.stringify(Errors[ErrorCodes.FRAUD]('app_props')),
+					{
+						status: 403,
+						headers: { 'content-type': 'application/json' },
+					}
+				);
+			}
 		}
 	}
 

@@ -1,6 +1,6 @@
-import { request } from '@/lib/http/web';
+import HTTPClient from '@/lib/http';
 import { APIUser } from 'discord-api-types/v10';
-import { APIEndpoints, makeURL } from '../utils/constants';
+import { APIEndpoints } from '../utils/constants';
 import Store from './Store';
 
 export default new (class CurrentUserStore extends Store<APIUser> {
@@ -9,14 +9,9 @@ export default new (class CurrentUserStore extends Store<APIUser> {
 	}
 
 	async fetch(set: ReturnType<CurrentUserStore['useSetInStorage']>) {
-		const { ok, json } = await request(makeURL(APIEndpoints.ME, {})).then(
-			async (res) => ({
-				ok: res.ok,
-				json: await res.json(),
-			})
-		);
+		const { ok, data } = await HTTPClient.get<APIUser>(APIEndpoints.ME);
 
-		if (ok) set(json);
+		if (ok) set(data);
 		else set(null as any);
 	}
 })();

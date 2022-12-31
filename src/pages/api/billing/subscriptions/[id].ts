@@ -64,8 +64,6 @@ export default async function subscription(
 	if (!id?.startsWith('sub_'))
 		return res.status(400).send(Errors[ErrorCodes.INVALID_SUBSCRIPTION_ID]);
 
-	const coll = subscriptions();
-
 	const subscription = await getDbSubscription(user.id, id);
 
 	if (!subscription)

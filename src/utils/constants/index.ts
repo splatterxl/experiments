@@ -11,10 +11,8 @@ export const APIEndpoints = {
 
 	CHECKOUT: '/billing/checkout',
 
-	SUBSCRIPTIONS: '/billing/subscriptions',
 	SUBSCRIPTION: (id: string) => `/billing/subscriptions/${id}`,
 
-	PAYMENT_METHODS: '/billing/payment-methods',
 	PAYMENT_METHOD: (id: string) => `/billing/payment-methods/${id}`,
 
 	LOGIN: '/auth/login',

@@ -1,5 +1,6 @@
 import { ErrorCodes, Errors } from '@/lib/errors';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { IncomingMessage } from 'http';
+import { NextApiResponse } from 'next';
 
 export interface PaginationOptions {
 	limit?: number;
@@ -43,13 +44,16 @@ export function paginate<T>(
 	};
 }
 
-export const getOrigin = (req: NextApiRequest, res: NextApiResponse) => {
+export const getOrigin = (
+	req: IncomingMessage,
+	res?: NextApiResponse
+): string => {
 	const host = req.headers.host;
 
 	if (!host) {
-		res.status(400).send(Errors[ErrorCodes.INVALID_HOST]);
+		if (res) res.status(400).send(Errors[ErrorCodes.INVALID_HOST]);
 
-		return;
+		return null as any;
 	}
 
 	try {
@@ -62,6 +66,8 @@ export const getOrigin = (req: NextApiRequest, res: NextApiResponse) => {
 
 		return url.origin;
 	} catch {
-		res.status(400).send(Errors[ErrorCodes.INVALID_HOST]);
+		if (res) res.status(400).send(Errors[ErrorCodes.INVALID_HOST]);
+
+		return null as any;
 	}
 };

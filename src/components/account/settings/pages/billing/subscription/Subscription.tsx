@@ -1,10 +1,10 @@
 import useToast from '@/hooks/useToast';
 import { PaymentMethods } from '@/lib/billing/constants';
 import { SubscriptionData } from '@/lib/billing/types';
-import { request } from '@/lib/http/web';
+import HTTPClient from '@/lib/http';
 import GuildsStore from '@/stores/GuildsStore';
 import { one } from '@/utils';
-import { APIEndpoints, makeURL } from '@/utils/constants';
+import { APIEndpoints } from '@/utils/constants';
 import {
 	AlertDialog,
 	AlertDialogBody,
@@ -41,18 +41,20 @@ export const Subscription: React.FC = () => {
 
 	React.useEffect(() => {
 		if (sub_id)
-			request(makeURL(APIEndpoints.SUBSCRIPTION(sub_id))).then(async (res) => {
-				const json = await res.json();
+			HTTPClient.get<SubscriptionData>(APIEndpoints.SUBSCRIPTION(sub_id)).then(
+				async (res) => {
+					const json = await res.json();
 
-				if (res.ok) setSubscription(json);
-				else
-					switch (res.status) {
-						case 404:
-							router.replace('/404', router.asPath, { shallow: true });
-						default:
-							console.error(json);
-					}
-			});
+					if (res.ok) setSubscription(json);
+					else
+						switch (res.status) {
+							case 404:
+								router.replace('/404', router.asPath, { shallow: true });
+							default:
+								console.error(json);
+						}
+				}
+			);
 	}, [sub_id, router]);
 
 	const guild = GuildsStore.useItem(subscription?.guild_id);
@@ -154,8 +156,8 @@ export const Subscription: React.FC = () => {
 									setCancelling(true);
 
 									try {
-										const res = await request(
-											makeURL(APIEndpoints.SUBSCRIPTION(subscription.id)),
+										const res = await HTTPClient.request<SubscriptionData>(
+											APIEndpoints.SUBSCRIPTION(subscription.id),
 											{ method: subscription.cancels_at ? 'POST' : 'DELETE' }
 										);
 
@@ -167,7 +169,7 @@ export const Subscription: React.FC = () => {
 													: sub.renews_at,
 											}));
 										} else {
-											const { message } = await res.json();
+											const { message } = await res.err;
 
 											toast({
 												description: message,
