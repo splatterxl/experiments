@@ -1,3 +1,4 @@
+import { handleAuthorization, refreshToken } from '@/lib/auth/discord';
 import { ErrorCodes, Errors } from '@/lib/errors';
 import { APIUser, Snowflake } from 'discord-api-types/v10';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -32,7 +33,25 @@ export const checkAuth = async (
 				return;
 			}
 
-			const json = await getUserProfile(id, auth);
+			let json = await getUserProfile(id, auth);
+
+			if (!json) {
+				// try refreshing
+
+				try {
+					const refreshed = await refreshToken(auth.refresh_token);
+
+					await handleAuthorization(refreshed, id);
+
+					json = await getUserProfile(id, refreshed);
+
+					if (!json) throw new Error('new refreshed access is invalid'); // what?
+				} catch {
+					await logout(res);
+
+					return;
+				}
+			}
 
 			setCookie({ res }, 'auth', sign(json), { path: '/' });
 
