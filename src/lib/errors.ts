@@ -7,6 +7,9 @@ class APIError {
 		baggage?: any
 	) {
 		this.#baggage = baggage ?? {};
+
+		// @ts-ignore
+		if (code == null) this.code = undefined;
 	}
 
 	toJSON() {
