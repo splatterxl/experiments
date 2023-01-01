@@ -91,16 +91,13 @@ export function middleware(request: NextRequest) {
 					  )
 					: null;
 
-				const bail = () =>
-					new NextResponse(
-						JSON.stringify(Errors[ErrorCodes.FRAUD]('app_props')),
-						{
-							status: 403,
-							headers: { 'content-type': 'application/json' },
-						}
-					);
+				const bail = (reason: string) =>
+					new NextResponse(JSON.stringify(Errors[ErrorCodes.FRAUD](reason)), {
+						status: 403,
+						headers: { 'content-type': 'application/json' },
+					});
 
-				if (!appProps) return bail();
+				if (!appProps) return bail('app_props_present');
 
 				for (const prop of [
 					'browser_user_agent',
@@ -108,7 +105,7 @@ export function middleware(request: NextRequest) {
 					'app_environment',
 				]) {
 					if (!appProps?.[prop as keyof AppProperties]) {
-						return bail();
+						return bail('app_props_keys');
 					}
 				}
 
@@ -116,9 +113,11 @@ export function middleware(request: NextRequest) {
 					appProps.app_environment !== process.env.NODE_ENV ||
 					appProps.browser_user_agent !== request.headers.get('user-agent')
 				) {
-					return bail();
+					return bail('app_props_env_ua');
 				}
 			} catch (err: any) {
+				console.log(err);
+
 				return new NextResponse(
 					JSON.stringify(Errors[ErrorCodes.FRAUD]('app_props')),
 					{
