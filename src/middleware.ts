@@ -40,7 +40,7 @@ export function middleware(request: NextRequest) {
 				'user-agent',
 				'x-app-props',
 			]) {
-				if (!request.headers.has(header) || !request.headers.get(header))
+				if (!request.headers.has(header) || !request.headers.get(header)) {
 					return new NextResponse(
 						JSON.stringify(Errors[ErrorCodes.FRAUD]('headers')),
 						{
@@ -48,6 +48,7 @@ export function middleware(request: NextRequest) {
 							headers: { 'content-type': 'application/json' },
 						}
 					);
+				}
 			}
 
 			if (!request.headers.get('user-agent')?.startsWith('Mozilla/5.0')) {
