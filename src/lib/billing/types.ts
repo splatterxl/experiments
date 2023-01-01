@@ -19,7 +19,18 @@ export interface SubscriptionData {
 	cancels_at: number | null;
 	cancelled: boolean;
 	renews_at: number | null;
-	payment_method?: Stripe.PaymentMethod | null;
+	payment_method?: PaymentMethod | null;
 }
 
-export type PaymentMethod = Stripe.PaymentMethod & { default: boolean };
+export interface PaymentMethod {
+	id: string;
+	default: boolean;
+	type: Stripe.PaymentMethod.Type;
+	email: string | null;
+	exp: string | null;
+	brand: string | null;
+	last4: string | null;
+	wallet: Stripe.PaymentMethod.Card.Wallet | null;
+	eps: Stripe.PaymentMethod.Eps.Bank | null;
+	ideal: Stripe.PaymentMethod.Ideal.Bank | null;
+}

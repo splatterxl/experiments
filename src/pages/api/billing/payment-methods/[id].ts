@@ -1,3 +1,4 @@
+import handle from '@/lib/api/schema';
 import { checkAuth } from '@/lib/auth/request';
 import {
 	getCustomer,
@@ -8,6 +9,7 @@ import { PaymentMethod } from '@/lib/billing/types';
 import { redis } from '@/lib/db';
 import { customers } from '@/lib/db/collections';
 import { ErrorCodes, Errors } from '@/lib/errors';
+import { s } from '@sapphire/shapeshift';
 import { Ratelimit } from '@upstash/ratelimit';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
@@ -79,7 +81,7 @@ export default async function subscription(
 
 			await coll.insertOne({ user_id: user.id, customer_id: customer });
 		} else {
-			return res.status(500).send(Errors[ErrorCodes.INTERNAL_SERVER_ERROR]);
+			return res.status(422).send(Errors[ErrorCodes.UNPROCESSABLE_ENTITY]);
 		}
 	}
 
@@ -91,7 +93,15 @@ export default async function subscription(
 
 	switch (req.method) {
 		case 'PATCH': {
-			const { body } = req;
+			const body = handle(
+				req,
+				res,
+				s.object({
+					default: s.boolean.optional,
+				})
+			);
+
+			if (!body) return;
 
 			if ('default' in body) {
 				if (typeof body.default !== 'boolean')
@@ -100,14 +110,25 @@ export default async function subscription(
 				try {
 					await setCustomerDefaultPaymentMethod(customer, id);
 				} catch (err: any) {
-					return res.status(422).send({ message: err.message });
+					return res
+						.status(500)
+						.send(Errors[ErrorCodes.INTERNAL_SERVER_ERROR](err));
 				}
 			}
 		}
 		case 'GET':
 			return res.status(200).send({
-				...result,
-				customer: stripeCustomer.id,
+				id: result.id,
+				type: result.type,
+				exp: result.card?.exp_year
+					? `${result.card.exp_month}/${result.card.exp_year}`
+					: null,
+				email: result.billing_details.email,
+				brand: result.card?.brand ?? null,
+				wallet: result.card?.wallet ?? null,
+				last4: result.card?.last4 ?? null,
+				eps: result.eps?.bank ?? null,
+				ideal: result.ideal?.bank ?? null,
 				default:
 					(stripeCustomer.invoice_settings.default_payment_method as string) ===
 					result.id,

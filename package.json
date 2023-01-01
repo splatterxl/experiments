@@ -1,6 +1,6 @@
 {
 	"name": "experiments",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"private": true,
 	"scripts": {
 		"dev": "next dev -p 3001",
@@ -15,6 +15,7 @@
 		"@emotion/react": "^11.10.5",
 		"@emotion/styled": "^11.10.5",
 		"@next/font": "^13.0.6",
+		"@sapphire/shapeshift": "^3.8.1",
 		"@sentry/nextjs": "^7.28.0",
 		"@stripe/stripe-js": "^1.46.0",
 		"@types/fuzzy-search": "^2.1.2",
@@ -51,7 +52,6 @@
 		"@types/node": "18.11.9",
 		"@types/react": "18.0.26",
 		"@types/react-dom": "18.0.9",
-		"prettier": "^2.8.1",
-		"react-devtools": "^4.27.0"
+		"prettier": "^2.8.1"
 	}
 }

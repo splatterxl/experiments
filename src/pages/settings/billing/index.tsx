@@ -1,5 +1,5 @@
-import PaymentMethodSmall from '@/components/account/settings/pages/billing/payment-methods/PaymentMethodSmall';
-import SubscriptionHeader from '@/components/account/settings/pages/billing/subscription/SubscriptionHeader';
+import PaymentMethodSmall from '@/components/account/billing/PaymentMethodSmall';
+import SubscriptionHeader from '@/components/account/billing/SubscriptionHeader';
 import {
 	SettingsPage,
 	SettingsPages,
@@ -24,7 +24,9 @@ import {
 	Tooltip,
 	VStack,
 } from '@chakra-ui/react';
+import { RESTGetAPICurrentUserGuildsResult } from 'discord-api-types/v10';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
+import React from 'react';
 
 interface BillingSettingsProps {
 	subscriptions: SubscriptionData[];
@@ -35,7 +37,15 @@ export default function BillingSettings({
 	subscriptions,
 	paymentMethods,
 }: BillingSettingsProps) {
-	const guilds = GuildsStore.useValue();
+	const getGuilds = GuildsStore.useGetFromStorage();
+
+	const [guilds, setGuilds] = React.useState<RESTGetAPICurrentUserGuildsResult>(
+		null as any
+	);
+
+	React.useEffect(() => {
+		setGuilds(getGuilds() ?? []);
+	}, [getGuilds]);
 
 	return (
 		<SettingsPage page={SettingsPages.BILLING}>
@@ -53,7 +63,7 @@ export default function BillingSettings({
 						same cycle. You can cancel or re-assign your subscription at any
 						time.
 					</Text>
-					{subscriptions && guilds?.length ? (
+					{guilds?.length ? (
 						subscriptions.length ? (
 							<List pt={5} w='full'>
 								{subscriptions.map((subscription, i, a) => {
@@ -110,32 +120,26 @@ export default function BillingSettings({
 						Your payment methods are securely transmitted using Transport Layer
 						Security (TLS) and encrypted at rest. Even we can&apos;t see them!
 					</Text>
-					{paymentMethods ? (
-						paymentMethods.length ? (
-							<List pt={5} w='full' display='flex' flexDir='column' gap={3}>
-								{paymentMethods.map((pm, i, a) => {
-									return (
-										<ListItem key={pm.id}>
-											<PaymentMethodSmall pm={pm} index={i} length={a.length} />
-										</ListItem>
-									);
-								})}
-							</List>
-						) : (
-							<Text
-								mt={4}
-								p={6}
-								rounded='xl'
-								_dark={{ bgColor: 'gray.700' }}
-								_light={{ bgColor: 'gray.200' }}
-							>
-								Purchase a subscription to add a payment method.
-							</Text>
-						)
+					{paymentMethods.length ? (
+						<List pt={5} w='full' display='flex' flexDir='column' gap={3}>
+							{paymentMethods.map((pm, i, a) => {
+								return (
+									<ListItem key={i}>
+										<PaymentMethodSmall pm={pm} index={i} length={a.length} />
+									</ListItem>
+								);
+							})}
+						</List>
 					) : (
-						<Center w='full' h='20vh'>
-							<Spinner size='lg' />
-						</Center>
+						<Text
+							mt={4}
+							p={6}
+							rounded='xl'
+							_dark={{ bgColor: 'gray.700' }}
+							_light={{ bgColor: 'gray.200' }}
+						>
+							Purchase a subscription to add a payment method.
+						</Text>
 					)}
 				</Box>
 			</VStack>

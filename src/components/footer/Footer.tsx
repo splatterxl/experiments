@@ -12,7 +12,7 @@ export const Footer = () => {
 			justify='space-between'
 		>
 			<Heading size='sm' fontWeight={500}>
-				&copy; Experiments, 2022. All rights reserved.
+				&copy; Experiments, 2022-2023. All rights reserved.
 			</Heading>
 			<List as={HStack} spacing={0} gap={2}>
 				<ListItem>

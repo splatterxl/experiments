@@ -38,4 +38,12 @@ export default new (class CurrentUserGuildsStore extends Store<RESTGetAPICurrent
 
 		return get().find((v) => v.id === k);
 	}
+
+	useGetItem(k?: Snowflake | null) {
+		const get = this.useGetFromStorage();
+
+		if (!k) return () => undefined;
+
+		return () => get().find((v) => v.id === k);
+	}
 })();

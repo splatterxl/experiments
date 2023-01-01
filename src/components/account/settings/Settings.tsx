@@ -1,3 +1,4 @@
+import { Routes } from '@/utils/constants';
 import { ChevronRightIcon } from '@chakra-ui/icons';
 import {
 	Box,
@@ -21,7 +22,11 @@ export enum SettingsPages {
 }
 
 export const SettingsPage: React.FC<
-	React.PropsWithChildren<{ page: SettingsPages }>
+	React.PropsWithChildren<{
+		page: SettingsPages;
+		isMain?: boolean;
+		isMore?: boolean;
+	}>
 > = (props) => {
 	const router = useRouter();
 
@@ -47,7 +52,11 @@ export const SettingsPage: React.FC<
 
 	return (
 		<Box px={10}>
-			<Tabs index={props.page} colorScheme='orange' isLazy>
+			<Tabs
+				index={props.isMore ? length + 1 : props.page}
+				colorScheme='orange'
+				isLazy
+			>
 				<TabList
 					_selected={{ _light: { color: 'orange.300 !important' } }}
 					_light={{ borderColor: 'blackAlpha.300' }}
@@ -69,8 +78,10 @@ export const SettingsPage: React.FC<
 									);
 								}}
 							>
-								{loading === i && props.page !== (i as SettingsPages) ? (
-									<Spinner />
+								{loading === i &&
+								(!(props.isMain ?? true) ||
+									props.page !== (i as SettingsPages)) ? (
+									<Spinner size='sm' mx={5} />
 								) : (
 									`${v[0].toUpperCase()}${v.slice(1).toLowerCase()}`
 								)}
@@ -82,18 +93,19 @@ export const SettingsPage: React.FC<
 						else return component;
 					})}
 					{md ? (
-						<Tab>
+						<Tab
+							onClick={() => {
+								router.replace(Routes.MORE_SETTINGS);
+							}}
+						>
 							<ChevronRightIcon rounded='lg' boxSize='1.3em' />
 							<VisuallyHidden>More Settings</VisuallyHidden>
 						</Tab>
 					) : null}
-					{!md && process.env.NODE_ENV === 'development' ? (
-						<Tab>Debug</Tab>
-					) : null}
 				</TabList>
 
 				<TabPanels>
-					{Array.from(Array(props.page), (_, v) => (
+					{Array.from(Array(props.isMore ? length + 1 : props.page), (_, v) => (
 						<TabPanel key={v} />
 					))}
 					<TabPanel>{props.children}</TabPanel>

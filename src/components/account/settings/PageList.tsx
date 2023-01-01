@@ -1,11 +1,10 @@
+import { Routes } from '@/utils/constants';
 import { List, ListItem } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import React from 'react';
-import { Button } from '../../../brand/Button';
+import { Button } from '../../brand/Button';
 
-export const PageList: React.FC<{ setIndex: (i: number) => void }> = ({
-	setIndex,
-}) => {
+export const PageList: React.FC = () => {
 	const router = useRouter();
 
 	return (
@@ -22,7 +21,7 @@ export const PageList: React.FC<{ setIndex: (i: number) => void }> = ({
 					bgColor='transparent !important'
 					label='General'
 					onClick={() => {
-						setIndex(0);
+						router.push(Routes.SETTINGS);
 					}}
 				/>
 				<Button
@@ -36,7 +35,7 @@ export const PageList: React.FC<{ setIndex: (i: number) => void }> = ({
 					bgColor='transparent !important'
 					label='Servers'
 					onClick={() => {
-						setIndex(1);
+						router.push(Routes.SERVER_SETTINGS);
 					}}
 				/>
 				<Button
@@ -50,7 +49,7 @@ export const PageList: React.FC<{ setIndex: (i: number) => void }> = ({
 					bgColor='transparent !important'
 					label='Account'
 					onClick={() => {
-						setIndex(2);
+						router.push(Routes.ACCOUNT_SETTINGS);
 					}}
 				/>
 				<Button
@@ -64,7 +63,7 @@ export const PageList: React.FC<{ setIndex: (i: number) => void }> = ({
 					bgColor='transparent !important'
 					label='Billing'
 					onClick={() => {
-						setIndex(3);
+						router.push(Routes.BILLING_SETTINGS);
 					}}
 				/>
 			</ListItem>

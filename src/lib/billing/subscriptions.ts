@@ -103,7 +103,22 @@ export const getSubscriptionData = async (
 				: null,
 		cancelled: !!data.ended_at,
 		renews_at: data.current_period_end,
-		payment_method,
+		payment_method: payment_method
+			? {
+					id: payment_method.id,
+					default: false,
+					type: payment_method.type,
+					email: payment_method.billing_details.email,
+					exp: payment_method.card?.exp_year
+						? `${payment_method.card.exp_month}/${payment_method.card.exp_year}`
+						: null,
+					brand: payment_method.card?.brand ?? null,
+					last4: payment_method.card?.last4 ?? null,
+					wallet: payment_method.card?.wallet ?? null,
+					eps: payment_method.eps?.bank ?? null,
+					ideal: payment_method.ideal?.bank ?? null,
+			  }
+			: null,
 	};
 
 	if (extended) {

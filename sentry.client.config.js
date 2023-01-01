@@ -29,6 +29,11 @@ if (process.env.NODE_ENV !== 'development')
 
 			return scope;
 		},
+		beforeSend(error) {
+			if (error.message?.toLowerCase().includes('hydration')) return null;
+
+			return error;
+		},
 		// ...
 		// Note: if you want to override the automatic release value, do not set a
 		// `release` value here - use the environment variable `SENTRY_RELEASE`, so
