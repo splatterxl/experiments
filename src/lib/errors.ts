@@ -235,7 +235,7 @@ export const Errors = {
 			? new APIError('Request blocked', ErrorCodes.FRAUD, {
 					area: area,
 			  })
-			: [area],
+			: [area[0] + area[area.length - 1]],
 	[ErrorCodes.FEATURE_DISABLED]: new APIError(
 		'This feature has been temporarily disabled',
 		ErrorCodes.FEATURE_DISABLED
