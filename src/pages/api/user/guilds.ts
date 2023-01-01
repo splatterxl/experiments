@@ -15,6 +15,6 @@ export default async function getMyGuilds(
 
 	const resp = await getGuilds(auth.access_token);
 
-	if (!resp) res.status(502).send(Errors[ErrorCodes.BAD_GATEWAY]);
+	if (!resp) res.status(429).send(Errors[ErrorCodes.USER_LIMIT](2));
 	else res.send(resp);
 }

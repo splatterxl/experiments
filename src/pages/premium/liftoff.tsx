@@ -19,6 +19,7 @@ export default function Liftoff() {
 			</Head>
 			<VStack
 				h='85vh'
+				p={6}
 				pb='20vh'
 				flexDirection='column'
 				textAlign='center'

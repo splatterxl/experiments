@@ -19,7 +19,6 @@ import {
 	VStack,
 } from '@chakra-ui/react';
 import React from 'react';
-import Stripe from 'stripe';
 
 export default function PaymentMethodSmall({
 	pm,
@@ -54,14 +53,11 @@ export default function PaymentMethodSmall({
 	);
 }
 
-export function getLabelForPM(pm: Stripe.PaymentMethod) {
+export function getLabelForPM(pm: PaymentMethod) {
 	switch (pm.type) {
 		case 'card': {
-			const card = pm.card!;
-
-			if (!card.wallet)
-				return `${CardBrands[card.brand]} ending in ${card.last4}`;
-			else return Wallets[card.wallet.type];
+			if (!pm.wallet) return `${CardBrands[pm.brand!]} ending in ${pm.last4}`;
+			else return Wallets[pm.wallet.type];
 		}
 
 		default:
@@ -69,29 +65,26 @@ export function getLabelForPM(pm: Stripe.PaymentMethod) {
 	}
 }
 
-export function getDetailsForPM(pm: Stripe.PaymentMethod) {
+export function getDetailsForPM(pm: PaymentMethod) {
 	switch (pm.type) {
 		case 'card':
-			return `Expires on ${pm.card!.exp_month}/${pm.card!.exp_year}`;
+			return `Expires on ${pm.exp}`;
 		case 'ideal':
-			return IdealBanks[pm.ideal!.bank!] ?? 'Unknown bank';
+			return IdealBanks[pm.ideal!] ?? 'Unknown bank';
 		case 'eps':
-			return EpsBanks[pm.eps!.bank!] ?? 'Unknown bank';
+			return EpsBanks[pm.eps!] ?? 'Unknown bank';
 		default:
-			return pm.billing_details.email;
+			return pm.email;
 	}
 }
 
-export function getIconForPM(pm: Stripe.PaymentMethod, props?: IconProps) {
+export function getIconForPM(pm: PaymentMethod, props?: IconProps) {
 	let Icon: React.ComponentType<IconProps> | string = CardIcon;
 
 	switch (pm.type) {
 		case 'card': {
-			const card = pm.card!;
-
-			if (card.wallet) Icon = WalletIcons[card.wallet.type];
-			else if (card.brand !== 'unknown')
-				Icon = `/assets/card/${card.brand}.svg`;
+			if (pm.wallet) Icon = WalletIcons[pm.wallet.type];
+			else if (pm.brand !== 'unknown') Icon = `/assets/card/${pm.brand}.svg`;
 
 			break;
 		}

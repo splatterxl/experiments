@@ -75,5 +75,7 @@ export const Routes = {
 	PAYMENT_METHOD_SETTINGS: (pm: string) =>
 		`/settings/billing/payment-methods/${pm}`,
 
+	MORE_SETTINGS: '/settings/more',
+
 	DASHBOARD: '/dashboard',
 };

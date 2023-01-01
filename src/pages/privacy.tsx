@@ -14,7 +14,7 @@ export default function Privacy() {
 					Privacy Policy
 				</Heading>
 				<Text fontWeight={300}>
-					Last modified and effective: December 30, 2022.
+					Last modified and effective: January 01, 2023.
 				</Text>
 				<Heading fontWeight='extrabold'>Overview</Heading>
 				<Text>
@@ -72,6 +72,7 @@ export default function Privacy() {
 						contact us, please provide us with this value to assist debugging.
 					</ListItem>
 				</List>
+
 				<Heading>02. Data Shared</Heading>
 				<Text>
 					<b>We do not sell your personal information.</b> We share your billing

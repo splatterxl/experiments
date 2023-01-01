@@ -1,4 +1,4 @@
-export class Error {
+class APIError {
 	#baggage: any;
 
 	constructor(
@@ -10,9 +10,15 @@ export class Error {
 	}
 
 	toJSON() {
-		return { message: this.message, code: this.code, ...this.#baggage };
+		return {
+			message: this.message,
+			code: this.code,
+			...this.#baggage,
+		};
 	}
 }
+
+export { APIError as Error };
 
 export enum ErrorCodes {
 	// auth
@@ -37,6 +43,7 @@ export enum ErrorCodes {
 	INVALID_PRICE,
 	INVALID_TRIAL,
 	INVALID_SESSION,
+	INVALID_FORM_BODY,
 
 	// unknown entities
 	UNKNOWN_HARVEST = 3e3,
@@ -76,158 +83,178 @@ export enum ErrorCodes {
 }
 
 export const Errors = {
-	[ErrorCodes.LOGIN]: new Error(
+	[ErrorCodes.LOGIN]: new APIError(
 		'Please log in before attempting this action',
 		ErrorCodes.LOGIN
 	),
-	[ErrorCodes.AUTH_EXPIRED]: new Error(
+	[ErrorCodes.AUTH_EXPIRED]: new APIError(
 		'Authentication token expired. Please log in again.',
 		ErrorCodes.AUTH_EXPIRED
 	),
-	[ErrorCodes.MISSING_ACCESS]: new Error(
+	[ErrorCodes.MISSING_ACCESS]: new APIError(
 		'Missing access',
 		ErrorCodes.MISSING_ACCESS
 	),
 
-	[ErrorCodes.INVALID_SCOPE]: new Error(
+	[ErrorCodes.INVALID_SCOPE]: new APIError(
 		'Invalid scope',
 		ErrorCodes.INVALID_SCOPE
 	),
-	[ErrorCodes.GUILDS_REQUIRED]: new Error(
+	[ErrorCodes.GUILDS_REQUIRED]: new APIError(
 		'To prevent spam and fraud across our services, we ask for read-only access to your servers list. We will \
     never share or view this data. Consult our privacy policy for more information: https://exps.splt.dev/privacy',
 		ErrorCodes.INVALID_SCOPE
 	),
-	[ErrorCodes.EMAIL_REQUIRED]: new Error(
+	[ErrorCodes.EMAIL_REQUIRED]: new APIError(
 		'We require read-only access to your email address to send you important updates about your account and payments, \
     and to provide our Mailing List services. We will never send you promotional content without consent. Consult our privacy \
     policy for more information: https://exps.splt.dev/privacy',
 		ErrorCodes.INVALID_SCOPE
 	),
-	[ErrorCodes.ANTI_SPAM_CHECK_FAILED]: new Error(
+	[ErrorCodes.ANTI_SPAM_CHECK_FAILED]: new APIError(
 		'To prevent spam across our services, we require accounts to be legitimate to sign in.',
 		ErrorCodes.ANTI_SPAM_CHECK_FAILED
 	),
 
-	[ErrorCodes.INVALID_REQUEST_BODY]: new Error(
+	[ErrorCodes.INVALID_REQUEST_BODY]: new APIError(
 		'Invalid request body. Must be application/json',
 		ErrorCodes.INVALID_REQUEST_BODY
 	),
-	[ErrorCodes.INVALID_HOST]: new Error('Invalid host', ErrorCodes.INVALID_HOST),
-	[ErrorCodes.INVALID_SIGNATURE]: new Error(
+	[ErrorCodes.INVALID_HOST]: new APIError(
+		'Invalid host',
+		ErrorCodes.INVALID_HOST
+	),
+	[ErrorCodes.INVALID_SIGNATURE]: new APIError(
 		'Invalid signature',
 		ErrorCodes.INVALID_SIGNATURE
 	),
-	[ErrorCodes.INVALID_PAYMENT_METHOD_ID]: new Error(
+	[ErrorCodes.INVALID_PAYMENT_METHOD_ID]: new APIError(
 		'Invalid payment method ID',
 		ErrorCodes.INVALID_PAYMENT_METHOD_ID
 	),
-	[ErrorCodes.INVALID_SUBSCRIPTION_ID]: new Error(
+	[ErrorCodes.INVALID_SUBSCRIPTION_ID]: new APIError(
 		'Invalid subscription ID',
 		ErrorCodes.INVALID_SUBSCRIPTION_ID
 	),
-	[ErrorCodes.INVALID_GUILD_ID]: new Error(
+	[ErrorCodes.INVALID_GUILD_ID]: new APIError(
 		'Invalid guild ID',
 		ErrorCodes.INVALID_SUBSCRIPTION_ID
 	),
-	[ErrorCodes.INVALID_PRODUCT]: new Error(
+	[ErrorCodes.INVALID_PRODUCT]: new APIError(
 		'Invalid product',
 		ErrorCodes.INVALID_PRODUCT
 	),
-	[ErrorCodes.INVALID_PRICE]: new Error(
+	[ErrorCodes.INVALID_PRICE]: new APIError(
 		'Invalid price',
 		ErrorCodes.INVALID_PRICE
 	),
-	[ErrorCodes.INVALID_TRIAL]: new Error(
+	[ErrorCodes.INVALID_TRIAL]: new APIError(
 		'Invalid trial',
 		ErrorCodes.INVALID_TRIAL
 	),
-	[ErrorCodes.INVALID_SESSION]: new Error(
+	[ErrorCodes.INVALID_SESSION]: new APIError(
 		'Invalid checkout session',
 		ErrorCodes.INVALID_SESSION
 	),
+	[ErrorCodes.INVALID_FORM_BODY]: (errors: any) =>
+		new APIError('Invalid form body', ErrorCodes.INVALID_FORM_BODY, {
+			errors,
+		}),
 
-	[ErrorCodes.UNKNOWN_HARVEST]: new Error(
+	[ErrorCodes.UNKNOWN_HARVEST]: new APIError(
 		'Unknown data harvest',
 		ErrorCodes.UNKNOWN_HARVEST
 	),
-	[ErrorCodes.UNKNOWN_PAYMENT_METHOD]: new Error(
+	[ErrorCodes.UNKNOWN_PAYMENT_METHOD]: new APIError(
 		'Unknown payment method',
 		ErrorCodes.UNKNOWN_PAYMENT_METHOD
 	),
-	[ErrorCodes.UNKNOWN_SUBSCRIPTION]: new Error(
+	[ErrorCodes.UNKNOWN_SUBSCRIPTION]: new APIError(
 		'Unknown subscription',
 		ErrorCodes.UNKNOWN_SUBSCRIPTION
 	),
-	[ErrorCodes.UNKNOWN_SESSION]: new Error(
+	[ErrorCodes.UNKNOWN_SESSION]: new APIError(
 		'Unknown checkout session',
 		ErrorCodes.UNKNOWN_SESSION
 	),
 
 	[ErrorCodes.USER_LIMIT]: (retry: number) =>
-		new Error('You are being rate limited', ErrorCodes.USER_LIMIT, {
+		new APIError('You are being rate limited', ErrorCodes.USER_LIMIT, {
 			retry_after: retry,
 		}),
 	[ErrorCodes.RESOURCE_LIMIT]: (retry: number) =>
-		new Error('The resource is being rate limited', ErrorCodes.RESOURCE_LIMIT, {
-			retry_after: retry,
-		}),
+		new APIError(
+			'The resource is being rate limited',
+			ErrorCodes.RESOURCE_LIMIT,
+			{
+				retry_after: retry,
+			}
+		),
 	[ErrorCodes.IP_LIMIT]: (retry: number) =>
-		new Error(
+		new APIError(
 			'You have been temporarily blocked from accessing our API due to exceeding our rate limits too often.',
 			ErrorCodes.IP_LIMIT
 		),
-	[ErrorCodes.HARVEST_ALREADY_IN_PROGRESS]: new Error(
+	[ErrorCodes.HARVEST_ALREADY_IN_PROGRESS]: new APIError(
 		'Data harvest already in progress.',
 		ErrorCodes.HARVEST_ALREADY_IN_PROGRESS
 	),
 
-	[ErrorCodes.CUSTOMER_DELETED]: new Error(
+	[ErrorCodes.CUSTOMER_DELETED]: new APIError(
 		'Customer deleted.',
 		ErrorCodes.CUSTOMER_DELETED
 	),
-	[ErrorCodes.UPDATE_CANCELLED_SUB]: new Error(
+	[ErrorCodes.UPDATE_CANCELLED_SUB]: new APIError(
 		'Cannot update a cancelled subscription',
 		ErrorCodes.UPDATE_CANCELLED_SUB
 	),
-	[ErrorCodes.USER_NOT_ADMIN]: new Error(
+	[ErrorCodes.USER_NOT_ADMIN]: new APIError(
 		'The user is not an administrator of the selected guild',
 		ErrorCodes.USER_NOT_ADMIN
 	),
-	[ErrorCodes.SUBSCRIPTION_ALREADY_APPLIED]: new Error(
+	[ErrorCodes.SUBSCRIPTION_ALREADY_APPLIED]: new APIError(
 		'A subscription of this type has already been applied to the guild.',
 		ErrorCodes.SUBSCRIPTION_ALREADY_APPLIED
 	),
-	[ErrorCodes.REINSTATE_FAILED_SUB]: new Error(
+	[ErrorCodes.REINSTATE_FAILED_SUB]: new APIError(
 		'Cannot reinstate a failed subscription',
 		ErrorCodes.REINSTATE_FAILED_SUB
 	),
-	[ErrorCodes.COMPLETE_UNPAID]: new Error(
+	[ErrorCodes.COMPLETE_UNPAID]: new APIError(
 		'Complete payment has been left unpaid',
 		ErrorCodes.COMPLETE_UNPAID
 	),
 
-	[ErrorCodes.MAX_SUBSCRIPTIONS]: new Error(
+	[ErrorCodes.MAX_SUBSCRIPTIONS]: new APIError(
 		'Maximum number of subscriptions reached (25)',
 		ErrorCodes.MAX_SUBSCRIPTIONS
 	),
 
 	[ErrorCodes.FRAUD]: (area: string) =>
-		new Error('Request blocked', ErrorCodes.FRAUD, {
+		new APIError('Request blocked', ErrorCodes.FRAUD, {
 			area: process.env.NODE_ENV === 'development' ? area : undefined,
 		}),
-	[ErrorCodes.FEATURE_DISABLED]: new Error(
+	[ErrorCodes.FEATURE_DISABLED]: new APIError(
 		'This feature has been temporarily disabled',
 		ErrorCodes.FEATURE_DISABLED
 	),
 
-	[ErrorCodes.NOT_FOUND]: new Error('404: Not Found'),
-	[ErrorCodes.METHOD_NOT_ALLOWED]: new Error('405: Method Not Allowed'),
-	[ErrorCodes.UNPROCESSABLE_ENTITY]: new Error('422: Unprocessable Entity'),
-	[ErrorCodes.BAD_GATEWAY]: new Error('502: Bad Gateway'),
-	[ErrorCodes.INTERNAL_SERVER_ERROR]: new Error('500: Internal Server Error'),
+	[ErrorCodes.NOT_FOUND]: new APIError('404: Not Found'),
+	[ErrorCodes.METHOD_NOT_ALLOWED]: new APIError('405: Method Not Allowed'),
+	[ErrorCodes.UNPROCESSABLE_ENTITY]: new APIError('422: Unprocessable Entity'),
+	[ErrorCodes.BAD_GATEWAY]: new APIError('502: Bad Gateway'),
+	[ErrorCodes.INTERNAL_SERVER_ERROR]: (error: Error) =>
+		new APIError(
+			process.env.NODE_ENV === 'development'
+				? error.message
+				: '500: Internal Server Error',
+			ErrorCodes.UNKNOWN,
+			{
+				stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+			}
+		),
 
-	[ErrorCodes.UNKNOWN]: new Error('500: Internal Server Error'),
+	[ErrorCodes.UNKNOWN]: new APIError('500: Internal Server Error'),
 };
 
-const _: Record<ErrorCodes, Error | ((_: any) => Error)> = Errors;
+const _: Record<ErrorCodes, APIError | ((_: any) => APIError)> = Errors;

@@ -1,5 +1,4 @@
 import { getProperties } from '@/lib/analytics/web';
-import { Error } from '@/lib/errors';
 import logger from '@/lib/logger/web';
 import { RESTGetAPICurrentUserGuildsResult } from 'discord-api-types/v10';
 import { sleep } from '../../utils';
@@ -131,8 +130,8 @@ const HTTPClient = new (class HTTPClient {
 		});
 	}
 
-	patch(endpoint: string, body: any, options: RequestOptions = {}) {
-		return this.request(endpoint, {
+	patch<T>(endpoint: string, body: any, options: RequestOptions = {}) {
+		return this.request<T>(endpoint, {
 			...options,
 			method: 'PATCH',
 			body: JSON.stringify(body),

@@ -1,6 +1,5 @@
 import { revokeTokens } from '@/lib/auth/discord';
 import { getAuth } from '@/lib/db';
-import { ErrorCodes, Errors } from '@/lib/errors';
 import { getLoggerForRequest, getLoggerForUser } from '@/lib/logger/api';
 import { APIUser } from 'discord-api-types/v10';
 import { decode } from 'jsonwebtoken';
@@ -25,18 +24,10 @@ export default async function Logout(
 
 		const logger = getLoggerForUser(getLoggerForRequest(req), user, auth);
 
-		try {
-			await revokeTokens(auth, user.id);
+		await revokeTokens(auth, user.id);
 
-			logger.info('Logged out successfully');
+		logger.info('Logged out successfully');
 
-			return res.redirect(Routes.HOME);
-		} catch (err: any) {
-			console.log(err);
-
-			logger.error({ error: err.toString() }, 'Logged out unsuccessfully');
-
-			return res.status(500).send(Errors[ErrorCodes.INTERNAL_SERVER_ERROR]);
-		}
+		return res.redirect(Routes.HOME);
 	}
 }

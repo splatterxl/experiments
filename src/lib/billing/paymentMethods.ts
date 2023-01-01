@@ -20,7 +20,17 @@ export async function getPaymentMethods(userId: Snowflake) {
 			res.data.map(
 				(v) =>
 					({
-						...v,
+						id: v.id,
+						type: v.type,
+						email: v.billing_details.email,
+						exp: v.card?.exp_year
+							? `${v.card.exp_month}/${v.card.exp_year}`
+							: null,
+						brand: v.card?.brand ?? null,
+						eps: v.eps?.bank ?? null,
+						ideal: v.ideal?.bank ?? null,
+						last4: v.card?.last4 ?? null,
+						wallet: v.card?.wallet ?? null,
 						default:
 							stripeCustomer.invoice_settings.default_payment_method === v.id,
 					} as PaymentMethod)
