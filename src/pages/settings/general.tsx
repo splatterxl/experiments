@@ -1,10 +1,12 @@
 import { UserIcon } from '@/components/account/UserIcon';
 import { checkAuthProps } from '@/lib/auth/request';
+import CurrentUserStore from '@/stores/CurrentUserStore';
 import { Routes } from '@/utils/constants';
 import { Box, Heading, HStack, Link, Text } from '@chakra-ui/react';
 import { APIUser } from 'discord-api-types/v10';
 import { GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 import Head from 'next/head';
+import React from 'react';
 import {
 	SettingsPage,
 	SettingsPages,
@@ -14,7 +16,17 @@ interface SettingsProps {
 	user: APIUser;
 }
 
-export default function Settings({ user }: SettingsProps) {
+export default function Settings({ user: userProp }: SettingsProps) {
+	const [user, setState] = React.useState(userProp);
+	const [getUser, setUser] = CurrentUserStore.useStateFromStorage();
+
+	React.useEffect(() => {
+		if (userProp) setUser(userProp);
+		else setState(getUser());
+	}, []);
+
+	if (!user) return null;
+
 	return (
 		<>
 			<Head>

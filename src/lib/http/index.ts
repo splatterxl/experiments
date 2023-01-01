@@ -25,7 +25,12 @@ export const request = async (
 	while (res.status === 429 && (init?.wait ?? true)) {
 		const ms = parseInt(res.headers.get('retry-after')!) * 1000;
 
-		console.log(`sleeping ${ms}ms`);
+		logger.debug(
+			{
+				url,
+			},
+			`sleeping ${ms}ms`
+		);
 
 		await sleep(ms);
 
