@@ -83,12 +83,7 @@ export function middleware(request: NextRequest) {
 				const appProps: AppProperties | null = request.headers.get(
 					'x-app-props'
 				)
-					? JSON.parse(
-							Buffer.from(
-								request.headers.get('x-app-props')!,
-								'base64'
-							).toString()
-					  )
+					? JSON.parse(atob(request.headers.get('x-app-props')!))
 					: null;
 
 				const bail = (reason: string) =>
