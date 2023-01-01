@@ -231,9 +231,11 @@ export const Errors = {
 	),
 
 	[ErrorCodes.FRAUD]: (area: string) =>
-		new APIError('Request blocked', ErrorCodes.FRAUD, {
-			area: process.env.NODE_ENV === 'development' ? area : undefined,
-		}),
+		process.env.NODE_ENV === 'development'
+			? new APIError('Request blocked', ErrorCodes.FRAUD, {
+					area: area,
+			  })
+			: [area],
 	[ErrorCodes.FEATURE_DISABLED]: new APIError(
 		'This feature has been temporarily disabled',
 		ErrorCodes.FEATURE_DISABLED
