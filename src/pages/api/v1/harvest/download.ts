@@ -1,13 +1,11 @@
+import { getSubscriptions } from '@/lib/billing/subscriptions';
 import { JWT_TOKEN } from '@/lib/crypto/jwt';
-import { redis } from '@/lib/db';
-import { authorizations, customers, subscriptions } from '@/lib/db/collections';
-import { Authorization } from '@/lib/db/models';
+import { db, getAuth, getDbCustomer, redis } from '@/lib/db';
 import { ErrorCodes, Errors } from '@/lib/errors';
 import { getLoggerForRequest } from '@/lib/logger/api';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Snowflake } from 'discord-api-types/globals';
 import { JwtPayload, verify } from 'jsonwebtoken';
-import { WithId } from 'mongodb';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { one } from '../../../../utils';
 
@@ -34,7 +32,7 @@ export default async function downloadHarvest(
 				message: 'Harvest expiration date invalid',
 			};
 
-		const identifier = 'download_harvest:' + payload.user;
+		const identifier = 'download-harvest:' + payload.user;
 		const result = await ratelimit.limit(identifier);
 		res.setHeader('X-RateLimit-Limit', result.limit);
 		res.setHeader('X-RateLimit-Remaining', result.remaining);
@@ -68,15 +66,28 @@ export default async function downloadHarvest(
 }
 
 async function getHarvest(user: Snowflake) {
-	const session: WithId<Partial<Authorization>> =
-		(await authorizations().findOne({ user_id: user })) as any;
+	const session: any = await getAuth(user);
 
 	delete session?.access_token;
 	delete session?.refresh_token;
 
 	return {
-		subscriptions: await subscriptions().find({ user_id: user }).toArray(),
+		subscriptions: await getSubscriptions(user),
 		session,
-		customers: await customers().find({ user_id: user }).toArray(),
+		customer: await getDbCustomer(user),
+		activity: await db
+			.db('logs')
+			.collection('log-collection')
+			.find({
+				'user.id': user,
+			})
+			.toArray()
+			.then((activity) =>
+				activity.map((act) => {
+					delete act?.auth?.access_token;
+
+					return act;
+				})
+			),
 	};
 }

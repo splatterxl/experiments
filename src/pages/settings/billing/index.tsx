@@ -45,7 +45,7 @@ export default function BillingSettings({
 
 	React.useEffect(() => {
 		setGuilds(getGuilds() ?? []);
-	}, [getGuilds]);
+	}, []);
 
 	return (
 		<SettingsPage page={SettingsPages.BILLING}>

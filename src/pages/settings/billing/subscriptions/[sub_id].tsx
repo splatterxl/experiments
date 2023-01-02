@@ -56,7 +56,7 @@ export default function Subscription({ subData }: SubscriptionProps) {
 
 	React.useEffect(() => {
 		setGuild(getGuild() ?? undefined);
-	}, [getGuild]);
+	}, []);
 
 	return (
 		<>

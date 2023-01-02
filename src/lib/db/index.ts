@@ -3,9 +3,8 @@ import { Redis } from '@upstash/redis';
 import { Snowflake } from 'discord-api-types/globals';
 import { MongoClient } from 'mongodb';
 
-export const client = new MongoClient(process.env.MONGODB_URI!).db(
-	'exps_' + process.env.NODE_ENV
-);
+export const db = new MongoClient(process.env.MONGODB_URI!);
+export const client = db.db('exps_' + process.env.NODE_ENV);
 
 export const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,
