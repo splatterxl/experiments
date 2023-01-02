@@ -7,7 +7,7 @@ export const Endpoints = {
 
 export const APIEndpoints = {
 	HARVEST: '/account/harvest',
-	DOWNLOAD_HARVEST: '/account/harvest/download',
+	DOWNLOAD_HARVEST: '/v1/harvest/download',
 
 	CHECKOUT: '/billing/checkout',
 

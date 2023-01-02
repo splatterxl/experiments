@@ -40,10 +40,13 @@ export const request = async (
 	return res;
 };
 
-export const getGuilds = () =>
-	HTTPClient.get<RESTGetAPICurrentUserGuildsResult>(APIEndpoints.GUILDS).then(
-		(res) => res.data
-	);
+export const getGuilds = () => {
+	logger.debug('Fetching guilds');
+
+	return HTTPClient.get<RESTGetAPICurrentUserGuildsResult>(
+		APIEndpoints.GUILDS
+	).then((res) => res.data);
+};
 
 export interface RequestOptions extends RequestInit {
 	wait?: boolean;

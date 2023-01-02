@@ -23,6 +23,11 @@ const nextConfig = {
 				source: '/settings',
 				permanent: false,
 			},
+			{
+				destination: '/api/v1/account/harvest/download',
+				source: '/api/account/harvest/download',
+				permanent: false,
+			},
 		];
 	},
 	headers: async () => {
