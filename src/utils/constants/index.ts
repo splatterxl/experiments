@@ -7,7 +7,7 @@ export const Endpoints = {
 
 export const APIEndpoints = {
 	HARVEST: '/account/harvest',
-	DOWNLOAD_HARVEST: '/v1/harvest/download',
+	DOWNLOAD_HARVEST: '/~/harvest/download',
 
 	CHECKOUT: '/billing/checkout',
 
@@ -16,7 +16,7 @@ export const APIEndpoints = {
 	PAYMENT_METHOD: (id: string) => `/billing/payment-methods/${id}`,
 
 	LOGIN: '/auth/login',
-	DISCORD_CALLBACK: '/auth/discord',
+	DISCORD_CALLBACK: '/~/callback',
 	LOGOUT: '/auth/logout',
 
 	GUILDS: '/user/guilds',
