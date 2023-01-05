@@ -24,12 +24,17 @@ const nextConfig = {
 				permanent: false,
 			},
 			{
-				destination: '/api/~/harvest/download',
+				destination: '/api/~/harvest',
 				source: '/api/account/harvest/download',
 				permanent: false,
 			},
 			{
-				destination: '/api/~/billing/webhook',
+				destination: '/api/~/harvest',
+				source: '/api/v1/harvest/download',
+				permanent: false,
+			},
+			{
+				destination: '/api/~/stripe',
 				source: '/api/billing/webhook',
 				permanent: false,
 			},
