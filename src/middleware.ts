@@ -31,7 +31,10 @@ export function middleware(request: NextRequest) {
 				);
 		}
 
-		if (!request.nextUrl.pathname.startsWith('/api/v1')) {
+		if (
+			!request.nextUrl.pathname.startsWith('/api/v1') &&
+			!request.nextUrl.pathname.startsWith('/api/~')
+		) {
 			for (const header of [
 				'accept',
 				'host',

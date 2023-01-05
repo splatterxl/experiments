@@ -24,8 +24,18 @@ const nextConfig = {
 				permanent: false,
 			},
 			{
-				destination: '/api/v1/account/harvest/download',
+				destination: '/api/~/harvest/download',
 				source: '/api/account/harvest/download',
+				permanent: false,
+			},
+			{
+				destination: '/api/~/billing/webhook',
+				source: '/api/billing/webhook',
+				permanent: false,
+			},
+			{
+				destination: '/api/~/callback',
+				source: '/api/auth/discord',
 				permanent: false,
 			},
 		];
