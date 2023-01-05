@@ -7,7 +7,7 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Snowflake } from 'discord-api-types/globals';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { one } from '../../../../utils';
+import { one } from '../../../utils';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
