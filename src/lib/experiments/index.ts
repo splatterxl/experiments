@@ -31,7 +31,7 @@ export function getDbExperiments(
 export async function getExperiments(
 	options: GetExperimentsOptions
 ): Promise<Experiment[]> {
-	if (options.limit != undefined && options.limit > 200)
+	if (options.limit != undefined && +options.limit > 200)
 		throw new TypeError('limit must be less than 200');
 
 	const withRollouts = !!options.with_rollouts;
