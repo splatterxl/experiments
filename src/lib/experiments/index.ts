@@ -9,8 +9,8 @@ import { ObjectId } from 'mongodb';
 export interface GetExperimentsOptions {
 	type?: 'user' | 'guild';
 	q?: string;
-	limit?: number;
-	cursor?: number;
+	limit?: string;
+	cursor?: string;
 	with_rollouts?: boolean;
 	with_assignments?: boolean;
 }
@@ -23,8 +23,8 @@ export function getDbExperiments(
 		.find({
 			type: options.type ?? { $exists: !withRollouts ? true : undefined },
 		})
-		.skip(options.cursor ?? 0)
-		.limit(options.limit ?? 50)
+		.skip(parseInt(options.cursor ?? '0'))
+		.limit(parseInt(options.limit ?? '50'))
 		.toArray();
 }
 

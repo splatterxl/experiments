@@ -10,6 +10,6 @@ export default async function listExperiments(
 
 		res.send(await getBySearch(req.query));
 	} catch (err: any) {
-		res.status(400).send({ error: err.message });
+		res.status(400).send({ message: err.message });
 	}
 }

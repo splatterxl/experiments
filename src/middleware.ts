@@ -31,10 +31,7 @@ export function middleware(request: NextRequest) {
 				);
 		}
 
-		if (
-			!request.nextUrl.pathname.startsWith('/api/v1') &&
-			!request.nextUrl.pathname.startsWith('/api/~')
-		) {
+		if (!request.nextUrl.pathname.startsWith('/api/v1')) {
 			for (const header of [
 				'accept',
 				'host',
@@ -82,48 +79,49 @@ export function middleware(request: NextRequest) {
 				}
 			}
 
-			try {
-				const appProps: AppProperties | null = request.headers.get(
-					'x-app-props'
-				)
-					? JSON.parse(atob(request.headers.get('x-app-props')!))
-					: null;
+			if (!request.nextUrl.pathname.startsWith('/api/~'))
+				try {
+					const appProps: AppProperties | null = request.headers.get(
+						'x-app-props'
+					)
+						? JSON.parse(atob(request.headers.get('x-app-props')!))
+						: null;
 
-				const bail = (reason: string) =>
-					new NextResponse(JSON.stringify(Errors[ErrorCodes.FRAUD](reason)), {
-						status: 403,
-						headers: { 'content-type': 'application/json' },
-					});
+					const bail = (reason: string) =>
+						new NextResponse(JSON.stringify(Errors[ErrorCodes.FRAUD](reason)), {
+							status: 403,
+							headers: { 'content-type': 'application/json' },
+						});
 
-				if (!appProps) return bail('app_props_present');
+					if (!appProps) return bail('app_props_present');
 
-				for (const prop of [
-					'browser_user_agent',
-					'app_version',
-					'app_environment',
-				]) {
-					if (!appProps?.[prop as keyof AppProperties]) {
-						return bail('app_props_keys');
+					for (const prop of [
+						'browser_user_agent',
+						'app_version',
+						'app_environment',
+					]) {
+						if (!appProps?.[prop as keyof AppProperties]) {
+							return bail('app_props_keys');
+						}
 					}
-				}
 
-				if (
-					appProps.app_environment !== process.env.NODE_ENV ||
-					appProps.browser_user_agent !== request.headers.get('user-agent')
-				) {
-					return bail('app_props_env_ua');
-				}
-			} catch (err: any) {
-				console.log(err);
-
-				return new NextResponse(
-					JSON.stringify(Errors[ErrorCodes.FRAUD]('app_props')),
-					{
-						status: 403,
-						headers: { 'content-type': 'application/json' },
+					if (
+						appProps.app_environment !== process.env.NODE_ENV ||
+						appProps.browser_user_agent !== request.headers.get('user-agent')
+					) {
+						return bail('app_props_env_ua');
 					}
-				);
-			}
+				} catch (err: any) {
+					console.log(err);
+
+					return new NextResponse(
+						JSON.stringify(Errors[ErrorCodes.FRAUD]('app_props')),
+						{
+							status: 403,
+							headers: { 'content-type': 'application/json' },
+						}
+					);
+				}
 		}
 	}
 
