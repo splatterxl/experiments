@@ -38,7 +38,6 @@ export function middleware(request: NextRequest) {
 				'accept-encoding',
 				'accept-language',
 				'user-agent',
-				'x-app-props',
 			]) {
 				if (!request.headers.has(header) || !request.headers.get(header)) {
 					return new NextResponse(
@@ -79,8 +78,11 @@ export function middleware(request: NextRequest) {
 				}
 			}
 
-			if (!request.nextUrl.pathname.startsWith('/api/~'))
+			if (!request.nextUrl.pathname.startsWith('/api/~')) {
 				try {
+					if (!request.headers.has('x-app-props'))
+						throw new Error('no app props');
+
 					const appProps: AppProperties | null = request.headers.get(
 						'x-app-props'
 					)
@@ -122,6 +124,7 @@ export function middleware(request: NextRequest) {
 						}
 					);
 				}
+			}
 		}
 	}
 
