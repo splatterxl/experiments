@@ -39,7 +39,7 @@ export default async function checkout(
 		res
 			.setHeader('Retry-After', (result.reset - Date.now()) / 1000)
 			.status(429)
-			.json(Errors[ErrorCodes.USER_LIMIT](result.reset - Date.now()));
+			.json(Errors[ErrorCodes.USER_LIMIT]((result.reset - Date.now()) / 1000));
 		return;
 	}
 
