@@ -1,18 +1,39 @@
+import { redis } from '@/lib/db';
 import { Experiment } from '@/lib/db/models';
+import { ErrorCodes, Errors } from '@/lib/errors';
 import { getExperiments, GetExperimentsOptions } from '@/lib/experiments';
+import { Ratelimit } from '@upstash/ratelimit';
 import FuzzySearch from 'fuzzy-search';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getClientIp } from 'request-ip';
 
-export default async function searchExperiments(
+const ratelimit = new Ratelimit({
+	redis: redis,
+	limiter: Ratelimit.fixedWindow(2, '30 m'),
+});
+
+export default async function listExperiments(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
-	const { q } = req.query;
+	const identifier = 'exps:' + getClientIp(req);
+	const result = await ratelimit.limit(identifier);
+	res.setHeader('X-RateLimit-Limit', result.limit);
+	res.setHeader('X-RateLimit-Remaining', result.remaining);
+	res.setHeader('X-RateLimit-Reset', result.reset);
 
-	if (!q) return res.status(400).send({ error: 'No query' });
+	if (!result.success) {
+		res
+			.setHeader('Retry-After', (result.reset - Date.now()) / 1000)
+			.status(429)
+			.json(Errors[ErrorCodes.USER_LIMIT]((result.reset - Date.now()) / 1000));
+		return;
+	}
 
 	try {
-		res.send(await getBySearch(req.query as any));
+		delete req.query.q;
+
+		res.send(await getBySearch(req.query));
 	} catch (err: any) {
 		res.status(400).send({ message: err.message });
 	}
