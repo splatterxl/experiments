@@ -14,7 +14,7 @@ export default async function searchExperiments(
 	try {
 		res.send(await getBySearch(req.query as any));
 	} catch (err: any) {
-		res.status(400).send({ error: err.message });
+		res.status(400).send({ message: err.message });
 	}
 }
 
