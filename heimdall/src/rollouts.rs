@@ -156,7 +156,7 @@ impl PopulationFilter {
             2918402255 => Filter::member_count,
             3013771838 => Filter::id,
             4148745523 => Filter::hub_type,
-            188952590 => unreachable!(),
+            188952590 => Filter::vanity_url,
             2294888943 => Filter::range_by_hash,
             _ => unreachable!(),
         };
@@ -198,7 +198,7 @@ pub enum Filter {
     Feature(Vec<String>),
     IDRange {
         start: Option<u64>,
-        end: u64,
+        end: Option<u64>,
     },
     MemberCount {
         start: Option<u64>,
@@ -210,6 +210,7 @@ pub enum Filter {
         hash_key: i64,
         target: i64,
     },
+    VanityURL(bool),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -226,6 +227,8 @@ pub struct FiltersFlattened {
     pub hub_types: Option<Vec<i64>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub range_by_hash: Option<RangeByHash>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vanity_url: Option<bool>,
 }
 
 impl Default for FiltersFlattened {
@@ -237,6 +240,7 @@ impl Default for FiltersFlattened {
             ids: None,
             member_count: None,
             range_by_hash: None,
+            vanity_url: None,
         }
     }
 }
@@ -257,6 +261,7 @@ impl FiltersFlattened {
                 }
                 Filter::IDs(ids) => it.ids = Some(ids),
                 Filter::HubTypes(types) => it.hub_types = Some(types),
+                Filter::VanityURL(enabled) => it.vanity_url = Some(enabled),
             }
         }
 
@@ -267,7 +272,7 @@ impl FiltersFlattened {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IDRange {
     pub start: Option<u64>,
-    pub end: u64,
+    pub end: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -297,16 +302,14 @@ impl Filter {
         Filter::Feature(features)
     }
 
-    // [[_, start: string | null], [_, end: string]]
+    // [[_, start: string | null], [_, end: string | null]]
     pub fn id_range(vec: Vec<Value>) -> Filter {
         let start = vec[0].as_array().unwrap()[1]
             .as_str()
             .map(|s| s.parse::<u64>().unwrap());
         let end = vec[1].as_array().unwrap()[1]
             .as_str()
-            .unwrap()
-            .parse::<u64>()
-            .unwrap();
+            .map(|s| s.parse::<u64>().unwrap());
 
         Filter::IDRange { start, end }
     }
@@ -353,6 +356,12 @@ impl Filter {
         let target = vec[1].as_array().unwrap()[1].as_i64().unwrap();
 
         Filter::RangeByHash { hash_key, target }
+    }
+
+    pub fn vanity_url(vec: Vec<Value>) -> Filter {
+        let boolean = vec[0].as_array().unwrap()[1].as_bool().unwrap();
+
+        Filter::VanityURL(boolean)
     }
 }
 
