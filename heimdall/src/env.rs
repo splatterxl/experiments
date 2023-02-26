@@ -9,3 +9,7 @@ pub fn mongo() -> String {
 pub fn env() -> String {
     env!("ENV").to_string()
 }
+
+pub fn fingerprints_uri() -> String {
+    env!("FINGERPRINTS_URI").to_string()
+}

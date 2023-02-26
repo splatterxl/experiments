@@ -24,7 +24,6 @@ pub fn get_position(fingerprint: String, experiment_id: String) -> u32 {
 pub struct BaseAssignment {
     hash_key: i64,
     has_assignments: bool,
-    assignments: HashMap<String, i32>,
     revision: i64,
 }
 
@@ -39,7 +38,6 @@ impl BaseAssignment {
         Self {
             hash_key,
             has_assignments: true,
-            assignments: map,
             revision: revision as i64,
         }
     }
@@ -77,18 +75,23 @@ pub async fn apply_assignments(
                 if let Some(name) = experiment.name {
                     let pos = crate::assignments::get_position(fingerprint.clone(), name);
 
+                    let str = format!("assignments.{pos}");
+
                     coll.update_one(
-                            doc! { "hash_key": hash_key.clone() },
-                            doc! { "$set": to_document(&crate::assignments::BaseAssignment::from((hash_key, revision, bucket), pos))? },
-                            None,
-                        )
-                        .await?;
+                        doc! { "hash_key": hash_key.clone() },
+                        doc! { "$set": {
+                            str: bucket,
+                            "revision": revision
+                        } },
+                        None,
+                    )
+                    .await?;
                 } else if experiment.has_assignments.is_none() {
                     println!("Missing experiment metadata for hash key {}", hash_key);
 
                     coll.update_one(
                         doc! { "hash_key": hash_key },
-                        doc! { "$set": { "has_assignments": true, "revision": revision } },
+                        doc! { "$set": { "has_assignments": true, "revision": revision, } },
                         Some(UpdateOptions::builder().upsert(Some(true)).build()),
                     )
                     .await?;
