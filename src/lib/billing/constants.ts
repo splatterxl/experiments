@@ -76,6 +76,7 @@ export const PaymentMethods: Record<Stripe.PaymentMethod['type'], string> = {
 	boleto: 'Boleto',
 	card: 'Card',
 	card_present: 'Stripe Terminal',
+ cashapp: "CashApp",
 	customer_balance: 'Balance',
 	eps: 'EPS',
 	fpx: 'FPX',
