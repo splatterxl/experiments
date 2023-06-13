@@ -21,7 +21,15 @@ export function getDbExperiments(
 ) {
 	return experiments()
 		.find({
-			type: options.type ?? { $exists: !withRollouts ? true : undefined },
+			...(options.type ?? !withRollouts
+				? {
+						type: options.type ?? { $exists: !withRollouts ? true : undefined },
+				  }
+				: {}),
+			...(options.q ? { $text: { $search: options.q } } : {}),
+		})
+		.sort({
+			name: -1,
 		})
 		.skip(parseInt(options.cursor ?? '0'))
 		.limit(parseInt(options.limit ?? '50'))
@@ -69,4 +77,8 @@ export async function getExperiments(
 	);
 
 	return json;
+}
+
+export async function getExperiment(hash_key: number) {
+	return experiments().findOne({ hash_key });
 }

@@ -3,6 +3,7 @@ import getConfig from 'next/config';
 const keys = ['referrer', 'source', 'campaign', 'from'];
 
 export const createAnalyticsQuery = (options: Partial<RoutingOptions>) => {
+	return options.path!;
 	return `${options.path}?${new URLSearchParams({
 		...options.analytics,
 		...options.query,

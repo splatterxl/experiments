@@ -40,24 +40,7 @@ export default async function listExperiments(
 }
 
 export async function getBySearch(options: GetExperimentsOptions) {
-	let { q: search } = options;
-
 	const experiments = await getExperiments(options);
 
-	if (experiments === null) return null;
-
-	let result: Experiment[];
-
-	if (search) {
-		const fuzzy = new FuzzySearch(experiments, ['title', 'id'], {
-			caseSensitive: false,
-			sort: true,
-		});
-
-		result = fuzzy.search(search);
-	} else {
-		result = experiments;
-	}
-
-	return result;
+	return experiments;
 }

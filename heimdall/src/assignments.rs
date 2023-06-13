@@ -44,11 +44,11 @@ impl BaseAssignment {
 }
 
 pub async fn apply_assignments(
-    coll: Collection<Experiment>,
+    coll: &Collection<Experiment>,
     assignments: Vec<Assignment>,
     fingerprint: String,
 ) -> anyhow::Result<()> {
-    for Assignment(HashKey(hash_key), revision, bucket, _, _) in assignments {
+    for Assignment(HashKey(hash_key), revision, bucket, _pop, _override, _hash_result, _aaMode) in assignments {
         let experiment = coll
             .find_one(doc! { "hash_key": hash_key.clone() }, None)
             .await?;

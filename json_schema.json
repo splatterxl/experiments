@@ -1,0 +1,112 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Generated schema for Root",
+	"type": "object",
+	"properties": {
+		"fingerprint": {
+			"type": "string"
+		},
+		"assignments": {
+			"type": "array",
+			"items": {
+				"type": "array",
+				"items": {
+					"type": "number"
+				}
+			}
+		},
+		"guild_experiments": {
+			"type": "array",
+			"items": {
+				"type": "array",
+				"items": [
+					{
+						"type": "number"
+					},
+					{
+						"type": "string"
+					},
+					{
+						"type": "number"
+					},
+					{
+						"type": "array",
+						"items": {
+							"type": "array",
+							"items": {
+								"type": "array",
+								"items": {
+									"type": "array",
+									"items": [
+										{
+											"type": "number"
+										},
+										{
+											"type": "array",
+											"items": {}
+										}
+									],
+									"additionalItems": false
+								}
+							}
+						}
+					},
+					{
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"b": {
+									"type": "number"
+								},
+								"k": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								}
+							},
+							"required": ["b", "k"]
+						}
+					},
+					{
+						"type": "array",
+						"items": {
+							"type": "array",
+							"items": {
+								"type": "array",
+								"items": {
+									"type": "array",
+									"items": {
+										"type": "array",
+										"items": [
+											{
+												"type": "number"
+											},
+											{
+												"type": "array",
+												"items": {}
+											}
+										],
+										"additionalItems": false
+									}
+								}
+							}
+						}
+					},
+					{
+						"type": "string"
+					},
+					{
+						"type": "number"
+					},
+					{
+						"type": "number"
+					}
+				],
+				"additionalItems": false
+			}
+		}
+	},
+	"required": ["fingerprint", "assignments", "guild_experiments"]
+}
