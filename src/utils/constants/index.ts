@@ -78,4 +78,8 @@ export const Routes = {
 	MORE_SETTINGS: '/settings/more',
 
 	DASHBOARD: '/dashboard',
+	EXPERIMENTS: (type: string) => `/dashboard/experiments/${type}`,
+	EXPERIMENT: (hash_key: string) => `/dashboard/experiments/${hash_key}`,
+	SEARCH_RESULTS: (query: string) =>
+		'/dashboard/experiments/search?query=' + query,
 };

@@ -17,7 +17,7 @@ pub struct GuildRollouts {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Assignment(pub HashKey, pub u32, pub i32, pub i32, pub i32);
+pub struct Assignment(pub HashKey, pub u32, pub i32, pub i32, pub i32, pub i32, pub i8);
 
 impl RolloutsRaw {
     pub fn simplify(self) -> GuildRollouts {
@@ -45,6 +45,9 @@ pub struct GuildExperiment(
     Vec<Population>,
     Vec<Override>,
     Vec<Vec<Population>>,
+    Option<String>,
+    Option<i32>,
+    Option<i8>
 );
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

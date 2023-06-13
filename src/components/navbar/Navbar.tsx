@@ -3,6 +3,7 @@ import { login } from '@/lib/analytics/web/actions/login';
 import { HStack, Link, useMediaQuery } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import { parseCookies } from 'nookies';
+import { useEffect, useState } from 'react';
 import CurrentUserStore from '../../stores/CurrentUserStore';
 import { Routes } from '../../utils/constants';
 import { UserIcon } from '../account/UserIcon';
@@ -13,10 +14,14 @@ export default function Navbar() {
 	const cookies = parseCookies();
 
 	const user = CurrentUserStore.useValue();
-
 	const router = useRouter();
 
 	const [isMobile] = useMediaQuery('(max-width: 512px)');
+	const [loaded, setLoaded] = useState(false);
+
+	useEffect(() => {
+		setLoaded(true);
+	}, []);
 
 	return (
 		<HStack
@@ -45,33 +50,40 @@ export default function Navbar() {
 					Premium
 				</Link>
 
-				<PrimaryButton
-					onClick={() => {
-						if (!cookies.auth) login('navbar', router.asPath);
-						else if (router.pathname !== Routes.DASHBOARD)
-							router.push(
-								createAnalyticsQuery({
-									path: Routes.DASHBOARD,
-									analytics: { from: 'navbar' },
-								})
-							);
-					}}
-					icon={
-						user && !isMobile ? (
-							<UserIcon
-								size='xs'
-								username={user.username + "'s"}
-								id={user.id}
-								avatar={user.avatar}
-								discrim={user.discriminator}
-							/>
-						) : null
-					}
-					px={5}
-					label='Dashboard'
-					size='lg'
-					role='link'
-				/>
+				{!loaded ? null : user ? (
+					<Link
+						href={
+							router.pathname.startsWith(Routes.DASHBOARD)
+								? Routes.SETTINGS
+								: Routes.DASHBOARD
+						}
+					>
+						<UserIcon
+							size='sm'
+							username={user.username + "'s"}
+							id={user.id}
+							avatar={user.avatar}
+							discrim={user.discriminator}
+						/>
+					</Link>
+				) : (
+					<PrimaryButton
+						onClick={() => {
+							if (!cookies.auth) login('navbar', router.asPath);
+							else if (router.pathname !== Routes.DASHBOARD)
+								router.push(
+									createAnalyticsQuery({
+										path: Routes.DASHBOARD,
+										analytics: { from: 'navbar' },
+									})
+								);
+						}}
+						px={5}
+						label='Dashboard'
+						size='lg'
+						role='link'
+					/>
+				)}
 			</HStack>
 		</HStack>
 	);

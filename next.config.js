@@ -2,7 +2,6 @@ const { version } = require('./package.json');
 
 /** @type { import('next').NextConfig } */
 const nextConfig = {
-	reactStrictMode: true,
 	swcMinify: true,
 	sentry: {
 		// Use `hidden-source-map` rather than `source-map` as the Webpack `devtool`
