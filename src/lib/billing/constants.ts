@@ -116,6 +116,7 @@ export const Wallets: Record<Stripe.PaymentMethod.Card.Wallet.Type, string> = {
 	masterpass: 'Masterpass',
 	samsung_pay: 'Samsung Pay',
 	visa_checkout: 'Visa Checkout',
+ link: "Link",
 };
 
 export const WalletIcons: Record<
