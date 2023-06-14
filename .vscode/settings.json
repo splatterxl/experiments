@@ -3,7 +3,8 @@
 	"javascript.preferences.importModuleSpecifierEnding": "minimal",
 	"typescript.preferences.importModuleSpecifier": "non-relative",
 	"[python]": {
-		"editor.defaultFormatter": "ms-python.black-formatter"
+		"editor.defaultFormatter": "ms-python.python"
 	},
-	"python.formatting.provider": "none"
+	"python.formatting.provider": "none",
+	"python.languageServer": "None"
 }
