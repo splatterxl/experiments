@@ -21,7 +21,7 @@
 		"@stripe/stripe-js": "^1.46.0",
 		"@types/chart.js": "^2.9.37",
 		"@types/fuzzy-search": "^2.1.2",
-		"@types/jsonwebtoken": "^8.5.9",
+		"@types/jsonwebtoken": "^9.0.0",
 		"@types/request-ip": "^0.0.37",
 		"@upstash/ratelimit": "^0.1.5",
 		"@upstash/redis": "^1.18.4",
