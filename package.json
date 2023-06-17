@@ -31,7 +31,7 @@
 		"discord-api-types": "^0.37.20",
 		"discord-verify": "^1.0.0",
 		"eslint": "8.29.0",
-		"eslint-config-next": "13.0.5",
+		"eslint-config-next": "13.4.6",
 		"framer-motion": "^8.0.0",
 		"fuzzy-search": "^3.2.1",
 		"jsonwebtoken": "^9.0.0",
