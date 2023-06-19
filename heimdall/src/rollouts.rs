@@ -1,26 +1,46 @@
+use reqwest::{Client, Method};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RolloutsRaw {
-    pub fingerprint: String,
+    pub fingerprint: Option<String>,
     pub assignments: Vec<Assignment>,
     pub guild_experiments: Vec<GuildExperiment>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct GuildRollouts {
-    pub fingerprint: String,
+pub struct Rollouts {
+    pub fingerprint: Option<String>,
     #[serde(skip_serializing)]
     pub assignments: Vec<Assignment>,
     pub guild_experiments: Vec<ExperimentRollout>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Assignment(pub HashKey, pub u32, pub i32, pub i32, pub i32);
+pub struct Assignment(
+    pub HashKey,
+    pub u32,
+    pub i32,
+    pub i32,
+    pub i32,
+    pub i32,
+    pub i8,
+);
+
+impl Assignment {
+    pub fn to_json(self, id: String) -> Value {
+        json!({
+            "bucket": self.2,
+            "override": self.3,
+            "population": self.4,
+            "fingerprint_id": id,
+        })
+    }
+}
 
 impl RolloutsRaw {
-    pub fn simplify(self) -> GuildRollouts {
+    pub fn simplify(self) -> Rollouts {
         let experiments = self.guild_experiments;
         let mut new_experiments = Vec::new();
 
@@ -28,7 +48,7 @@ impl RolloutsRaw {
             new_experiments.push(experiment.simplify())
         }
 
-        GuildRollouts {
+        Rollouts {
             fingerprint: self.fingerprint,
             assignments: self.assignments,
             guild_experiments: new_experiments,
@@ -45,6 +65,9 @@ pub struct GuildExperiment(
     Vec<Population>,
     Vec<Override>,
     Vec<Vec<Population>>,
+    Option<String>,
+    Option<i32>,
+    Option<i8>,
 );
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -156,7 +179,7 @@ impl PopulationFilter {
             2918402255 => Filter::member_count,
             3013771838 => Filter::id,
             4148745523 => Filter::hub_type,
-            188952590 => unreachable!(),
+            188952590 => Filter::vanity_url,
             2294888943 => Filter::range_by_hash,
             _ => unreachable!(),
         };
@@ -198,7 +221,7 @@ pub enum Filter {
     Feature(Vec<String>),
     IDRange {
         start: Option<u64>,
-        end: u64,
+        end: Option<u64>,
     },
     MemberCount {
         start: Option<u64>,
@@ -210,6 +233,7 @@ pub enum Filter {
         hash_key: i64,
         target: i64,
     },
+    VanityURL(bool),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -226,6 +250,8 @@ pub struct FiltersFlattened {
     pub hub_types: Option<Vec<i64>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub range_by_hash: Option<RangeByHash>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vanity_url: Option<bool>,
 }
 
 impl Default for FiltersFlattened {
@@ -237,6 +263,7 @@ impl Default for FiltersFlattened {
             ids: None,
             member_count: None,
             range_by_hash: None,
+            vanity_url: None,
         }
     }
 }
@@ -257,6 +284,7 @@ impl FiltersFlattened {
                 }
                 Filter::IDs(ids) => it.ids = Some(ids),
                 Filter::HubTypes(types) => it.hub_types = Some(types),
+                Filter::VanityURL(enabled) => it.vanity_url = Some(enabled),
             }
         }
 
@@ -267,7 +295,7 @@ impl FiltersFlattened {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IDRange {
     pub start: Option<u64>,
-    pub end: u64,
+    pub end: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -297,16 +325,14 @@ impl Filter {
         Filter::Feature(features)
     }
 
-    // [[_, start: string | null], [_, end: string]]
+    // [[_, start: string | null], [_, end: string | null]]
     pub fn id_range(vec: Vec<Value>) -> Filter {
         let start = vec[0].as_array().unwrap()[1]
             .as_str()
             .map(|s| s.parse::<u64>().unwrap());
         let end = vec[1].as_array().unwrap()[1]
             .as_str()
-            .unwrap()
-            .parse::<u64>()
-            .unwrap();
+            .map(|s| s.parse::<u64>().unwrap());
 
         Filter::IDRange { start, end }
     }
@@ -354,10 +380,32 @@ impl Filter {
 
         Filter::RangeByHash { hash_key, target }
     }
+
+    pub fn vanity_url(vec: Vec<Value>) -> Filter {
+        let boolean = vec[0].as_array().unwrap()[1].as_bool().unwrap();
+
+        Filter::VanityURL(boolean)
+    }
 }
 
-pub async fn get_rollouts() -> anyhow::Result<GuildRollouts> {
-    let resp = reqwest::get("http://discord.com/api/v9/experiments?with_guild_experiments=true")
+pub async fn get_rollouts(
+    fingerprint: Option<&str>,
+    http_client: &Client,
+) -> anyhow::Result<Rollouts> {
+    let resp = http_client
+        .request(
+            Method::GET,
+            "http://discord.com/api/v9/experiments?with_guild_experiments=true",
+        )
+        .header(
+            "X-Fingerprint",
+            if let Some(fingerprint) = fingerprint {
+                fingerprint.to_string()
+            } else {
+                "".to_string()
+            },
+        )
+        .send()
         .await?
         .json::<RolloutsRaw>()
         .await?;

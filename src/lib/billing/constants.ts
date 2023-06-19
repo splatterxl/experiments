@@ -76,6 +76,7 @@ export const PaymentMethods: Record<Stripe.PaymentMethod['type'], string> = {
 	boleto: 'Boleto',
 	card: 'Card',
 	card_present: 'Stripe Terminal',
+	cashapp: 'CashApp',
 	customer_balance: 'Balance',
 	eps: 'EPS',
 	fpx: 'FPX',
@@ -95,6 +96,8 @@ export const PaymentMethods: Record<Stripe.PaymentMethod['type'], string> = {
 	sofort: 'Sofort',
 	us_bank_account: 'ACH Direct Debit',
 	wechat_pay: 'WeChat Pay',
+	paypal: 'PayPal',
+	zip: 'ZIP',
 };
 
 export const PaymentMethodIcons: Partial<
@@ -115,6 +118,7 @@ export const Wallets: Record<Stripe.PaymentMethod.Card.Wallet.Type, string> = {
 	masterpass: 'Masterpass',
 	samsung_pay: 'Samsung Pay',
 	visa_checkout: 'Visa Checkout',
+	link: 'Link',
 };
 
 export const WalletIcons: Record<
@@ -127,6 +131,7 @@ export const WalletIcons: Record<
 	masterpass: '/assets/card/mastercard.svg',
 	samsung_pay: CardIcon,
 	visa_checkout: '/assets/card/visa.svg',
+	link: CardIcon,
 };
 
 export const IdealBanks: Record<Stripe.PaymentMethod.Ideal.Bank, string> = {
@@ -143,6 +148,7 @@ export const IdealBanks: Record<Stripe.PaymentMethod.Ideal.Bank, string> = {
 	sns_bank: 'SNS Bank',
 	triodos_bank: 'Triodos Bank',
 	van_lanschot: 'Van Lanschot',
+	yoursafe: 'Yoursafe',
 };
 
 export const EpsBanks: Record<Stripe.PaymentMethod.Eps.Bank, string> = {

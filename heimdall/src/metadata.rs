@@ -1,9 +1,12 @@
-// https://aether.gaminggeek.dev/v2/discexp
+// https://aether.getfire.bot/v2/discexp
 
 use reqwest::{header::HeaderMap, Client};
 use serde::{Deserialize, Serialize};
 
-pub type AetherResponse = Vec<ExperimentAether>;
+#[derive(Serialize, Deserialize)]
+pub struct AetherResponse {
+    pub experiments: Vec<ExperimentAether>
+}
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ExperimentAether {
@@ -25,6 +28,7 @@ pub struct ExperimentMetadata {
     pub description: Option<String>,
     pub name: String,
     pub hash_key: i64,
+    pub no_name: bool
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -36,7 +40,7 @@ pub struct Bucket {
 pub async fn get_metadata() -> anyhow::Result<Vec<ExperimentMetadata>> {
     // we need to do this for some reason
     let mut headers = HeaderMap::new();
-    headers.insert("authority", "aether.gaminggeek.dev".parse().unwrap());
+    headers.insert("authority", "aether.getfire.bot".parse().unwrap());
     headers.insert(
         "accept-language",
         "en-GB,en;q=0.9,en-US;q=0.8,en-IE;q=0.7,de-DE;q=0.6,de;q=0.5"
@@ -64,7 +68,7 @@ pub async fn get_metadata() -> anyhow::Result<Vec<ExperimentMetadata>> {
         .build()
         .unwrap();
     let res = client
-        .get("https://aether.gaminggeek.dev/v2/discexp")
+        .get("https://aether.getfire.bot/v2/discexp")
         .headers(headers)
         .send()
         .await?
@@ -73,7 +77,7 @@ pub async fn get_metadata() -> anyhow::Result<Vec<ExperimentMetadata>> {
 
     let mut experiments = Vec::new();
 
-    for experiment in res {
+    for experiment in res.experiments {
         let mut buckets = Vec::new();
         let description = if (experiment.description.len() - experiment.buckets.len()) == 1 {
             Some(experiment.description.get(0).unwrap().clone())
@@ -101,6 +105,7 @@ pub async fn get_metadata() -> anyhow::Result<Vec<ExperimentMetadata>> {
             name: experiment.id,
             buckets,
             description,
+            no_name: false
         })
     }
 

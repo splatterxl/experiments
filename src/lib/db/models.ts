@@ -1,3 +1,4 @@
+import type { getExperimentRollout } from '@/lib/experiments/web';
 import { Snowflake } from 'discord-api-types/globals';
 import { Products } from '../billing/constants';
 
@@ -39,16 +40,20 @@ export interface Experiment {
 	buckets: { name: string; description: string | null }[];
 	id: string;
 	hash_key: number;
+	name: string;
+	description: string | null;
+	no_name?: true;
 }
 
-export interface ExperimentRollout {
+export interface ExperimentRollout extends Experiment {
 	type: 'guild';
 	populations: Population[];
 	overrides: Override[];
 	overrides_formatted: [Population[]];
+	rollout: ReturnType<typeof getExperimentRollout>;
 }
 
-export interface ExperimentAssignment {
+export interface ExperimentAssignment extends Experiment {
 	type: 'user';
 	has_assignments: boolean;
 	assignments?: Record<`${number}`, number>;
@@ -61,21 +66,22 @@ export interface Population {
 
 export interface Rollout {
 	bucket: number;
-	rollout: Rollout[];
+	rollout: { s: number; e: number }[];
 }
 
 export interface Filters {
 	features: string[] | null;
 	id_range: { start: bigint | null; end: bigint } | null;
 	member_count: { start: bigint | null; end: bigint | null } | null;
-	ids: bigint[] | null;
+	ids: string[] | null;
 	hub_types: number[] | null;
 	range_by_hash: { hash_key: bigint; target: number } | null;
+	vanity_url: boolean | null;
 }
 
 export interface Override {
 	b: number;
-	k: bigint[];
+	k: string[];
 }
 
 //#endregion

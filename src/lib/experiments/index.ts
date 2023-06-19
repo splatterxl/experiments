@@ -4,6 +4,7 @@ import {
 	ExperimentAssignment,
 	ExperimentRollout,
 } from '@/lib/db/models';
+import { getExperimentRollout } from '@/lib/experiments/web';
 import { ObjectId } from 'mongodb';
 
 export interface GetExperimentsOptions {
@@ -13,19 +14,34 @@ export interface GetExperimentsOptions {
 	cursor?: string;
 	with_rollouts?: boolean;
 	with_assignments?: boolean;
+	with_percentages?: boolean;
 }
 
-export function getDbExperiments(
+export async function getDbExperiments(
 	options: GetExperimentsOptions,
 	withRollouts?: boolean
 ) {
-	return experiments()
+	const exps = await experiments()
 		.find({
-			type: options.type ?? { $exists: !withRollouts ? true : undefined },
+			...(options.type ?? !withRollouts
+				? {
+						type: options.type ?? { $exists: !withRollouts ? true : undefined },
+				  }
+				: {}),
+			...(options.q ? { $text: { $search: options.q } } : {}),
 		})
+		.sort(
+			options.q
+				? {}
+				: {
+						name: -1,
+				  }
+		)
 		.skip(parseInt(options.cursor ?? '0'))
 		.limit(parseInt(options.limit ?? '50'))
 		.toArray();
+
+	return exps;
 }
 
 export async function getExperiments(
@@ -36,6 +52,7 @@ export async function getExperiments(
 
 	const withRollouts = !!options.with_rollouts;
 	const withAssignments = !!options.with_assignments;
+	const withPercentages = !!options.with_percentages;
 
 	let json = await getDbExperiments(options, withRollouts).then((docs) =>
 		docs.map(
@@ -53,10 +70,14 @@ export async function getExperiments(
 						v.description?.replace(/^(Control|Treatment \d+)(: )?/, '') || null,
 				}));
 
-				if (!withRollouts && doc.type === 'guild') {
+				if ((!withRollouts || withPercentages) && doc.type === 'guild') {
 					delete doc.overrides;
 					delete doc.overrides_formatted;
 					delete doc.populations;
+				}
+
+				if (withPercentages && doc.type === 'guild') {
+					doc.rollout = getExperimentRollout(doc as any);
 				}
 
 				if (!withAssignments && doc.type === 'user') {
@@ -69,4 +90,8 @@ export async function getExperiments(
 	);
 
 	return json;
+}
+
+export async function getExperiment(hash_key: number) {
+	return experiments().findOne({ hash_key });
 }

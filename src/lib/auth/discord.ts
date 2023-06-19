@@ -98,7 +98,7 @@ export async function handleAuthorization(
 				refresh_token: result.refresh_token,
 				expires: new Date(Date.now() + result.expires_in * 1000),
 				token_type: result.token_type,
-				scope: result.scope.split(''),
+				scope: result.scope.split(' '),
 				user_id: userId,
 			},
 		},
