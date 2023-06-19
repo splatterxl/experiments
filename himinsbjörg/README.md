@@ -1,7 +1,7 @@
 # Himinsbjörg
 
-Service to extract experiments from the Gateway.
+Activity to scrape gateway experiments using `dolfies/discord.py-self`.
 
-## Environment
+## TODO
 
-- `TOKEN` – Discord token.
+All done.
