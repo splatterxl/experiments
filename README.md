@@ -1,12 +1,30 @@
 # Experiments
 
-A simple Discord bot to view, check and explore guild experiments of the Discord
-API. If you don't know what that means, this probably doesn't apply to you.
+UI to view experiment data/rollout.
 
-## Methodology
+Needs Yarn, Rust, Python and MongoDB.
 
-## Links
+## Setup
 
-- [Invite the bot](https://discord.com/api/oauth2/authorize?client_id=957383358592217088&scope=applications.commands)
-- [Source code](https://github.com/splatterxl/experiments)
-- [Rollouts UI](https://rollouts.advaith.io)
+```
+git submodule update --recursive --remote --init
+yarn install
+cd heimdall && cargo build; cd ..
+cd himinsbjörg && pip3 install -r requirements.txt; cd ..
+```
+
+## Running
+
+| Component   | Command            |
+| ----------- | ------------------ |
+| Heimdall    | `cargo run`        |
+| Himinsbjörg | `python3 main.py`  |
+| Website     | `yarn dev -p 3001` |
+
+## Production
+
+| Component   | Command                                         |
+| ----------- | ----------------------------------------------- |
+| Heimdall    | `cargo build --release` / `cargo run --release` |
+| Himinsbjörg | `python3 main.py`                               |
+| Website     | `yarn build` / `yarn start`                     |
