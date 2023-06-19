@@ -1,3 +1,4 @@
+import type { getExperimentRollout } from '@/lib/experiments/web';
 import { Snowflake } from 'discord-api-types/globals';
 import { Products } from '../billing/constants';
 
@@ -49,6 +50,7 @@ export interface ExperimentRollout extends Experiment {
 	populations: Population[];
 	overrides: Override[];
 	overrides_formatted: [Population[]];
+	rollout: ReturnType<typeof getExperimentRollout>;
 }
 
 export interface ExperimentAssignment extends Experiment {

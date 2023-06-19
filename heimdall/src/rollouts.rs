@@ -1,26 +1,46 @@
+use reqwest::{Client, Method};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RolloutsRaw {
-    pub fingerprint: String,
+    pub fingerprint: Option<String>,
     pub assignments: Vec<Assignment>,
     pub guild_experiments: Vec<GuildExperiment>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct GuildRollouts {
-    pub fingerprint: String,
+pub struct Rollouts {
+    pub fingerprint: Option<String>,
     #[serde(skip_serializing)]
     pub assignments: Vec<Assignment>,
     pub guild_experiments: Vec<ExperimentRollout>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Assignment(pub HashKey, pub u32, pub i32, pub i32, pub i32, pub i32, pub i8);
+pub struct Assignment(
+    pub HashKey,
+    pub u32,
+    pub i32,
+    pub i32,
+    pub i32,
+    pub i32,
+    pub i8,
+);
+
+impl Assignment {
+    pub fn to_json(self, id: String) -> Value {
+        json!({
+            "bucket": self.2,
+            "override": self.3,
+            "population": self.4,
+            "fingerprint_id": id,
+        })
+    }
+}
 
 impl RolloutsRaw {
-    pub fn simplify(self) -> GuildRollouts {
+    pub fn simplify(self) -> Rollouts {
         let experiments = self.guild_experiments;
         let mut new_experiments = Vec::new();
 
@@ -28,7 +48,7 @@ impl RolloutsRaw {
             new_experiments.push(experiment.simplify())
         }
 
-        GuildRollouts {
+        Rollouts {
             fingerprint: self.fingerprint,
             assignments: self.assignments,
             guild_experiments: new_experiments,
@@ -47,7 +67,7 @@ pub struct GuildExperiment(
     Vec<Vec<Population>>,
     Option<String>,
     Option<i32>,
-    Option<i8>
+    Option<i8>,
 );
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -368,8 +388,24 @@ impl Filter {
     }
 }
 
-pub async fn get_rollouts() -> anyhow::Result<GuildRollouts> {
-    let resp = reqwest::get("http://discord.com/api/v9/experiments?with_guild_experiments=true")
+pub async fn get_rollouts(
+    fingerprint: Option<&str>,
+    http_client: &Client,
+) -> anyhow::Result<Rollouts> {
+    let resp = http_client
+        .request(
+            Method::GET,
+            "http://discord.com/api/v9/experiments?with_guild_experiments=true",
+        )
+        .header(
+            "X-Fingerprint",
+            if let Some(fingerprint) = fingerprint {
+                fingerprint.to_string()
+            } else {
+                "".to_string()
+            },
+        )
+        .send()
         .await?
         .json::<RolloutsRaw>()
         .await?;

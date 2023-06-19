@@ -1,7 +1,7 @@
 import { GuildBuckets } from '@/components/experiments/GuildBuckets';
 import { ExperimentRollout } from '@/lib/db/models';
 import { parseNewFilters } from '@/lib/experiments/render';
-import { getExperimentRollout } from '@/lib/experiments/web';
+import { getBucket, getExperimentRollout } from '@/lib/experiments/web';
 import {
 	Accordion,
 	AccordionButton,
@@ -44,7 +44,7 @@ export const GuildExpRollout: FC<ExperimentRollout> = (exp) => {
 					labels: exp.buckets.map((v) => v.name),
 					datasets: [unfiltered, ...filtered]
 						.filter((v) => v !== null && v !== undefined)
-						.map(((v: NonNullable<(typeof filtered)[0]>) => ({
+						.map(((v: NonNullable<typeof filtered[0]>) => ({
 							label: parseNewFilters(v.filters),
 							data: v.percentages,
 						})) as any) as any as { label: string; data: number[] }[],
@@ -62,7 +62,7 @@ export const GuildExpRollout: FC<ExperimentRollout> = (exp) => {
 		setLoaded(true);
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- unfiltered will change if filtered does
-	}, [exp.buckets, unfiltered]);
+	}, [exp.buckets]);
 
 	const [loaded, setLoaded] = useState(false);
 
@@ -83,32 +83,33 @@ export const GuildExpRollout: FC<ExperimentRollout> = (exp) => {
 							</Tr>
 						</Thead>
 						<Tbody>
-							{(filtered.length ? filtered : [unfiltered!]).map(
-								(rollout, i) => (
-									<Tr key={i}>
-										<Td>{parseNewFilters(rollout.filters)}</Td>
-										{exp.buckets.map((_, i) => (
-											<Td
-												isNumeric
-												key={i}
-												// emulate being highlighted
-												color={
-													rollout.percentages[i] > 0 ? 'green.400' : 'red.400'
-												}
-												fontWeight={
-													rollout.percentages[i] === 100
-														? 'black'
-														: rollout.percentages[i] > 0
-														? 'semibold'
-														: 'normal'
-												}
-											>
-												{rollout.percentages[i]}%
-											</Td>
-										))}
-									</Tr>
-								)
-							)}
+							{(filtered.length && unfiltered?.percentages[0] === 100
+								? filtered
+								: [unfiltered!, ...(filtered ?? [])]
+							).map((rollout, i) => (
+								<Tr key={i}>
+									<Td>{parseNewFilters(rollout.filters)}</Td>
+									{exp.buckets.map((_, i) => (
+										<Td
+											isNumeric
+											key={i}
+											// emulate being highlighted
+											color={
+												rollout.percentages[i] > 0 ? 'green.400' : 'red.400'
+											}
+											fontWeight={
+												rollout.percentages[i] === 100
+													? 'black'
+													: rollout.percentages[i] > 0
+													? 'semibold'
+													: 'normal'
+											}
+										>
+											{rollout.percentages[i]}%
+										</Td>
+									))}
+								</Tr>
+							))}
 						</Tbody>
 					</Table>
 				</TableContainer>
@@ -119,23 +120,21 @@ export const GuildExpRollout: FC<ExperimentRollout> = (exp) => {
 					<Heading size='sm'>Overrides</Heading>
 					<Accordion w='full' allowToggle>
 						{exp.overrides.map((v, i) => (
-							<>
-								<AccordionItem key={i} w='full'>
-									<h2>
-										<AccordionButton>
-											<Box as='span' flex='1' textAlign='left'>
-												{exp.buckets[i === -1 ? 0 : i + 1].description}
-											</Box>
-											<AccordionIcon />
-										</AccordionButton>
-									</h2>
-									<AccordionPanel pb={4}>
-										<Code p={2} rounded='lg'>
-											<pre>{v.k.join('\n')}</pre>
-										</Code>
-									</AccordionPanel>
-								</AccordionItem>
-							</>
+							<AccordionItem key={i} w='full'>
+								<h2>
+									<AccordionButton>
+										<Box as='span' flex='1' textAlign='left'>
+											{getBucket(exp, v.b).description}
+										</Box>
+										<AccordionIcon />
+									</AccordionButton>
+								</h2>
+								<AccordionPanel pb={4}>
+									<Code p={2} rounded='lg'>
+										<pre>{v.k.join('\n')}</pre>
+									</Code>
+								</AccordionPanel>
+							</AccordionItem>
 						))}
 					</Accordion>
 				</VStack>

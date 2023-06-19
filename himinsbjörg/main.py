@@ -4,6 +4,7 @@ import discord
 from dotenv import load_dotenv
 import os
 from pymongo import MongoClient
+import asyncio
 
 load_dotenv(".env.local")  # take environment variables from .env.
 
@@ -91,10 +92,17 @@ class HiminsbjorgClient(discord.Client):
     async def on_ready(self):
         print("Logged on as", self.user)
 
-        for experiment in self.guild_experiments:
-            print(f"Handling experiment {experiment.name} ({experiment.hash_key})")
+        while True:
+            for experiment in self.guild_experiments:
+                print(f"Handling experiment {experiment.name} ({experiment.hash_key})")
 
-            handle_exp(experiment)
+                handle_exp(experiment)
+            
+            await asyncio.sleep(900)
+
+            await self.close()
+            self.clear()
+            await self.connect(reconnect=True)
 
     async def on_message(self, message):
         # only respond to ourselves
