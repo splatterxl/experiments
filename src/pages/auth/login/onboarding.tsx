@@ -31,7 +31,7 @@ export default function LoginOnboarding({ next }: { next: string }) {
 				<title>Login | Experiments</title>
 			</Head>
 			<Center h='85vh' pb='20vh' flexDirection='column' textAlign='center'>
-				{user && next !== Routes.DASHBOARD ? (
+				{user ? (
 					<>
 						<Heading display='flex' alignItems='center' flexDir='row' gap={2}>
 							<Text as='span'>Hi, </Text>
@@ -45,8 +45,8 @@ export default function LoginOnboarding({ next }: { next: string }) {
 							<Text as='span'>{user.username}</Text>
 						</Heading>
 						<Text fontSize='lg' px={16} textAlign='center'>
-							We&apos;re glad you could join us. Go to your personal dashboard
-							to view activities and account settings.
+							We&apos;re glad you could join us. Go to your dashboard to view
+							experiment rollouts.
 						</Text>
 						<GhostButton
 							label='Go to Dashboard'

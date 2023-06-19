@@ -1,14 +1,16 @@
 use std::collections::HashMap;
 use std::io::Cursor;
 
-use mongodb::bson::{doc, to_document};
+use mongodb::bson::doc;
 use mongodb::options::UpdateOptions;
 use mongodb::Collection;
 use murmur3::murmur3_32;
+use reqwest::Client;
 use serde::Serialize;
+use serde_json::{from_str, json, to_string, Value};
 
 use crate::database::Experiment;
-use crate::rollouts::{self, Assignment, HashKey};
+use crate::rollouts::{self, Assignment};
 
 pub fn get_position(fingerprint: String, experiment_id: String) -> u32 {
     let id = fingerprint.split('.').next().unwrap();
@@ -48,20 +50,28 @@ pub async fn apply_assignments(
     assignments: Vec<Assignment>,
     fingerprint: String,
 ) -> anyhow::Result<()> {
-    for Assignment(HashKey(hash_key), revision, bucket, _pop, _override, _hash_result, _aaMode) in assignments {
+    for assignment in assignments {
         let experiment = coll
-            .find_one(doc! { "hash_key": hash_key.clone() }, None)
+            .find_one(doc! { "hash_key": assignment.0.clone().0 }, None)
             .await?;
+
+        let pos = assignment.5 as u32;
 
         match experiment {
             None => {
-                println!("Missing experiment metadata for hash key {}", hash_key);
+                println!(
+                    "\nMissing experiment metadata for hash key {}",
+                    assignment.0 .0
+                );
 
                 coll.insert_one(
                     &Experiment::new(
-                        rollouts::HashKey(hash_key),
+                        assignment.0.clone(),
                         Some(true),
-                        Some(revision as i64),
+                        Some(assignment.1.clone() as i64),
+                        assignment,
+                        pos,
+                        fingerprint.split(".").next().unwrap().to_string(),
                     ),
                     None,
                 )
@@ -73,25 +83,31 @@ pub async fn apply_assignments(
             }
             Some(experiment) => {
                 if let Some(name) = experiment.name {
-                    let pos = crate::assignments::get_position(fingerprint.clone(), name);
-
                     let str = format!("assignments.{pos}");
 
                     coll.update_one(
-                        doc! { "hash_key": hash_key.clone() },
+                        doc! { "hash_key": assignment.0.clone().0 },
                         doc! { "$set": {
-                            str: bucket,
-                            "revision": revision
+                            str: {
+                                "bucket": assignment.2,
+                                "override": assignment.3,
+                                "population": assignment.4,
+                                "fingerprint_id": fingerprint.split(".").next().unwrap().to_string()
+                            },
+                            "revision": assignment.1
                         } },
                         None,
                     )
                     .await?;
                 } else if experiment.has_assignments.is_none() {
-                    println!("Missing experiment metadata for hash key {}", hash_key);
+                    println!(
+                        "\nMissing experiment metadata for hash key {}",
+                        assignment.0.clone().0
+                    );
 
                     coll.update_one(
-                        doc! { "hash_key": hash_key },
-                        doc! { "$set": { "has_assignments": true, "revision": revision, } },
+                        doc! { "hash_key": assignment.0.clone().0 },
+                        doc! { "$set": { "has_assignments": true, "revision": assignment.1, } },
                         Some(UpdateOptions::builder().upsert(Some(true)).build()),
                     )
                     .await?;
@@ -105,6 +121,66 @@ pub async fn apply_assignments(
             }
         }
     }
+
+    Ok(())
+}
+
+pub async fn fetch_assignments(
+    coll: &Collection<Experiment>,
+    http_client: &Client,
+) -> anyhow::Result<()> {
+    let file = std::fs::read_to_string("./fingerprints.txt")?;
+    let lines = file.lines();
+
+    let mut enumerator = lines.enumerate();
+    let (lower, upper) = enumerator.size_hint();
+    let len = (lower + upper.unwrap_or(lower)) / 2;
+
+    let json = from_str::<Value>(&std::fs::read_to_string("meta.json")?)?;
+    let obj = json.as_object().unwrap();
+    let mut pos = obj.get("pos").unwrap().as_i64().unwrap();
+    let last_updated = obj.get("last_updated").unwrap().as_i64().unwrap();
+
+    // if last updated is yesterday
+    if last_updated
+        < (std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64
+            - 86400i64)
+    {
+        pos = 0;
+    }
+
+    for (i, line) in enumerator.skip(pos as usize) {
+        let fingerprint = line.trim();
+
+        println!(
+            "Handling fingerprint: {fingerprint} (No. {i}{})",
+            if len == 0 {
+                "".to_string()
+            } else {
+                format!("/{len}")
+            }
+        );
+
+        let response = rollouts::get_rollouts(Some(fingerprint), &http_client).await?;
+
+        if let Some(new_fp) = response.fingerprint {
+            println!("Bogus fingerprint: {fingerprint}");
+            apply_assignments(&coll, response.assignments, new_fp).await?;
+        } else {
+            apply_assignments(&coll, response.assignments, fingerprint.to_string());
+        }
+
+        std::fs::write(
+            "meta.json",
+            to_string(&json!({ "pos": i, "last_updated": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() })).unwrap(),
+        )
+        .unwrap();
+    }
+
+    println!("Done handling fingerprints.");
 
     Ok(())
 }

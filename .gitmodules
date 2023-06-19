@@ -1,3 +1,7 @@
 [submodule "heimdall/twilight"]
 	path = heimdall/twilight
 	url = https://github.com/splatterxl/twilight
+
+[submodule "dolfies/discord.py-self"]
+	path = discord.py-self
+	url = git@github.com:dolfies/discord.py-self

@@ -1,7 +1,7 @@
 import { GuildIcon } from '@/components/account/GuildIcon';
 import { ExperimentRollout } from '@/lib/db/models';
 import { orList } from '@/lib/experiments/render';
-import { check } from '@/lib/experiments/web';
+import { check, getBucket } from '@/lib/experiments/web';
 import GuildsStore from '@/stores/GuildsStore';
 import {
 	Accordion,
@@ -10,7 +10,6 @@ import {
 	AccordionItem,
 	AccordionPanel,
 	Box,
-	Divider,
 	HStack,
 	Heading,
 	Stack,
@@ -30,6 +29,8 @@ export const GuildBuckets: FC<ExperimentRollout> = (exp) => {
 		.filter((v) => v.active);
 
 	if (!assignments.length) return null;
+
+	console.log(assignments);
 
 	return (
 		<VStack minW='50vw' justify='start' align='start' w='full' pt={8}>
@@ -59,11 +60,13 @@ export const GuildBuckets: FC<ExperimentRollout> = (exp) => {
 											<Heading size='sm'>{assignment.guild.name}:</Heading>
 											<Text>
 												{orList.format(
-													assignment.overrides.map(
-														(v) =>
-															exp.buckets[v === -1 ? 0 : v].description ??
-															exp.buckets[v === -1 ? 0 : v].name
-													)
+													assignment.overrides.map((v) => {
+														const bucket = getBucket(exp, v);
+
+														console.log(assignment, bucket);
+
+														return bucket.description ?? bucket.name;
+													})
 												)}
 											</Text>
 										</HStack>
@@ -218,11 +221,7 @@ export const GuildBuckets: FC<ExperimentRollout> = (exp) => {
 																textUnderlineOffset={3}
 																textDecorationColor='whiteAlpha.500'
 															>
-																{
-																	exp.buckets[
-																		pop.bucket === -1 ? 0 : pop.bucket
-																	]?.name
-																}
+																{getBucket(exp, pop.bucket)?.name}
 															</Text>
 														</Tooltip>
 														{a.length > 1 && i !== a.length - 1 && ' or '}

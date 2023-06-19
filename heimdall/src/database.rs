@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::{
     metadata::Bucket,
-    rollouts::{HashKey, Override, Populations},
+    rollouts::{Assignment, HashKey, Override, Populations},
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -29,11 +30,22 @@ pub struct Experiment {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub has_assignments: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub assignments: Option<HashMap<String, i32>>,
+    pub assignments: Option<HashMap<String, Value>>,
 }
 
 impl Experiment {
-    pub fn new(hash_key: HashKey, has_assignments: Option<bool>, revision: Option<i64>) -> Self {
+    pub fn new(
+        hash_key: HashKey,
+        has_assignments: Option<bool>,
+        revision: Option<i64>,
+        bucket: Assignment,
+        position: u32,
+        id: String,
+    ) -> Self {
+        let mut map = HashMap::new();
+
+        map.insert(format!("{position}"), bucket.to_json(id));
+
         Self {
             hash_key,
             name: None,
@@ -46,7 +58,7 @@ impl Experiment {
             title: None,
             type_field: None,
             has_assignments,
-            assignments: None,
+            assignments: Some(map),
         }
     }
 }
