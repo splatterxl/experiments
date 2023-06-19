@@ -7,7 +7,7 @@ import { getBySearch } from './search';
 
 const ratelimit = new Ratelimit({
 	redis: redis,
-	limiter: Ratelimit.fixedWindow(2, '30 m'),
+	limiter: Ratelimit.fixedWindow(2, '30 s'),
 });
 
 export default async function listExperiments(

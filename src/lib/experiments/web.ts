@@ -95,7 +95,7 @@ export const check = (
 	exp: ExperimentRollout,
 	guild?: APIGuild
 ) => {
-	const hash = murmurhash.v3(`${exp.name}:${guildId}`) % 1e4;
+	const hash = murmurhash.v3(`${exp.name ?? exp.hash_key}:${guildId}`) % 1e4;
 
 	const res: {
 		populations: {
@@ -119,25 +119,36 @@ export const check = (
 		}
 	}
 
-	for (const [i, { rollout: p, filters: f }] of exp.populations.entries()) {
-		if (Object.keys(f).length === 0 || !guild || checkFilter(f, guild)) {
-			for (const { bucket: b, rollout: r } of p) {
-				if (b === -1 || b === 0) continue;
+	for (const [
+		index,
+		{ rollout: rollouts, filters: filters },
+	] of exp.populations.entries()) {
+		if (
+			Object.keys(filters).length === 0 ||
+			!guild ||
+			checkFilter(filters, guild)
+		) {
+			for (const { bucket, rollout: rollout } of rollouts) {
+				if (bucket === -1 || bucket === 0) continue;
 				if (
-					r.some(({ s, e }) => hash >= s && hash <= e) &&
-					!res.populations.some((v) => v.bucket === b)
+					rollout.some(
+						({ s: start, e: end }) => hash >= start && hash <= end
+					) &&
+					!res.populations.some((v) => v.bucket === bucket)
 				) {
 					res.populations.push({
-						bucket: b,
-						index: i,
-						name: parseNewFilters(f),
-						cond: r,
+						bucket: bucket,
+						index: index,
+						name: parseNewFilters(filters),
+						cond: rollout,
 					});
 					res.active = true;
 				}
 			}
 		}
 	}
+
+	console.log('checking', `${exp.name ?? exp.hash_key}:${guildId}`, hash, res);
 
 	return res;
 };
@@ -160,6 +171,16 @@ export const checkFilter = (filter: Filters, guild: APIGuild): boolean => {
 		(guild.owner_id ? !filter.ids.includes(guild.owner_id) : true)
 	)
 		return false;
+	if (filter.range_by_hash) {
+		const { hash_key, target } = filter.range_by_hash;
+
+		var hashedKey = murmurhash(`${hash_key}:${guild.id}`);
+		if (
+			(hashedKey > 0 ? hashedKey + hashedKey : hashedKey >>> 0) % 10000 >=
+			target
+		)
+			return false;
+	}
 
 	return true;
 };
@@ -251,7 +272,7 @@ export const getExperimentRollout = (
 				pc: control,
 			},
 			...rollout
-				.filter((v) => v.bucket !== -1)
+				.filter((v) => v.bucket !== -1 && getBucket(exp, v.bucket))
 				.map((v) => ({
 					bucket: v.bucket,
 					ranges: v.ranges,
@@ -263,13 +284,24 @@ export const getExperimentRollout = (
 
 		// add to final the buckets that are not there
 
-		for (const bucket of exp.buckets.map((_, i) => i)) {
-			if (!final.find((v) => v.bucket === (bucket === 0 ? -1 : bucket))) {
-				final.push({ bucket, ranges: [], pc: 0 });
+		for (const bucket of exp.buckets.map((_, i) => _)) {
+			if (
+				!final.find(
+					(v) => v.bucket === parseInt(bucket.name.match(/\d+$/g)?.[0] ?? '-1')
+				)
+			) {
+				console.log('inserting bucket', bucket);
+
+				final.push({
+					bucket: parseInt(bucket.name.match(/\d+$/g)?.[0] ?? '-1'),
+					ranges: [],
+					pc: 0,
+				});
 			}
 		}
 
 		return {
+			buckets: final.sort((a, b) => a.bucket - b.bucket).map((v) => v.bucket),
 			filters: pop.filters,
 			ranges: final.sort((a, b) => a.bucket - b.bucket).map((v) => v.ranges),
 			percentages: final.sort((a, b) => a.bucket - b.bucket).map((v) => v.pc),
@@ -285,5 +317,19 @@ export const getExperimentRollout = (
 		noFilters = undefined;
 	}
 
-	return { unfiltered: noFilters, filtered: rollout ?? [] };
+	console.log('rollout', rollout);
+
+	return { unfiltered: noFilters, filtered: rollout?.filter((v) => v) ?? [] };
+};
+
+export const getBucket = (exp: DbExperiment, key: number) => {
+	console.log(key, exp.buckets);
+
+	return (
+		key === -1
+			? exp.buckets[0]
+			: exp.buckets.find(
+					(bucket) => key === parseInt(bucket.name.match(/\d+$/)?.[0] ?? '-1')
+			  ) ?? null
+	)!;
 };
