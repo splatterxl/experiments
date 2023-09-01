@@ -43,6 +43,8 @@ export interface Experiment {
 	name: string;
 	description: string | null;
 	no_name?: true;
+	holdout?: [name: string, bucket: number];
+	hash_name?: string;
 }
 
 export interface ExperimentRollout extends Experiment {
@@ -69,15 +71,15 @@ export interface Rollout {
 	rollout: { s: number; e: number }[];
 }
 
-export interface Filters {
-	features: string[] | null;
-	id_range: { start: bigint | null; end: bigint } | null;
-	member_count: { start: bigint | null; end: bigint | null } | null;
-	ids: string[] | null;
-	hub_types: number[] | null;
-	range_by_hash: { hash_key: bigint; target: number } | null;
-	vanity_url: boolean | null;
-}
+export type Filters = Partial<{
+	features: string[];
+	id_range: { start: bigint | null; end: bigint };
+	member_count: { start: bigint | null; end: bigint };
+	ids: string[];
+	hub_types: number[];
+	range_by_hash: { hash_key: bigint; target: number };
+	vanity_url: boolean;
+}>;
 
 export interface Override {
 	b: number;

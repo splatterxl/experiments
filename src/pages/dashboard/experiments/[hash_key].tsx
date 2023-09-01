@@ -1,9 +1,10 @@
 import { GuildExpRollout } from '@/components/experiments/GuildExpRollout';
 import useToast from '@/hooks/useToast';
 import { Experiment, ExperimentRollout } from '@/lib/db/models';
-import { getExperiment } from '@/lib/experiments';
+import { getExperimentByName } from '@/lib/experiments';
 import { Routes } from '@/utils/constants';
 import {
+	Center,
 	Divider,
 	Heading,
 	Table,
@@ -16,27 +17,32 @@ import {
 	Tr,
 	VStack,
 } from '@chakra-ui/react';
-import { GetServerSidePropsResult } from 'next';
+import { GetServerSidePropsResult, InferGetServerSidePropsType } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
 
 export default function ExperimentInfo({
 	experiment,
-}: {
-	experiment: Experiment;
-}) {
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	const toast = useToast();
 
 	console.log(experiment);
 
+	if (Array.isArray(experiment))
+		return (
+			<Center flexDirection='column'>
+				<Heading>This experiment</Heading>
+			</Center>
+		);
+
 	return (
 		<>
 			<Head>
-				<title>{`${experiment.title} | Experiments`}</title>
+				<title>{`${experiment.title ?? experiment.name} | Experiments`}</title>
 			</Head>
 			<VStack w='full' justify='start' align='start'>
 				<Heading size='lg' maxW='70vw' lineHeight={1}>
-					{experiment.title}{' '}
+					{experiment.title ?? experiment.name}{' '}
 					<Text
 						as='span'
 						fontSize='md'
@@ -50,15 +56,21 @@ export default function ExperimentInfo({
 							<>
 								<span
 									onClick={() => {
-										navigator.clipboard.writeText(experiment.name);
+										navigator.clipboard.writeText(
+											experiment.title
+												? experiment.name
+												: experiment.hash_key.toString()
+										);
 
 										toast({
 											status: 'info',
-											description: 'Copied experiment name to clipboard.',
+											description: `Copied experiment ${
+												experiment.title ? 'name' : 'hash'
+											} to clipboard.`,
 										});
 									}}
 								>
-									{experiment.name}
+									{experiment.title ? experiment.name : experiment.hash_key}
 								</span>{' '}
 								•{' '}
 							</>
@@ -71,6 +83,24 @@ export default function ExperimentInfo({
 						</Link>
 					</Text>
 				</Heading>
+				{experiment.holdout ? (
+					<Text>
+						This experiment depends on{' '}
+						<Link
+							href={{
+								pathname: '/dashboard/experiments/[hash_key]',
+								query: { hash_key: experiment.holdout[0] },
+							}}
+						>
+							{experiment.holdout[0]}
+						</Link>{' '}
+						being{' '}
+						{experiment.holdout[1] === 0
+							? 'disabled'
+							: `assigned to bucket ${experiment.holdout[1]}`}
+						.
+					</Text>
+				) : null}
 				<Text>{experiment.description}</Text>
 				<Divider />
 				<VStack
@@ -88,32 +118,34 @@ export default function ExperimentInfo({
 							roll-out for experiments are unreliable.
 						</Text>
 					) : null}
-					<VStack minW='50vw' justify='start' align='start'>
-						<Heading size='sm'>Buckets</Heading>
-						<TableContainer w='full'>
-							<Table w='full'>
-								<Thead>
-									<Tr>
-										<Th>Name</Th>
-										<Th>Description</Th>
-									</Tr>
-								</Thead>
-								<Tbody>
-									{experiment.buckets.map((bucket) => (
-										<Tr key={bucket.name}>
-											<Td>{bucket.name}</Td>
-											<Td>
-												{bucket.description?.replace(
-													new RegExp(`^${bucket.name}:?`),
-													''
-												) || <i>No description provided by Discord</i>}
-											</Td>
+					{experiment.buckets ? (
+						<VStack minW='50vw' justify='start' align='start'>
+							<Heading size='sm'>Buckets</Heading>
+							<TableContainer w='full'>
+								<Table w='full'>
+									<Thead>
+										<Tr>
+											<Th>Name</Th>
+											<Th>Description</Th>
 										</Tr>
-									))}
-								</Tbody>
-							</Table>
-						</TableContainer>
-					</VStack>
+									</Thead>
+									<Tbody>
+										{experiment.buckets.map((bucket) => (
+											<Tr key={bucket.name}>
+												<Td>{bucket.name}</Td>
+												<Td>
+													{bucket.description?.replace(
+														new RegExp(`^${bucket.name}:?`),
+														''
+													) || <i>No description provided by Discord</i>}
+												</Td>
+											</Tr>
+										))}
+									</Tbody>
+								</Table>
+							</TableContainer>
+						</VStack>
+					) : null}
 					{experiment.type === 'guild' ? (
 						<GuildExpRollout {...(experiment as ExperimentRollout)} />
 					) : null}
@@ -125,10 +157,12 @@ export default function ExperimentInfo({
 
 export const getServerSideProps = async (
 	context: any
-): Promise<GetServerSidePropsResult<{ experiment: Experiment }>> => {
+): Promise<
+	GetServerSidePropsResult<{ experiment: Experiment | Experiment[] }>
+> => {
 	const { hash_key } = context.query;
 
-	const experiment = await getExperiment(parseInt(hash_key));
+	const experiment = await getExperimentByName(hash_key);
 
 	console.log(experiment);
 
@@ -142,7 +176,15 @@ export const getServerSideProps = async (
 
 	return {
 		props: {
-			experiment,
+			experiment: (Array.isArray(experiment)
+				? experiment.map((experiment) =>
+						Object.fromEntries(
+							Object.entries(experiment).map(([k, v]) => [k, v ?? null])
+						)
+				  )
+				: Object.fromEntries(
+						Object.entries(experiment).map(([k, v]) => [k, v ?? null])
+				  )) as any,
 		},
 	};
 };

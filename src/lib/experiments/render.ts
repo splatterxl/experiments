@@ -52,9 +52,10 @@ export const parseNewFilters = (
 	if (f.vanity_url)
 		filters.push(`${f.vanity_url ? 'has' : 'does not have'} vanity URL`);
 	if (f.range_by_hash)
-		filters.push(
-			`is ranged by hash ${f.range_by_hash.hash_key} (target: ${f.range_by_hash.target})`
-		);
+		if (f.range_by_hash.target < 10000)
+			filters.push(
+				`is ranged by hash ${f.range_by_hash.hash_key} (target: ${f.range_by_hash.target})`
+			);
 
 	return !filters.length ? 'No filters' : `Server ${andList.format(filters)}`;
 };

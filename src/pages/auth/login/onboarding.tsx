@@ -65,6 +65,8 @@ export default function LoginOnboarding({ next }: { next: string }) {
 	);
 }
 
+export const runtime = 'edge';
+
 export async function getServerSideProps(
 	context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<{ next: string }>> {

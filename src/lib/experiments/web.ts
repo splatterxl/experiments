@@ -221,10 +221,17 @@ interface Rollout {
 
 export const getExperimentRollout = (
 	exp: DbExperiment
-): { unfiltered: Rollout | undefined; filtered: Rollout[] } => {
-	const pops = (exp.populations ?? []).concat(
-		exp.overrides_formatted?.flat() ?? []
-	);
+): { unfiltered: Rollout[]; filtered: Rollout[] } => {
+	const pops = (exp.populations ?? [])
+		.concat(exp.overrides_formatted?.flat() ?? [])
+		.map((pop) => {
+			if (pop.filters.range_by_hash?.target === 1000) {
+				// @ts-ignore it is optional
+				delete pop.filters.range_by_hash;
+			}
+
+			return pop;
+		});
 
 	if (!pops.length)
 		pops.push({
@@ -309,12 +316,12 @@ export const getExperimentRollout = (
 	});
 
 	// put the rollout bucket with no items in item.filters at the start
-	let noFilters = rollout.find((v) => !Object.keys(v.filters).length);
+	let noFilters = rollout.filter((v) => !Object.keys(v.filters).length) ?? [];
 
 	rollout = rollout.filter((v) => !noFilters || Object.keys(v.filters).length);
 
-	if (rollout.length && noFilters?.percentages[0] === 100) {
-		noFilters = undefined;
+	if (rollout.length && noFilters?.every((f) => f.percentages[0] === 100)) {
+		noFilters = [];
 	}
 
 	console.log('rollout', rollout);
@@ -323,13 +330,24 @@ export const getExperimentRollout = (
 };
 
 export const getBucket = (exp: DbExperiment, key: number) => {
-	console.log(key, exp.buckets);
-
-	return (
-		key === -1
+	const b = (
+		[0, -1].includes(key)
 			? exp.buckets[0]
 			: exp.buckets.find(
 					(bucket) => key === parseInt(bucket.name.match(/\d+$/)?.[0] ?? '-1')
 			  ) ?? null
 	)!;
+
+	if (!b) {
+		console.log(
+			new Error(`Cannot index experiment ${exp.name ?? exp.id} for key ${key}`)
+		);
+
+		return {
+			name: b === 0 ? 'Control' : `Treatment ${key}`,
+			description: '',
+		};
+	}
+
+	return b;
 };

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any
+from typing import Any, Dict
 import discord
 from dotenv import load_dotenv
 import os
@@ -94,23 +94,16 @@ class HiminsbjorgClient(discord.Client):
 
         while True:
             for experiment in self.guild_experiments:
-                print(f"Handling experiment {experiment.name} ({experiment.hash_key})")
+                print(experiment)
+                # print(f"Handling experiment {experiment.name} ({experiment.hash_key})")
 
-                handle_exp(experiment)
+                # handle_exp(experiment)
             
             await asyncio.sleep(900)
 
             await self.close()
             self.clear()
             await self.connect(reconnect=True)
-
-    async def on_message(self, message):
-        # only respond to ourselves
-        if message.author != self.user:
-            return
-
-        if message.content == "ping":
-            await message.channel.send("pong")
 
 
 client = HiminsbjorgClient()
