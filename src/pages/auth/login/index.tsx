@@ -108,8 +108,6 @@ export default function Login({ next, origin }: LoginProps) {
 	);
 }
 
-export const runtime = 'edge';
-
 export async function getServerSideProps(
 	context: GetServerSidePropsContext
 ): Promise<GetServerSidePropsResult<LoginProps>> {
