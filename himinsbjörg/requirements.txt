@@ -31,7 +31,7 @@ mypy-extensions==1.0.0
 nodeenv==1.8.0
 packaging==23.1
 pathspec==0.11.1
-platformdirs==3.5.3
+platformdirs==3.11.0
 protobuf==4.21.12
 pycparser==2.21
 pylint==2.17.4
