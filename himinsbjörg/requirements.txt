@@ -49,4 +49,4 @@ tzlocal==5.0.1
 urllib3==1.26.16
 Werkzeug==2.2.3
 wrapt==1.15.0
-yarl==1.8.1
+yarl==1.9.4
