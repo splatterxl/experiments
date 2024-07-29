@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node deploy.cjs && node dist/index.js",
+    "start": "node deploy.cjs && node dist/index.js"
   },
   "repository": {
     "type": "git",
