@@ -21,7 +21,9 @@ export default function (i: CommandInteraction) {
         description:
           "I'm a small bot made by <@728342296696979526> to explore Discord guild experiments. Type `/` to view my commands.",
         footer: {
-          text: `v${VERSION} • ${COMMIT_SHA.slice(0, 8)}`,
+          text: `v${VERSION} • ${COMMIT_SHA.slice(0, 8)} • ${
+            process.env.NODE_ENV
+          }`,
         },
       },
     ],
