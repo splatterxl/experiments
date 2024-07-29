@@ -15,7 +15,9 @@ import { loadRollouts } from "./load.js";
 
 const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
 
-export const COMMIT_SHA = execSync("git rev-parse HEAD").toString().trim(),
+export const COMMIT_SHA =
+    process.env.RAILWAY_GIT_COMMIT_SHA ??
+    execSync("git rev-parse HEAD").toString().trim(),
   PKG = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")),
   VERSION = PKG.version;
 
