@@ -1,127 +1,174 @@
-import { APIEmbed, ButtonStyle, Snowflake } from "discord-api-types/v10";
+import { APIEmbed } from "discord-api-types/v10";
 import {
   ActionRow,
   ActionRowBuilder,
+  APISelectMenuOption,
   AttachmentBuilder,
   ButtonBuilder,
+  ButtonStyle,
   CommandInteraction,
+  GuildHubType,
   InteractionReplyOptions,
   MessageActionRowComponent,
   SelectMenuBuilder,
   SelectMenuOptionBuilder,
+  Snowflake,
+  SnowflakeUtil,
   User,
 } from "discord.js";
-import { checkMulti, Experiment, Filter, FilterType } from "./experiment.js";
+import { dirname, join } from "path";
+import {
+  checkMulti,
+  Experiment,
+  FilterType,
+  IBucketOverride,
+  IExperimentPopulation,
+  IPopulationBucket,
+  IPopulationFilter,
+} from "./experiment.js";
 import { lastFetchedAt, rollouts } from "./index.js";
-import { murmur3 } from "./util.js";
+import { __DEV__, murmur3 } from "./util.js";
+
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration.js";
+import relativeTime from "dayjs/plugin/relativeTime.js";
+import { readFile } from "fs/promises";
+dayjs.extend(duration);
+dayjs.extend(relativeTime);
+
 export const andList = new Intl.ListFormat();
 export const orList = new Intl.ListFormat(undefined, { type: "disjunction" });
 
-export const parseFilter = (f: Filter) => {
-  if (f[0] === FilterType.Feature)
-    return `Server has feature ${orList.format(f[1][0][1])}`;
-  if (f[0] === FilterType.IDRange)
-    return `Server ID is in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}`;
-  if (f[0] === FilterType.MemberCount)
-    return `Server member count is ${
-      f[1][1][1]
-        ? `in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}`
-        : `${f[1][0][1]}+`
-    }`;
-  if (f[0] === FilterType.ID)
-    return `Server ID is ${orList.format(f[1][0][1])}`;
-  if (f[0] === FilterType.HubType)
-    return `Server hub type is ${orList.format(
-      f[1][0][1].map((t) => t.toString())
-    )}`;
-  return `Unknown filter type ${f[0]}`;
-};
+const __dirname = dirname(import.meta.url).replace(/^file:\/\//, "");
 
-export const parseFilterShort = (f: Filter) => {
-  if (f[0] === FilterType.Feature)
-    return `has feature ${orList.format(f[1][0][1])}`;
-  if (f[0] === FilterType.IDRange)
-    return `ID is in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}`;
-  if (f[0] === FilterType.MemberCount)
-    return `member count is ${
-      f[1][1][1]
-        ? `in range ${f[1][0][1] ?? 0} - ${f[1][1][1]}`
-        : `${f[1][0][1]}+`
-    }`;
-  if (f[0] === FilterType.ID) return `ID is one of \`...\``;
-  if (f[0] === FilterType.HubType)
-    return `hub type is ${orList.format(f[1][0][1].map((t) => t.toString()))}`;
-  return `unknown`;
+const guilds = await readFile(
+  join(__dirname, "..", "guilds.json"),
+  "utf8"
+).then((res) => JSON.parse(res));
+
+export const parseFilter = (filter: IPopulationFilter) => {
+  switch (filter.type) {
+    case FilterType.GUILD_IDS:
+      return `Guild ID is one of: ${orList.format(filter.guild_ids!)}`;
+    case FilterType.GUILD_ID_RANGE:
+      if (filter.min && filter.max)
+        return `Guild was created between ${new Date(
+          Number(SnowflakeUtil.deconstruct(BigInt(filter.min!)).timestamp)
+        ).toISOString()} and ${new Date(
+          Number(SnowflakeUtil.deconstruct(BigInt(filter.max!)).timestamp)
+        ).toISOString()} `;
+      else if (!filter.max && filter.min)
+        return `Guild was created after ${new Date(
+          Number(SnowflakeUtil.deconstruct(BigInt(filter.min!)).timestamp)
+        ).toISOString()}`;
+      else if (!filter.min && filter.max)
+        return `Guild was created before ${new Date(
+          Number(SnowflakeUtil.deconstruct(BigInt(filter.max!)).timestamp)
+        ).toISOString()}`;
+      else throw new Error("invalid guild_id_range filter");
+    case FilterType.GUILD_AGE_RANGE_DAYS:
+      if (filter.min && filter.max)
+        return `Guild is between ${dayjs
+          .duration(+filter.min!, "days")
+          .humanize()} and ${dayjs
+          .duration(+filter.max!, "days")
+          .humanize()} old`;
+      else if (!filter.max && filter.min)
+        return `Guild is at least ${dayjs
+          .duration(+filter.min!, "days")
+          .humanize()} old`;
+      else if (!filter.min && filter.max)
+        return `Guild is less than ${dayjs
+          .duration(+filter.max!, "days")
+          .humanize()} old`;
+      else throw new Error("invalid guild_age_range_days filter");
+    case FilterType.GUILD_MEMBER_COUNT_RANGE:
+      if (filter.min && filter.max)
+        return `Guild has between ${filter.min} and ${filter.max} members`;
+      else if (!filter.max && filter.min)
+        return `Guild has at least ${filter.min} members`;
+      else if (!filter.min && filter.max)
+        return `Guild has less than ${filter.max} members`;
+      else throw new Error("invalid guild_age_range_days filter");
+    case FilterType.GUILD_HAS_FEATURE:
+      return `Guild has feature ${orList.format(filter.guild_features!)}`;
+    case FilterType.GUILD_HUB_TYPES:
+      return `Guild hub type is one of: ${orList.format(
+        filter.hub_types!.map((hubType) => GuildHubType[hubType])
+      )}`;
+    case FilterType.GUILD_HAS_VANITY_URL:
+      return `Guild ${
+        filter.vanity_required ? "has" : "does not have"
+      } a vanity URL code`;
+    case FilterType.GUILD_IN_RANGE_BY_HASH:
+      return `Guild in range 0..${filter.target} by hash ${filter.hash_key}`;
+  }
 };
 
 export const parsePopulations = (
-  r: Experiment["rollout"][3],
+  p: IExperimentPopulation[],
   exp: Experiment
 ) => {
-  return r.map((p) => {
-    const d = parsePopulation(p[0], exp);
-    const f = p[1].map(parseFilter).join("\n");
-
-    if (!f.length) return `Default\n${d}\n`;
-
-    return `${f}\n${d}\n`;
-  });
+  return p.map((p) => parsePopulation(p, exp));
 };
 
-export const parsePopulation = (
-  p: Experiment["rollout"][3][0][0],
-  exp: Experiment
-) => {
+export const parsePopulation = (p: IExperimentPopulation, exp: Experiment) => {
+  const b = parseBuckets(p.buckets, exp);
+  const f = p.filters.map(parseFilter).join("\n");
+
+  if (!f.length) return `Default\n${b}`;
+
+  return `${f}\n${b}`;
+};
+
+export const parseBuckets = (p: IPopulationBucket[], exp: Experiment) => {
   return p
     .map(
       (p) =>
-        `${treatment(p[0])}: ${p[1].map((v) => `${v.s}..${v.e}`).join(", ")}`
+        `${treatment(p.bucket_idx)}: ${p.positions
+          .map((v) => `${v.start}..${v.end}`)
+          .join(", ")}`
     )
     .map((v) => ` => ${v}`)
-    .join("\n");
+    .join("\n")
+    .trim();
 };
 
-export const parseOverrides = (
-  o: Experiment["rollout"][4],
-  exp: Experiment
-) => {
-  return o.map((o) => `${treatment(o.b)}\n------------\n${o.k.join("\n")}`);
+export const parseOverrides = (o: IBucketOverride[], exp: Experiment) => {
+  return o.map(
+    (o) =>
+      `${treatment(o.bucket_idx)}\n------------\n${o.ids
+        .map((id) => `${id}${id in guilds ? `: ${guilds[id]}` : ""}`)
+        .join("\n")}`
+  );
 };
 
-export const treatment = (t: number) => {
+export const treatment = (t: number, exp?: Experiment | number) => {
   if (t === -1) return "None";
   if (t === 0) return "Control";
-  return `Treatment ${t}`;
+  if (!exp || typeof exp === "number") {
+    return `Treatment ${t}`;
+  } else {
+    return (
+      exp.treatments?.find((s) => s.bucket_idx === t)?.description ??
+      `Treatment ${t}`
+    );
+  }
 };
 
-export const rolloutPercentage = (r: Experiment["rollout"][3]) => {
-  const rollout = r.filter((p) => p[1].length === 0);
-
-  let t = 0;
-
-  for (const r of rollout) {
-    const p = r[0];
-
-    for (const [b, v] of p) {
-      if (b === -1 || b === 0) continue;
-
-      for (const p of v) {
-        t += p.e - p.s;
-      }
-    }
-  }
-
-  const percentage = Math.trunc((t / 10_000) * 100);
-
-  return percentage;
+/**
+ * @deprecated
+ */
+export const rolloutPercentage = (r: any) => {
+  return 0;
 };
 
 export const createDefaultEmbed = (exp: Experiment): APIEmbed => {
   return {
-    title: `${exp.data.title} (${exp.data.id})`,
+    title: `${exp.title} (${exp.exp_id})`,
     color: 0xffcc00,
     footer: {
-      text: `${exp.data.id} - ${exp.data.buckets.length} buckets`,
+      text: `${exp.exp_id} - ${exp.treatments?.length ?? "unknown"} buckets`,
     },
   };
 };
@@ -132,30 +179,39 @@ export function renderExperimentHomeView(
 ): InteractionReplyOptions {
   const exp = rollouts.get(id)!;
 
+  console.log(exp);
+
   return {
-    content: `Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>`,
+    content: `Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>${
+      !exp.in_client ? ". This experiment is no longer in the client!" : ""
+    }`,
     embeds: [
       {
         ...createDefaultEmbed(exp),
-        description: `Rollout: ${rolloutPercentage(
-          exp.rollout[3]
-        )}%\nGuild position: ${murmur3(`${exp.data.id}:${i.guildId}`) % 1e4}`,
+        url: createRolloutsURL(exp.hash, false),
+        description: `${
+          i.guildId
+            ? `\nGuild position: ${murmur3(exp.exp_id, i.guildId) % 1e4}`
+            : ""
+        }`,
         fields: [
           {
             name: "Treatments",
-            value: exp.data.description
-              .map((v, i) =>
-                v.includes(":")
-                  ? v.replace(/^.*:/g, `Treatment ${i}:`)
-                  : v + ": <no description>"
-              )
-              .join("\n"),
+            value:
+              exp.treatments
+                ?.map(
+                  (t) =>
+                    `${t.description}${
+                      t.not_in_client ? " (not in client)" : ""
+                    }`
+                )
+                .join("\n") ?? "Unknown",
           },
         ],
       },
     ],
     components: renderPageComponents(i, exp, "home"),
-    attachments: [],
+    files: [],
   };
 }
 
@@ -166,25 +222,50 @@ export function renderRolloutView(
   const exp = rollouts.get(id)!;
 
   return {
-    content: `Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>`,
-    files: [
-      new AttachmentBuilder(
-        Buffer.from(
-          `--- Rollout for ${exp.data.title} (${exp.data.id}) ---
-
-        Percentage complete: ${rolloutPercentage(exp.rollout[3])}%
-
-        Populations: 
-        --------------------------------------------------
-
-        ${parsePopulations(exp.rollout[3], exp).join("\n\n")}
-      `.replace(/(\n+)\s+/g, "$1")
-        ),
-        {
-          name: `${exp.data.id}-rollout.txt`,
-        }
-      ),
-    ],
+    content: `${
+      !exp.populations?.length && !exp.overrides_formatted?.length
+        ? "The rollout for this experiment has not started yet. "
+        : ""
+    }Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>`,
+    files:
+      exp.populations?.length || exp.overrides_formatted?.length
+        ? [
+            new AttachmentBuilder(
+              Buffer.from(
+                `# Rollout for ${exp.title} (${exp.exp_id})\n${"=".repeat(
+                  10
+                )}\n${
+                  !exp.in_client
+                    ? "\n*** This experiment is no longer in the client! ***\n"
+                    : ""
+                }\n${
+                  exp.overrides_formatted?.length
+                    ? `Formatted Overrides:\n${"-".repeat(
+                        50
+                      )}\n${parsePopulations(
+                        exp.overrides_formatted?.flat(),
+                        exp
+                      )}`
+                    : ""
+                }${
+                  exp.overrides_formatted?.length && exp.populations?.length
+                    ? `\n\n\n`
+                    : ""
+                }${
+                  exp.populations?.length
+                    ? `Populations:\n${"-".repeat(50)}\n${parsePopulations(
+                        exp.populations,
+                        exp
+                      ).join("\n\n")}`
+                    : ""
+                }`
+              ),
+              {
+                name: `${exp.exp_id}-rollout.txt`,
+              }
+            ),
+          ]
+        : [],
     embeds: [],
     components: renderPageComponents(i, exp, "rollout"),
   };
@@ -197,21 +278,26 @@ export function renderOverrideView(
   const exp = rollouts.get(id)!;
 
   return {
-    content: `Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>`,
+    content: `${
+      !exp.overrides?.length
+        ? "There are no overrides for this experiment. "
+        : ""
+    }Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>`,
     embeds: [],
-    files: [
-      new AttachmentBuilder(
-        Buffer.from(
-          `--- Overrides for ${exp.data.title} (${exp.data.id}) ---
-
-      ${parseOverrides(exp.rollout[4], exp).join("\n\n")}
-      `.replace(/(\n+)\s+/g, "$1")
-        ),
-        {
-          name: `${exp.data.id}-overrides.txt`,
-        }
-      ),
-    ],
+    files: exp.overrides?.length
+      ? [
+          new AttachmentBuilder(
+            Buffer.from(
+              `--- Overrides for ${exp.title} (${
+                exp.exp_id
+              }) ---\n\n${parseOverrides(exp.overrides, exp).join("\n\n")}`
+            ),
+            {
+              name: `${exp.exp_id}-overrides.txt`,
+            }
+          ),
+        ]
+      : [],
     components: renderPageComponents(i, exp, "overrides"),
   };
 }
@@ -230,24 +316,38 @@ export function renderPageComponents(
             new SelectMenuBuilder()
               .setCustomId(`view,page`)
               .addOptions(
-                new SelectMenuOptionBuilder()
-                  .setLabel("Home")
-                  .setValue(`home,${exp.data.id}`)
-                  .setDescription("View this experiment's details.")
-                  .setDefault(currentPage === "home")
-                  .toJSON(),
-                new SelectMenuOptionBuilder()
-                  .setLabel("Rollout")
-                  .setValue(`rollout,${exp.data.id}`)
-                  .setDescription("View the rollout of this experiment.")
-                  .setDefault(currentPage === "rollout")
-                  .toJSON(),
-                new SelectMenuOptionBuilder()
-                  .setLabel("Overrides")
-                  .setValue(`overrides,${exp.data.id}`)
-                  .setDescription("View rollout overrides of this experiment.")
-                  .setDefault(currentPage === "overrides")
-                  .toJSON()
+                ...([
+                  new SelectMenuOptionBuilder()
+                    .setLabel("Home")
+                    .setValue(`home,${exp.exp_id}`)
+                    .setDescription("View this experiment's details.")
+                    .setDefault(currentPage === "home")
+                    .toJSON(),
+                  (exp.populations?.length ||
+                    exp.overrides_formatted?.length) &&
+                    new SelectMenuOptionBuilder()
+                      .setLabel("Rollout")
+                      .setValue(`rollout,${exp.exp_id}`)
+                      .setDescription("View the rollout of this experiment.")
+                      .setDefault(currentPage === "rollout")
+                      .toJSON(),
+                  exp.overrides?.length &&
+                    new SelectMenuOptionBuilder()
+                      .setLabel("Overrides")
+                      .setValue(`overrides,${exp.exp_id}`)
+                      .setDescription(
+                        "View rollout overrides of this experiment."
+                      )
+                      .setDefault(currentPage === "overrides")
+                      .toJSON(),
+                  __DEV__ &&
+                    new SelectMenuOptionBuilder()
+                      .setLabel("JSON")
+                      .setValue(`json,${exp.exp_id}`)
+                      .setDescription("View raw data (dev only)")
+                      .setDefault(currentPage === "json")
+                      .toJSON(),
+                ].filter((v) => v) as APISelectMenuOption[])
               )
               .setPlaceholder("Select a page...")
           )
@@ -278,39 +378,11 @@ export function generateMultiExperimentRolloutCheck(
   guildId: Snowflake,
   res: ReturnType<typeof checkMulti>
 ): [type: ViewType, data: string] {
-  let str: string;
-
-  if (res.length > 50) {
-    str = `--- Active experiments for ${guildId}) ---
-				${res
-          .map(
-            ({ id, treatment: matchedTreatments }) =>
-              `${id}: ${matchedTreatments.map(treatment).join(", ")}`
-          )
-          .join("\n")}
-        `.replace(/(\n+)\s+/g, "$1");
-  } else {
-    str = `**__Active experiments for ${guildId}__**
-
-			${res
-        .map(
-          ({ exp, treatment: matchedTreatments }) =>
-            `- [${exp.data.title}](${createRolloutsURL(
-              exp.data.id
-            )}): ${matchedTreatments
-              .map(treatment)
-              .map((v) => `**${v}**`)
-              .join(", ")}`
-        )
-        .join("\n")}
-			`.replace(/(\n+)\s+/g, "$1");
-  }
-
-  if (str.length > 19e2) str = str.replace(/\[(.+?)\]\(<.+?>\)/g, "$1");
-
-  return [ViewType.Content, str];
+  return [ViewType.Attachment, JSON.stringify(res, null, 2)];
 }
 
-export function createRolloutsURL(id: string) {
-  return `<https://rollouts.advaith.io/#${id}>`;
+export function createRolloutsURL(id: number, blocked = true) {
+  return `${blocked ? "<" : ""}https://nelly.tools/experiments/${id}${
+    blocked ? ">" : ""
+  }`;
 }

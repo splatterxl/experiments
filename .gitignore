@@ -107,3 +107,5 @@ dist
 rollouts.*
 
 .yarn/install-state.gz
+
+guilds.json

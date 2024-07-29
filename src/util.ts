@@ -1,12 +1,14 @@
 import {
-  ButtonStyle,
   ComponentType,
+  GuildHubType,
   MessageFlags,
   OAuth2Scopes,
   Routes,
 } from "discord-api-types/v10";
 import {
+  ButtonStyle,
   CacheType,
+  Client,
   CommandInteraction,
   InteractionReplyOptions,
   Message,
@@ -44,8 +46,8 @@ export async function editMessage(
   }
 }
 
-export function murmur3(str: string) {
-  return murmur.v3(str);
+export function murmur3(...strs: string[]) {
+  return murmur.v3(strs.join(":"));
 }
 
 export function pad(len: number, str: string) {
@@ -66,7 +68,7 @@ export function mapOl(v: any, i: number, m: any[]) {
 
 export function mapOlPlus(idx: number) {
   return (v: any, i: number, m: any[]) => {
-    return `\`${pad(`${idx + m.length}.`.length, `${i + idx + 1}.`)}\` ${v}`;
+    return `${i + idx + 1}. ${v}`;
   };
 }
 
@@ -103,10 +105,90 @@ export function replyIfNotGuild(i: CommandInteraction) {
   }
 }
 
+/**
+ * Deduplicates an array
+ */
 export function dedupe(arr: any[]) {
   return [...new Set(arr)];
 }
 
+/**
+ * Returns the string with rollouts.advaith.io hostname removed.
+ */
 export function removeRolloutsPrefix(str: string) {
   return str.replace(/^https:\/\/rollouts.advaith.io\/#/, "");
 }
+
+export interface CheckableGuild {
+  id: string;
+  name?: string;
+  features?: string[];
+  memberCount?: number;
+  vanityURLCode?: string | null;
+  hubType?: GuildHubType;
+
+  source?: "cache" | "preview" | "widget" | "mee6" | "servus";
+}
+
+/**
+ * Given a guild id, tries many different ways to get the guild object. (id, name, )
+ */
+export async function getGuild(
+  id: string,
+  client: Client
+): Promise<CheckableGuild | null> {
+  let guild: CheckableGuild | null = null;
+
+  try {
+    guild = await client.guilds.fetch(id);
+    if (guild) guild.source = "cache";
+  } catch {}
+
+  if (!guild)
+    try {
+      guild = await client.fetchGuildPreview(id);
+      if (guild) guild.source = "preview";
+
+      console.debug("preview", guild);
+    } catch {}
+
+  if (!guild)
+    try {
+      guild = await client.fetchGuildWidget(id);
+      if (guild) guild.source = "widget";
+
+      console.debug("widget", guild);
+    } catch {}
+
+  if (!guild)
+    try {
+      guild = await fetch(
+        "https://mee6.xyz/api/plugins/levels/leaderboard/" + id + "?limit=1"
+      )
+        .then((res) => res.json() as any)
+        .then((res) => res.guild);
+      if (guild) guild.source = "mee6";
+
+      console.debug("mee6", guild);
+    } catch {}
+
+  if (!guild && process.env.SERVUS_URL)
+    try {
+      guild = await fetch(process.env.SERVUS_URL + "/api/guilds/" + id)
+        .then((res) => res.json() as any)
+        .then((res) => res.guild);
+      if (guild) guild.source = "servus";
+
+      console.debug("servus", guild);
+    } catch {}
+
+  // done
+  return guild ?? null;
+}
+
+/** @deprecated */
+export function getGuildName(id: string) {
+  return null;
+}
+
+export const __DEV__ = process.env.NODE_ENV === "development";

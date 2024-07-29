@@ -1,170 +1,453 @@
 // thanks advaith
+// TODO: REWRITE THE WHOLE FILE
 
-import { Guild, GuildFeature, Snowflake } from "discord.js";
-import { andList, parseFilterShort } from "./render.js";
-import { dedupe, murmur3 } from "./util.js";
+import { Snowflake, SnowflakeUtil } from "discord.js";
+import { CheckableGuild, dedupe, murmur3 } from "./util.js";
 
+//#region INTERFACES
+// https://github.com/aamiaa/NellyTools/blob/main/src/interface/models/experiment.ts
+
+export enum ExperimentType {
+  USER = "user",
+  GUILD = "guild",
+}
+
+export enum ExperimentSource {
+  DESKTOP = "desktop",
+  ANDROID = "android",
+  IOS = "ios",
+}
+
+// All fields which are obtained from rollout data must be optional
+// since experiments can exist without rollouts
 export interface Experiment {
-  data: {
-    id: string;
-    type: "guild";
-    title: string;
-    description: string[];
-    buckets: number[];
-    hash: number;
-  };
-  rollout: [
-    hash: number, // hash
-    _: null,
-    revision: number,
-    populations: [
-      // populations
-      [
-        number, //bucket
-        {
-          // rollout
-          /** start */ s: number;
-          /** end */ e: number;
-        }[]
-      ][],
-      Filter[]
-    ][],
-    overrides: {
-      // overrides
-      /** bucket */ b: number;
-      /** server IDs */ k: string[];
-    }[]
-  ];
+  data_hash?: string;
+  build_hash?: string;
+
+  /**
+   * MurmurHash3 of the {@link Experiment.hash_key `hash_key`}
+   */
+  hash: number;
+  /**
+   * Hash key for the experiment.
+   *
+   * Use filter to hash the guild ID to determine the bucket, if set,
+   * otherwise use the {@link Experiment.hash `exp_id`} field.
+   *
+   * @example "2021-06_guild_role_subscriptions"
+   */
+  hash_key?: string;
+  /**
+   * Internal ID of the experiment
+   * @example "2021-06_guild_role_subscriptions"
+   */
+  exp_id: string;
+  /**
+   * Type of the experiment
+   * @example "guild"
+   */
+  type: ExperimentType.GUILD;
+  /**
+   * Human readable title of the experiment
+   * @example "Guild Role Subscriptions"
+   */
+  title?: string;
+  /**
+   * Treatments of the experiment
+   * @example [{ bucket_idx: 0, description: "Control" }]
+   */
+  treatments?: IExperimentTreatment[];
+  /**
+   * Rollout populations for guild experiments
+   */
+  populations?: IExperimentPopulation[];
+
+  overrides?: IBucketOverride[];
+  overrides_formatted?: IExperimentPopulation[][];
+
+  revision?: number;
+  holdout_name?: string;
+  holdout_bucket?: number;
+  aa_mode?: boolean;
+
+  // misc nellytools metadata
+  in_client?: boolean;
+  first_seen?: Date; // If first_seen is NOT set, it means the experiment was backported (i.e. not actually added at that date)
+  source: ExperimentSource;
+}
+
+export interface IExperimentTreatment {
+  bucket_idx: number;
+  description: string;
+
+  not_in_client?: boolean;
+}
+
+export interface IExperimentPopulation {
+  population_idx: number;
+
+  filters: IPopulationFilter[];
+  buckets: IPopulationBucket[];
+
+  has_build_restriction?: boolean;
+  has_unknown_filter?: boolean;
+  platforms?: ExperimentSource[];
+}
+
+export interface IRawPopulation {
+  population_idx: number;
+
+  buckets: IRawBucket[];
+
+  sources: ExperimentSource[];
+  inaccurate_count: number;
+}
+
+export interface IRawBucket {
+  bucket_idx: number;
+  raw_positions: number[];
+}
+
+export interface IBucketOverride {
+  bucket_idx: number;
+  ids: string[];
+}
+
+export interface IPopulationFilter {
+  type: FilterType;
+  guild_ids?: string[];
+  min?: string | number;
+  max?: string | number;
+  guild_features?: string[];
+  hub_types?: number[];
+  vanity_required?: boolean;
+  hash_key?: number;
+  target?: number;
+}
+
+export interface IPopulationBucket {
+  bucket_idx: number;
+  positions: {
+    start: number;
+    end: number;
+  }[];
 }
 
 export enum FilterType {
-  Feature = 1604612045,
-  IDRange = 2404720969,
-  MemberCount = 2918402255,
-  ID = 3013771838,
-  HubType = 4148745523,
+  GUILD_IDS = "guild_ids",
+  GUILD_ID_RANGE = "guild_id_range",
+  GUILD_AGE_RANGE_DAYS = "guild_age_range_days",
+  GUILD_MEMBER_COUNT_RANGE = "guild_member_count_range",
+  GUILD_HAS_FEATURE = "guild_has_feature",
+  GUILD_HUB_TYPES = "guild_hub_types",
+  GUILD_HAS_VANITY_URL = "guild_has_vanity_url",
+  GUILD_IN_RANGE_BY_HASH = "guild_in_range_by_hash",
 }
 
-type FeatureFilter = [FilterType.Feature, [[_: number, features: string[]]]];
-type IDRangeFilter = [
-  FilterType.IDRange,
-  [[_: number, start: number | null], [_: number, end: number]]
-];
-type MemberCountFilter = [
-  FilterType.MemberCount,
-  [[_: number, start: number | null], [_: number, end: number]]
-];
-type IDFilter = [FilterType.ID, [[_: number, ids: string[]]]];
-type HubTypeFilter = [FilterType.HubType, [[_: number, types: number[]]]];
+export enum FilterOption {
+  MIN_ID = "min_id",
+  MAX_ID = "max_id",
+  HASH_KEY = "hash_key",
+  TARGET = "target",
+}
 
-export type Filter =
-  | FeatureFilter
-  | IDRangeFilter
-  | MemberCountFilter
-  | IDFilter
-  | HubTypeFilter;
+//#endregion
 
 export * from "./render.js";
 
-export const populations = (exp: Experiment) => exp.rollout[3];
-export const overrides = (exp: Experiment) => exp.rollout[4];
+export const populations = (exp: Experiment) => exp.populations;
+export const overrides = (exp: Experiment) => exp.overrides;
 
-export const check = (guildId: Snowflake, exp: Experiment, guild?: Guild) => {
-  const hash = murmur3(`${exp.data.id}:${guildId}`) % 1e4;
+type InclusionReason =
+  | "override"
+  | "formatted_override"
+  | "population"
+  | "holdout";
 
-  const res: {
-    populations: {
-      bucket: number;
-      index: number;
-      name: string;
-      cond: { s: number; e: number }[];
-    }[];
-    active: boolean;
-    overrides: number[];
-  } = {
-    populations: [],
-    active: false,
-    overrides: [],
-  };
+interface CheckResult {
+  /**
+   * Whether the guild is included in the rollout
+   */
+  active: boolean;
+  hash?: number;
 
-  for (const { b, k } of overrides(exp)) {
-    if (k.includes(guildId)) {
-      res.overrides.push(b);
-      res.active = true;
-    }
+  buckets?: number[];
+
+  overrides?: IBucketOverride[];
+
+  holdout?: [name: string, bucket: number];
+
+  populations?: (IExperimentPopulation & {
+    maybe: boolean;
+  })[];
+  formatted_overrides?: (IExperimentPopulation & {
+    maybe: boolean;
+  })[];
+}
+
+export const check = (
+  guildId: Snowflake,
+  exp: Experiment,
+  guild?: CheckableGuild
+): CheckResult => {
+  if (!exp.hash_key && !exp.exp_id) {
+    throw new Error(
+      "Experiment has no hash key or exp ID -- incomplete data from Discord"
+    );
   }
 
-  for (const [i, [p, filter]] of populations(exp).entries()) {
-    if (
-      filter.length === 0 ||
-      !guild ||
-      filter.every((f) => checkFilter(f, guild))
-    ) {
-      for (const [b, r] of p) {
-        if (b === -1 || b === 0) continue;
-        if (r.some(({ s, e }) => hash >= s && hash <= e)) {
-          res.populations.push({
-            bucket: b,
-            index: i,
-            name: andList.format(filter.map((f) => parseFilterShort(f))),
-            cond: r,
-          });
-          res.active = true;
-        }
+  const hash = murmur3(exp.hash_key ?? exp.exp_id!, guildId) % 10e3;
+
+  const res: CheckResult & Required<Pick<CheckResult, "buckets" | "active">> = {
+    active: false,
+    hash,
+    buckets: [],
+  };
+
+  if (exp.overrides) {
+    res.overrides = [];
+
+    for (const override of exp.overrides ?? []) {
+      if (override.ids.includes(guildId)) {
+        res.active = true;
+
+        console.log(override);
+
+        res.overrides.push(override);
+        res.buckets.push(override.bucket_idx);
+
+        return res;
       }
     }
   }
 
+  if (exp.holdout_name && exp.holdout_bucket) {
+    res.holdout = [exp.holdout_name, exp.holdout_bucket];
+
+    const holdout = rollouts.get(exp.holdout_name);
+
+    if (!holdout) throw new ReferenceError("Holdout experiment not found");
+
+    const holdoutRes = check(guildId, holdout, guild);
+
+    if (!holdoutRes.active) {
+      return res;
+    }
+
+    if (!holdoutRes.buckets?.includes(exp.holdout_bucket)) {
+      return res;
+    }
+
+    console.log("holdout valid");
+  }
+
+  // FIXME: active but -1, also update buckets
+  if (exp.overrides_formatted) {
+    res.formatted_overrides = [];
+
+    for (const override of exp.overrides_formatted.flat()) {
+      const filters = override.filters;
+
+      const filtersRes = checkFilters(filters, guild, guildId);
+
+      if (filtersRes === false) {
+        continue;
+      }
+
+      const buckets: IPopulationBucket[] = [];
+
+      for (const bucket of override.buckets) {
+        const position = bucket.positions.find(
+          (pos) => pos.start <= hash && pos.end >= hash
+        );
+
+        if (position) {
+          buckets.push({ ...bucket, positions: [position] });
+
+          break;
+        }
+      }
+
+      if (buckets.length === 0) {
+        continue;
+      }
+
+      console.log(override);
+
+      res.active = true;
+      res.buckets = res.buckets.concat(buckets.map((b) => b.bucket_idx));
+
+      res.formatted_overrides.push({
+        ...override,
+        buckets,
+        maybe: filtersRes === "maybe",
+      });
+    }
+  }
+
+  if (exp.populations) {
+    res.populations = [];
+
+    for (const population of exp.populations) {
+      const filters = population.filters;
+
+      const filtersRes = checkFilters(filters, guild, guildId);
+
+      if (filtersRes === false) {
+        continue;
+      }
+
+      const buckets = [];
+
+      for (const bucket of population.buckets) {
+        const position = bucket.positions.find(
+          (pos) => pos.start <= hash && pos.end >= hash
+        );
+
+        if (position) {
+          buckets.push({ ...bucket, positions: [position] });
+
+          break;
+        }
+      }
+
+      if (buckets.length === 0) {
+        continue;
+      }
+
+      console.log(population);
+
+      res.active = true;
+      res.buckets = res.buckets.concat(buckets.map((b) => b.bucket_idx));
+
+      res.populations.push({
+        ...population,
+        buckets,
+        maybe: filtersRes === "maybe",
+      });
+    }
+
+    res.populations = res.populations.sort(
+      (a, b) => a.population_idx - b.population_idx
+    );
+  }
+
+  if (res.buckets.length === 1 && res.buckets[0] === -1) {
+    res.active = false;
+  }
+
+  res.buckets = dedupe(res.buckets).filter((v) => v !== -1);
+
   return res;
 };
 
-export const checkFilter = (filter: Filter, guild: Guild) => {
-  const [t, f] = filter;
+// https://github.com/aamiaa/NellyTools/blob/main/src/models/experiment/methods.ts#L448
+export const checkFilters = (
+  filters: IPopulationFilter[],
+  guild: CheckableGuild | undefined,
+  guildId: string
+): boolean | "maybe" => {
+  if (filters.length === 0) return true;
 
-  switch (t) {
-    case FilterType.Feature:
-      const [[, features]] = f;
-      return features.some((f) => guild.features.includes(f as GuildFeature));
-    case FilterType.IDRange: {
-      const [[, start], [, end]] = f;
-      return (start === null || +guild.id >= start) && +guild.id <= end;
-    }
-    case FilterType.MemberCount: {
-      const [[, start], [, end]] = f;
-      return (
-        (start === null || guild.memberCount >= start) &&
-        guild.memberCount <= end
-      );
-    }
-    case FilterType.ID:
-      const [[, ids]] = f;
-      return ids.includes(guild.id);
-    case FilterType.HubType:
-      break;
+  for (const filter of filters) {
+    const res = checkFilter(filter, guild, guildId);
+
+    console.log(filter, guild, guildId, res);
+
+    if (res !== true) return res;
+  }
+
+  return true;
+};
+
+const checkFilter = (
+  filter: IPopulationFilter,
+  guild: CheckableGuild | undefined,
+  guildId: string
+): boolean | "maybe" => {
+  switch (filter.type) {
+    case FilterType.GUILD_IDS:
+      return filter.guild_ids!.includes(guildId);
+    case FilterType.GUILD_ID_RANGE:
+      switch (true) {
+        case filter.min === undefined:
+          return BigInt(guildId) < BigInt(filter.max!);
+        case filter.max === undefined:
+          return BigInt(guildId) > BigInt(filter.min!);
+        default:
+          return (
+            BigInt(guildId) < BigInt(filter.min!) &&
+            BigInt(guildId) > BigInt(filter.max!)
+          );
+      }
+    case FilterType.GUILD_AGE_RANGE_DAYS:
+      const snowflake = SnowflakeUtil.deconstruct(guildId);
+
+      const age_ms = Date.now() - Number(snowflake.timestamp);
+      const age_days = age_ms / 86400000;
+
+      switch (true) {
+        case filter.min === undefined:
+          return age_days < +filter.max!;
+        case filter.max === undefined:
+          return age_days > +filter.min!;
+        default:
+          return age_days > +filter.min! && age_days < +filter.max!;
+      }
+    case FilterType.GUILD_MEMBER_COUNT_RANGE:
+      const memberCount = guild?.memberCount;
+
+      if (!memberCount) return "maybe";
+
+      switch (true) {
+        case filter.min === undefined:
+          return memberCount < +filter.max!;
+        case filter.max === undefined:
+          return memberCount > +filter.min!;
+        default:
+          return memberCount > +filter.min! && memberCount < +filter.max!;
+      }
+    case FilterType.GUILD_HAS_FEATURE:
+      const features = guild?.features;
+
+      if (!features) return "maybe";
+
+      return filter.guild_features!.some((f) => features.includes(f));
+
+    case FilterType.GUILD_HUB_TYPES:
+      const hubType = guild?.hubType;
+
+      if (!hubType) return "maybe";
+
+      return filter.hub_types!.includes(hubType);
+    case FilterType.GUILD_HAS_VANITY_URL:
+      const vanityURL = guild?.vanityURLCode;
+
+      return filter.vanity_required === !!vanityURL;
+    case FilterType.GUILD_IN_RANGE_BY_HASH:
+      const hash = murmur3(filter.hash_key!.toString(), guildId);
+
+      return (hash > 0 ? hash + hash : hash >>> 0) % 10e3 < filter.target!;
   }
 };
 
 export const checkMulti = (
   exps: Experiment[],
   guildId: Snowflake,
-  guild?: Guild
-) => {
-  if (guild?.id !== guildId) guild = undefined;
+  guild?: CheckableGuild
+) => {};
 
-  return exps
-    .map<[Experiment, ReturnType<typeof check>]>((experiment) => [
-      experiment,
-      check(guildId, experiment, guild),
-    ])
-    .filter(([, v]) => v.active)
-    .map(([exp, matchedData]) => ({
-      active: true,
-      treatment: dedupe(
-        matchedData.overrides.concat(
-          matchedData.populations.map((v) => v.bucket)
-        )
-      ),
-      id: exp.data.id,
-      exp,
-    }));
-};
+export function treatmentName(t: number | string) {
+  switch (typeof t) {
+    case "number":
+      if (t === -1) return "None";
+      if (t === 0) return "Control";
+      return `Treatment ${t}`;
+    case "string":
+      return t.split(":")[0];
+    default:
+      throw new TypeError("Invalid treatment name");
+  }
+}
+
+import { rollouts } from "./load.js";

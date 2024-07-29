@@ -1,4 +1,8 @@
-import { CommandInteraction, SelectMenuInteraction } from "discord.js";
+import {
+  AttachmentBuilder,
+  CommandInteraction,
+  SelectMenuInteraction,
+} from "discord.js";
 import {
   renderExperimentHomeView,
   renderOverrideView,
@@ -44,6 +48,18 @@ function getViewForPage(p: string) {
       return renderRolloutView;
     case "overrides":
       return renderOverrideView;
+    case "json":
+      return (_: any, id: string) => ({
+        content: "Debug data attached.",
+        files: [
+          new AttachmentBuilder(
+            Buffer.from(JSON.stringify(rollouts.get(id), null, 2)),
+            {
+              name: "debug.json",
+            }
+          ),
+        ],
+      });
     default:
       return () => ({ content: "Not found" });
   }

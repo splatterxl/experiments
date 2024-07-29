@@ -1,11 +1,14 @@
 import {
   ApplicationCommandOptionType,
+  AttachmentBuilder,
   Interaction,
   InteractionType,
   MessageComponentInteraction,
 } from "discord.js";
 import kleur from "kleur";
+import { inspect } from "util";
 import { autocompleteStores, commands } from "../index.js";
+import { __DEV__ } from "../util.js";
 
 export default async function (i: Interaction) {
   try {
@@ -90,7 +93,24 @@ export default async function (i: Interaction) {
     if (i.isRepliable())
       try {
         i.reply({
-          content: `An error occurred. \`\`\`js\n${e}\n\`\`\``,
+          content: __DEV__ ? "" : `An error occurred. \`\`\`js\n${e}\n\`\`\``,
+          files: __DEV__
+            ? [
+                new AttachmentBuilder(
+                  Buffer.from(
+                    (e as Error).stack ??
+                      inspect(e, {
+                        colors: false,
+                        compact: false,
+                        depth: 999,
+                      })
+                  ),
+                  {
+                    name: "data.txt",
+                  }
+                ),
+              ]
+            : [],
           ephemeral: true,
         });
       } catch {}

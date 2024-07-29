@@ -17,7 +17,7 @@ export default async function (i: CommandInteraction) {
 }
 
 const CONTENT =
-  "This list is **not** the list of rollouts that apply to your guild. It is a list of all the experiments advertised by the API.";
+  "This list is **not** the list of rollouts that apply to your guild. It is a list of all the experiments currently active from Discord.";
 
 function makeListReply(i: Interaction, l: string[], idx: number) {
   const index = idx * 15;
