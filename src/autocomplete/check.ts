@@ -1,19 +1,31 @@
 import { AutocompleteInteraction } from "discord.js";
-import { fuzzy } from "../index.js";
+import { fuzzy, rollouts } from "../index.js";
 import { removeRolloutsPrefix } from "../util.js";
 
 export default function (i: AutocompleteInteraction) {
   const typing = removeRolloutsPrefix(i.options.getString("experiment", true));
 
+  if (typing.length === 0)
+    return i.respond(
+      rollouts
+        .sort((a, b) => b.exp_id.localeCompare(a.exp_id))
+        .map((x) => ({
+          name: (x.title ?? x.exp_id).slice(0, 100),
+          value: x.exp_id,
+        }))
+        .slice(0, 24)
+    );
+
   let res =
     fuzzy
       ?.search(typing)
-      .map((x: any) => ({ name: x.data.title.slice(0, 100), value: x.data.id }))
-      .slice(0, 20) ?? [];
+      .map((x: any) => ({ name: x.title.slice(0, 100), value: x.exp_id }))
+      .slice(0, 24) ?? [];
 
-  if (typing.toLowerCase().includes("all")) {
-    res = res.concat([{ name: "All experiments", value: "all" }]);
-  }
+  if (typing !== "all" && typing.length <= 3)
+    res.unshift({ name: "ALL EXPERIMENTS", value: "all" });
+  else if (typing.startsWith("all"))
+    return [{ name: "All experiments returned by Discord", value: "all" }];
 
   return i.respond(res);
 }

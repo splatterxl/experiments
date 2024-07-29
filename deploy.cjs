@@ -5,6 +5,8 @@ const {
   ApplicationCommandOptionType,
 } = require("discord-api-types/v10");
 
+if (!process.env.DISCORD_TOKEN) throw new Error('invariant failed: DISCORD_TOKEN')
+
 const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
 !(async () => {
@@ -78,12 +80,25 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
           required: false,
         },
       ],
+      contexts: [0],
     },
     {
       name: "info",
       description: "Get info about the bot",
     },
-  ];
+    {
+      name: 'hash',
+      description: 'Perform a MurmurHash3 on a string',
+      options: [
+        {
+          name: 'string',
+          description: 'The string to hash',
+          type: ApplicationCommandOptionType.String,
+          required: true,
+        },
+      ],
+    }
+  ].map(v => ({ contexts: [0, 1, 2],integration_types:[0,1], ...v }));
 
   /** @type {import("discord-api-types/v10").RESTPutAPIApplicationCommandsResult} */
   const res = await rest.put(Routes.applicationCommands(application.id), {
