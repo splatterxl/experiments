@@ -9,6 +9,8 @@ import { Experiment, ExperimentType } from "./experiment.js";
 import { error, info } from "./instrument.js";
 import { __DEV__ } from "./util.js";
 
+if (!process.env.NELLY) throw new Error("invariant failed: NELLY");
+
 export let rollouts = new Collection<string, Experiment>(),
   list = () =>
     rollouts
