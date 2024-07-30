@@ -7,6 +7,7 @@ import { dirname } from "path";
 import invariant from "tiny-invariant";
 import { URLSearchParams } from "url";
 import { Experiment, ExperimentType } from "./experiment.js";
+import { VERSION } from "./index.js";
 import { error, info } from "./instrument.js";
 import { __DEV__ } from "./util.js";
 
@@ -31,7 +32,7 @@ export async function loadRollouts() {
       {
         headers: {
           Referer: "https://splatterxl.github.io",
-          "User-Agent": `Experiments (https://github.com/splatterxl/experiments; 2.0.0) Node.js/${process.version} Discord.js/${version}`,
+          "User-Agent": `Experiments (https://github.com/splatterxl/experiments; ${VERSION}) Node.js/${process.version} Discord.js/${version}`,
         },
       }
     ).then((res) => res.text());
