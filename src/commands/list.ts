@@ -9,7 +9,13 @@ import {
 import { lastFetchedAt, list } from "../index.js";
 import { editMessage, mapOlPlus } from "../util.js";
 
+// TODO: update this to check all the experiments
+
 export default async function (i: CommandInteraction) {
+  return i.reply(
+    "This command isn't functional right now, please try again later."
+  );
+
   const l = list();
 
   await i.reply(makeListReply(i as any, l, 0));

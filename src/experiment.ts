@@ -1,5 +1,4 @@
 // thanks advaith
-// TODO: REWRITE THE WHOLE FILE
 
 import { Snowflake, SnowflakeUtil } from "discord.js";
 import { CheckableGuild, dedupe, murmur3 } from "./util.js";
@@ -241,7 +240,6 @@ export const check = (
     console.log("holdout valid");
   }
 
-  // FIXME: active but -1, also update buckets
   if (exp.overrides_formatted) {
     res.formatted_overrides = [];
 

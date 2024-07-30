@@ -5,7 +5,8 @@ const {
   ApplicationCommandOptionType,
 } = require("discord-api-types/v10");
 
-if (!process.env.DISCORD_TOKEN) throw new Error('invariant failed: DISCORD_TOKEN')
+if (!process.env.DISCORD_TOKEN)
+  throw new Error("invariant failed: DISCORD_TOKEN");
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
@@ -55,7 +56,9 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     },
     {
       name: "list",
-      description: "Shows a list of currently active experiments",
+      description: "Shows a list of currently active experiments in your guild",
+      dm_permission: false,
+      contexts: [0],
     },
     {
       name: "invite",
@@ -87,18 +90,18 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
       description: "Get info about the bot",
     },
     {
-      name: 'hash',
-      description: 'Perform a MurmurHash3 on a string',
+      name: "hash",
+      description: "Perform a MurmurHash3 on a string",
       options: [
         {
-          name: 'string',
-          description: 'The string to hash',
+          name: "string",
+          description: "The string to hash",
           type: ApplicationCommandOptionType.String,
           required: true,
         },
       ],
-    }
-  ].map(v => ({ contexts: [0, 1, 2],integration_types:[0,1], ...v }));
+    },
+  ].map((v) => ({ contexts: [0, 1, 2], integration_types: [0, 1], ...v }));
 
   /** @type {import("discord-api-types/v10").RESTPutAPIApplicationCommandsResult} */
   const res = await rest.put(Routes.applicationCommands(application.id), {
