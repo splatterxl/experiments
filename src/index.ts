@@ -1,3 +1,5 @@
+import "dotenv/config.js";
+
 const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
 
 export const COMMIT_SHA =
@@ -153,3 +155,5 @@ loadRollouts();
 setInterval(loadRollouts, /* four hours */ 4 * 60 * 60 * 1000);
 
 export * from "./load.js";
+
+export const LOADING_COMPLETE = process.uptime();

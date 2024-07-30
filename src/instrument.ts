@@ -6,7 +6,10 @@ import {
 } from "discord.js";
 import kleur from "kleur";
 import { dirname, resolve } from "path";
-import { __DEV__ } from "./util.js";
+import { stringify } from "yaml";
+import { __DEV__, hostname } from "./util.js";
+
+// TODO: rewrite this whole file
 
 let rest: REST;
 
@@ -29,6 +32,7 @@ Sentry.init({
   ignoreErrors: [
     "Unknown interaction",
     DiscordjsErrorCodes.InteractionAlreadyReplied,
+    "nelly.tools returned",
   ],
 
   beforeSend(event, hint) {
@@ -43,158 +47,174 @@ Sentry.init({
     ) {
       debug("sentry.beforeSend", "captured error");
 
-      const workableTags = Object.entries(event.tags ?? {})
-        .filter(
-          ([k, v]) =>
-            ![
-              "guild_id",
-              "guild_name",
-              "replied",
-              "channel_id",
-              "channel_name",
-            ].includes(k) && v
-        )
-        .map(([k, v]) => [k, v!.toString()]);
-      rest
-        .post(
-          new URL(process.env.ERROR_WEBHOOK).pathname.replace(
-            /^\/api(\/v\d{1,2})?/,
-            ""
-          ) as `/${string}`,
-          {
-            body: {
-              content: `🚨 ${
-                hint.mechanism?.handled === false
-                  ? `Un${
-                      hint.originalException instanceof Promise
-                        ? "handled"
-                        : "caught"
-                    }`
-                  : ""
-              }${
-                hint.mechanism?.type === "onunhandledrejection"
-                  ? "Promise Rejection"
-                  : hint.mechanism?.type === "onuncaughtexception"
-                  ? "Exception"
-                  : "Error"
-              } \`[${__DEV__ ? "dev" : "prd"}-${event.server_name}-${
-                !__DEV__ ? event.release?.slice(0, 8) ?? "unknown" : "wip"
-              }-${event.event_id}]\` ${
-                event.fingerprint ? `@ \`${event.fingerprint.join("::")}\`` : ""
-              }\n\n${
-                event.user
-                  ? `Exception occured processing request from \n* user <@${
-                      event.user!.id
-                    }> (\`${event.user.id}\` – ${event.user.username})${
-                      event.tags?.replied != null
-                        ? event.tags.replied
-                          ? ". Error was returned through ephemeral response."
-                          : ". User could not be informed of error."
-                        : ""
-                    }${
-                      event.tags?.guild_id
-                        ? `\n* guild ${
-                            event.tags!.guild_name
-                              ? `**${event.tags!.guild_name.toString()}** (\`${event.tags.guild_id.toString()}\`)`
-                              : `\`${event.tags!.guild_id.toString()}\``
-                          }`
-                        : ""
-                    }${
-                      event.tags?.channel_id
-                        ? `\n* channel \`${event.tags.channel_id.toString()}\` (${
-                            event.tags.channel_type?.toString() ?? "unknown"
-                          })`
-                        : ""
-                    }\n\n`
-                  : ""
-              }${
-                workableTags.length
-                  ? `Additional metadata:\n\`\`\`yaml\n${workableTags.map(
-                      ([k, v]) => `${k}: ${v}`
-                    )}\n\`\`\`\n\n`
-                  : ""
-              }>>> ${
-                event.exception?.values?.slice(0, 5)?.map(
-                  (exception) =>
-                    `__**${exception.type}**: ${exception.value}__\n-# ${
-                      exception.mechanism?.type
-                        ? `${exception.mechanism.type.replace(
-                            /onun(handled|caught)(rejection|exception)/,
-                            (_, p1, p2) =>
-                              `Un${p1} ${p2[0].toUpperCase()}${p2.slice(1)}`
-                          )}`
-                        : exception.mechanism?.handled
-                        ? "Handled"
-                        : "Unhandled"
-                    }\n${
-                      exception.stacktrace?.frames
-                        ?.reverse()
-                        .slice(0, 5)
-                        .map((trace, i) => {
-                          const filename = trace.filename
-                            ?.replace(resolve(__dirname, "../"), "")
-                            .replace("/dist/", "/");
+      (async () => {
+        const workableTags = Object.fromEntries(
+          Object.entries({
+            ...(event.tags ?? {}),
+            ...(hint.originalException instanceof Error
+              ? hint.originalException
+              : hint.originalException instanceof Promise
+              ? await hint.originalException.catch((res) => res)
+              : {}),
+          }).filter(
+            ([k, v]) =>
+              ![
+                "guild_id",
+                "guild_name",
+                "replied",
+                "channel_id",
+                "channel_name",
+                "message",
+                "stack",
+              ].includes(k) && v
+          )
+        );
 
-                          return `* ${trace.in_app && filename ? "[" : ""}\`${
-                            filename
-                              ? filename?.includes("node_modules") ||
-                                trace.in_app === false
-                                ? trace.module ?? "unknown"
-                                : filename ?? "unknown"
-                              : "unknown"
-                          }${trace.lineno ? `:${trace.lineno}` : ""}${
-                            trace.colno ? `:${trace.colno}` : ""
-                          }\`${
-                            trace.in_app && filename
-                              ? `](<https://github.com/splatterxl/experiments/blob/new-bot/src/${filename
-                                  .replace(/\.js$/, ".ts")
-                                  .replace(/^\//, "")}>)`
-                              : ""
-                          }${trace.function ? ` @ \`${trace.function}\`` : ""}${
-                            i === 0 && trace.context_line
-                              ? `\n\`\`\`js\n${
-                                  trace.pre_context?.join("\n") ?? ""
-                                }\n${
-                                  trace.context_line
-                                } // <-- HAPPENED HERE\n${
-                                  trace.post_context?.join("\n") ?? ""
-                                }\n\`\`\``
-                              : ""
-                          }`;
-                        })
-                        .join("\n") ?? "No stacktrace attached."
-                    }${
-                      exception.stacktrace?.frames?.length! > 5 ? "\n..." : ""
-                    }`
-                ) ??
-                // @ts-ignore
-                hint.originalException.stack ??
-                "No stacktrace attached."
-              }`,
-              attachments: [
+        rest
+          .post(
+            new URL(process.env.ERROR_WEBHOOK!).pathname.replace(
+              /^\/api(\/v\d{1,2})?/,
+              ""
+            ) as `/${string}`,
+            {
+              body: {
+                content: `🚨 ${
+                  hint.mechanism?.handled === false
+                    ? `Un${
+                        hint.originalException instanceof Promise
+                          ? "handled"
+                          : "caught"
+                      }`
+                    : ""
+                }${
+                  hint.mechanism?.type === "onunhandledrejection"
+                    ? "Promise Rejection"
+                    : hint.mechanism?.type === "onuncaughtexception"
+                    ? "Exception"
+                    : "Error"
+                } \`[${hostname()}-${event.event_id}]\` ${
+                  event.fingerprint
+                    ? `@ \`${event.fingerprint.join("::")}\``
+                    : ""
+                }\n\n${
+                  event.user
+                    ? `Exception occured processing request from \n* user <@${
+                        event.user!.id
+                      }> (\`${event.user.id}\` – ${event.user.username})${
+                        event.tags?.replied != null
+                          ? event.tags.replied
+                            ? ". Error was returned through ephemeral response."
+                            : ". User could not be informed of error."
+                          : ""
+                      }${
+                        event.tags?.guild_id
+                          ? `\n* guild ${
+                              event.tags!.guild_name
+                                ? `**${event.tags!.guild_name.toString()}** (\`${event.tags.guild_id.toString()}\`)`
+                                : `\`${event.tags!.guild_id.toString()}\``
+                            }`
+                          : ""
+                      }${
+                        event.tags?.channel_id
+                          ? `\n* channel \`${event.tags.channel_id.toString()}\` (${
+                              event.tags.channel_type?.toString() ?? "unknown"
+                            })`
+                          : ""
+                      }\n\n`
+                    : ""
+                }${
+                  Object.keys(workableTags).length
+                    ? `Additional metadata:\n\`\`\`yaml\n${stringify(
+                        workableTags
+                      )}\n\`\`\`\n\n`
+                    : ""
+                }>>> ${
+                  event.exception?.values?.slice(0, 5)?.map(
+                    (exception) =>
+                      `__**${exception.type}**: ${exception.value}__\n-# ${
+                        exception.mechanism?.type
+                          ? `${exception.mechanism.type.replace(
+                              /onun(handled|caught)(rejection|exception)/,
+                              (_, p1, p2) =>
+                                `Un${p1} ${p2[0].toUpperCase()}${p2.slice(1)}`
+                            )}`
+                          : exception.mechanism?.handled
+                          ? "Handled"
+                          : "Unhandled"
+                      }\n${
+                        exception.stacktrace?.frames
+                          ?.reverse()
+                          .slice(0, 5)
+                          .map((trace, i) => {
+                            const filename = trace.filename
+                              ?.replace(resolve(__dirname, "../"), "")
+                              .replace("/dist/", "/");
+
+                            return `* ${trace.in_app && filename ? "[" : ""}\`${
+                              filename
+                                ? filename?.includes("node_modules") ||
+                                  trace.in_app === false
+                                  ? trace.module ?? "unknown"
+                                  : filename ?? "unknown"
+                                : "unknown"
+                            }${trace.lineno ? `:${trace.lineno}` : ""}${
+                              trace.colno ? `:${trace.colno}` : ""
+                            }\`${
+                              trace.in_app && filename
+                                ? `](<https://github.com/splatterxl/experiments/blob/new-bot/src/${filename
+                                    .replace(/\.js$/, ".ts")
+                                    .replace(/^\//, "")}>)`
+                                : ""
+                            }${
+                              trace.function ? ` @ \`${trace.function}\`` : ""
+                            }${
+                              i === 0 && trace.context_line
+                                ? `\n\`\`\`js\n${
+                                    trace.pre_context?.join("\n") ?? ""
+                                  }\n${
+                                    trace.context_line
+                                  } // <-- HAPPENED HERE\n${
+                                    trace.post_context?.join("\n") ?? ""
+                                  }\n\`\`\``
+                                : ""
+                            }`;
+                          })
+                          .join("\n") ?? "No stacktrace attached."
+                      }${
+                        exception.stacktrace?.frames?.length! > 5 ? "\n..." : ""
+                      }`
+                  ) ??
+                  // @ts-ignore
+                  hint.originalException.stack ??
+                  "No stacktrace attached."
+                }`,
+                attachments: [
+                  {
+                    id: 0,
+                    filename: "error.json",
+                  },
+                ],
+                username: `${__DEV__ ? "dev" : "prd"}-${event.server_name}-${
+                  !__DEV__ ? event.release?.slice(0, 8) ?? "unknown" : "wip"
+                }`,
+              } as RESTPostAPIChannelMessageFormDataBody,
+              files: [
                 {
-                  id: 0,
-                  filename: "error.json",
+                  data: Buffer.from(JSON.stringify([event, hint], null, 2)),
+                  name: "error.json",
+                  contentType: "application/json",
                 },
               ],
-              username: `${__DEV__ ? "dev" : "prd"}-${event.server_name}-${
-                !__DEV__ ? event.release?.slice(0, 8) ?? "unknown" : "wip"
-              }`,
-            } as RESTPostAPIChannelMessageFormDataBody,
-            files: [
-              {
-                data: Buffer.from(JSON.stringify([event, hint], null, 2)),
-                name: "error.json",
-                contentType: "application/json",
-              },
-            ],
-            auth: false,
-          }
-        )
-        // .then(console.log)
-        .catch((e) =>
-          error("sentry.webhook", "Failed to send error to webhook: ", e)
-        );
+              auth: false,
+            }
+          )
+          // .then(console.log)
+          .catch((e) =>
+            error("sentry.webhook", "Failed to send error to webhook: ", e)
+          );
+      })().catch((e) => {
+        error("sentry.webhook", "Failed to send error to webhook: ", e);
+      });
     }
 
     if (__DEV__) return null;

@@ -111,3 +111,5 @@ rollouts.*
 guilds.json
 # Sentry Config File
 .sentryclirc
+
+!.example.env

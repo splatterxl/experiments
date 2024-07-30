@@ -16,6 +16,8 @@ import {
   MessageComponentInteraction,
 } from "discord.js";
 import murmur from "murmurhash";
+import { hostname as server } from "os";
+import { COMMIT_SHA } from "./index.js";
 
 export async function editMessage(
   i: MessageComponentInteraction<CacheType>,
@@ -194,3 +196,23 @@ export function getGuildName(id: string) {
 }
 
 export const __DEV__ = process.env.NODE_ENV === "development";
+
+export const hostname = () => {
+  let environment = process.env.NODE_ENV;
+
+  switch (environment) {
+    case "development":
+      environment = "dev";
+      break;
+    case "production":
+      environment = "prd";
+      break;
+    case "staging":
+      environment = "stg";
+      break;
+  }
+
+  return `${environment}-${server}-${
+    !__DEV__ ? COMMIT_SHA?.slice(0, 8) ?? "unknown" : "wip"
+  }`;
+};
