@@ -14,6 +14,7 @@ import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { loadRollouts } from "./load.js";
+import { __DEV__ } from "./util.js";
 
 const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
 
@@ -26,11 +27,11 @@ export const COMMIT_SHA =
 /// --- BOT --- ///
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.DirectMessages,
-  ],
+  intents: [GatewayIntentBits.Guilds].concat(
+    __DEV__
+      ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages]
+      : []
+  ),
   makeCache: Options.cacheWithLimits({
     ApplicationCommandManager: 0,
     BaseGuildEmojiManager: 0,
