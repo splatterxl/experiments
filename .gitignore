@@ -109,3 +109,5 @@ rollouts.*
 .yarn/install-state.gz
 
 guilds.json
+# Sentry Config File
+.sentryclirc
