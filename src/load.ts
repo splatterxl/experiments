@@ -8,7 +8,7 @@ import invariant from "tiny-invariant";
 import { URLSearchParams } from "url";
 import { Experiment, ExperimentType } from "./experiment.js";
 import { VERSION } from "./index.js";
-import { error, info } from "./instrument.js";
+import { error, info, postMaintenance } from "./instrument.js";
 import { __DEV__ } from "./util.js";
 
 invariant(process.env.NELLY, "nelly.tools api url not set");
@@ -44,10 +44,24 @@ export async function loadRollouts() {
     } catch {
       error("rollouts.load", "nelly.tools returned invalid JSON", resp);
 
+      postMaintenance(
+        "failed to check rollouts from nelly.tools",
+        Buffer.from(resp),
+        "response.txt"
+      );
+
       throw new Error("nelly.tools returned invalid JSON");
     }
 
-    if (!result.success) throw new Error("nelly.tools returned error");
+    if (!result.success) {
+      postMaintenance(
+        "failed to check rollouts from nelly.tools",
+        Buffer.from(JSON.stringify(result, null, 2)),
+        "response.json"
+      );
+
+      throw new Error("nelly.tools returned error");
+    }
 
     rollouts = new Collection(
       result.data

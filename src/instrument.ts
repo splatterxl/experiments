@@ -259,3 +259,42 @@ export const warn = log.bind(null, "bgYellow", "warn  ");
 export const debug = log.bind(null, "gray", "debug");
 
 export const fatal = log.bind(null, "bgMagenta", "fatal");
+
+export function postMaintenance(
+  message: string,
+  file?: Buffer,
+  filename?: string
+) {
+  if (process.env.MAINTENANCE_WEBHOOK)
+    rest.post(
+      new URL(process.env.MAINTENANCE_WEBHOOK).pathname.replace(
+        /^\/api(\/v\d{1,2})?/,
+        ""
+      ) as `/${string}`,
+      {
+        auth: false,
+        versioned: false,
+        body: {
+          content: `* [${process.env.NODE_ENV}] ${message}`,
+          username: hostname(),
+          attachments: file
+            ? [
+                {
+                  id: 0,
+                  filename: filename ?? "maintenance.txt",
+                },
+              ]
+            : [],
+        } as RESTPostAPIChannelMessageFormDataBody,
+        files: file
+          ? [
+              {
+                data: file!,
+                name: filename ?? "maintenance.txt",
+                contentType: "text/plain",
+              },
+            ]
+          : [],
+      }
+    );
+}
