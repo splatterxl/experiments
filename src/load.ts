@@ -1,11 +1,12 @@
 import * as Sentry from "@sentry/node";
+import { debug } from "console";
 import { Collection, version } from "discord.js";
 import { readFileSync, statSync, writeFileSync } from "fs";
 import FuzzySearch from "fuzzy-search";
-import kleur from "kleur";
 import { dirname } from "path";
 import { URLSearchParams } from "url";
 import { Experiment, ExperimentType } from "./experiment.js";
+import { error, info } from "./instrument.js";
 import { __DEV__ } from "./util.js";
 
 export let rollouts = new Collection<string, Experiment>(),
@@ -39,9 +40,7 @@ export async function loadRollouts() {
         .filter((s: Experiment) => s.exp_id && s.type === ExperimentType.GUILD)
         .map((d: any) => [d.exp_id, d])
     );
-    console.debug(
-      `[${kleur.bold("rollouts")}::load] loaded ${rollouts.size} rollouts`
-    );
+    info("rollouts.load", `loaded ${rollouts.size} rollouts`);
     fuzzy = new FuzzySearch(
       [...rollouts.values()],
       ["title", "exp_id", "hash_key"],
@@ -56,9 +55,7 @@ export async function loadRollouts() {
   } catch (e) {
     Sentry.captureException(e);
 
-    console.error(
-      `[${kleur.bold("rollouts")}::load] failed to fetch rollouts: ${e}`
-    );
+    error("rollouts.load", `failed to fetch rollouts: ${e}`);
 
     // if (process.env.AETHER_URL) {
     //   try {
@@ -98,11 +95,7 @@ export async function loadRollouts() {
 }
 
 function startReAttemptingRolloutLoad() {
-  console.debug(
-    `[${kleur.bold(
-      "rollouts"
-    )}::load] failed to load rollouts, retrying in 5 minutes`
-  );
+  error("rollouts.load", "failed to load rollouts, retrying in 5 minutes");
   if (rollouts.size === 0) {
     try {
       const data = JSON.parse(
@@ -110,11 +103,9 @@ function startReAttemptingRolloutLoad() {
       );
 
       rollouts = new Collection(data.map((d: any) => [d.exp_id, d]));
-      console.debug(
-        `[${kleur.bold("rollouts")}::load] loaded ${
-          rollouts.size
-        } rollouts [file]`
-      );
+
+      info("rollouts.load.file", `loaded ${rollouts.size} rollouts [file]`);
+
       fuzzy = new FuzzySearch(
         [...rollouts.values()],
         ["data.title", "data.id"],
@@ -127,11 +118,7 @@ function startReAttemptingRolloutLoad() {
     } catch (e) {
       Sentry.captureException(e);
       // invalid/missing backups
-      console.error(
-        `[${kleur.bold(
-          "rollouts"
-        )}::load] failed to load rollouts from backup: ${e}`
-      );
+      error("rollouts.load.file", `failed to load rollouts from backup: ${e}`);
     }
   }
   setTimeout(loadRollouts, 5 * 60 * 1000);
@@ -140,17 +127,13 @@ function startReAttemptingRolloutLoad() {
 // this isn't going to be corrupted because it's gonna be only done every four hours
 function backupRollouts() {
   // return;
+  debug("rollouts.backup", `backing up ${rollouts.size} rollouts`);
 
-  console.debug(
-    `[${kleur.bold("rollouts")}::backup] backing up ${rollouts.size} rollouts`
-  );
   try {
     const data = JSON.stringify([...rollouts.values()]);
     writeFileSync(__dirname + "/../rollouts.json", data, "utf8");
 
-    console.info(
-      `[${kleur.bold("rollouts")}::backup] backed up ${rollouts.size} rollouts`
-    );
+    info("rollouts.backup", `backed up ${rollouts.size} rollouts`);
   } catch (e) {
     Sentry.captureException(e);
     // trollface

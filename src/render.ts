@@ -179,8 +179,6 @@ export function renderExperimentHomeView(
 ): InteractionReplyOptions {
   const exp = rollouts.get(id)!;
 
-  console.log(exp);
-
   return {
     content: `Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>${
       !exp.in_client ? ". This experiment is no longer in the client!" : ""

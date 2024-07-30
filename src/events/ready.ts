@@ -1,6 +1,6 @@
-import { Client } from 'discord.js';
-import kleur from 'kleur';
+import { Client } from "discord.js";
+import { info } from "../instrument.js";
 
 export default async function (c: Client<true>) {
-  console.log(`[${kleur.green('ready')}] Logged in as ${c.user!.tag}`);
+  info("events.ready", `Logged in as ${c.user!.tag}`);
 }

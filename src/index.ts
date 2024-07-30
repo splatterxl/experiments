@@ -1,5 +1,14 @@
+const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
+
+export const COMMIT_SHA =
+    process.env.RAILWAY_GIT_COMMIT_SHA ??
+    execSync("git rev-parse HEAD").toString().trim(),
+  PKG = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")),
+  VERSION = PKG.version;
+
 import "./instrument.js";
 
+import { captureException } from "@sentry/node";
 import {
   AutocompleteInteraction,
   Client,
@@ -13,16 +22,9 @@ import kleur from "kleur";
 import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { debug, error, info } from "./instrument.js";
 import { loadRollouts } from "./load.js";
 import { __DEV__ } from "./util.js";
-
-const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
-
-export const COMMIT_SHA =
-    process.env.RAILWAY_GIT_COMMIT_SHA ??
-    execSync("git rev-parse HEAD").toString().trim(),
-  PKG = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8")),
-  VERSION = PKG.version;
 
 /// --- BOT --- ///
 
@@ -63,7 +65,7 @@ process.on("uncaughtException", (err: Error) => {
   console.error(`[${kleur.red("uncaughtException")}] ${err.message}`);
 });
 process.on("beforeExit", () => {
-  console.info(`[${kleur.bold("exit")}] exiting`);
+  info("exit", "exiting");
   client.destroy();
 });
 
@@ -98,9 +100,19 @@ async function load() {
       type = "on",
     } = await import(`./events/${event}`);
 
-    client[type as "on"](eventName, handler);
+    client[type as "on"](eventName, async (...args) => {
+      try {
+        await handler(...args);
+      } catch (e) {
+        captureException(e, {
+          fingerprint: ["events.handle", eventName] as any,
+        });
 
-    console.debug(`[${kleur.green("events")}::load] loaded event ${eventName}`);
+        error("events.handle", `error in event ${eventName}`, e);
+      }
+    });
+
+    debug("events.load", `loaded event ${eventName}`);
   }
 
   for (const command of readdirSync(__dirname + "/commands").filter((v) =>
@@ -114,7 +126,7 @@ async function load() {
 
     commands.set(name, { handle: handler, handleComponent });
 
-    console.debug(`[${kleur.blue("commands")}::load] loaded command ${name}`);
+    debug("commands.load", `loaded command ${name}`);
   }
 
   for (const autocomplete of readdirSync(__dirname + "/autocomplete").filter(
@@ -125,21 +137,15 @@ async function load() {
 
     autocompleteStores.set(name, handler);
 
-    console.debug(
-      `[${kleur.cyan("autocomplete")}::load] loaded autocomplete store ${name}`
-    );
+    debug("autocomplete.load", `loaded autocomplete store ${name}`);
   }
 
   client.on("debug", (...d: any) =>
-    console.debug(kleur.gray("[client::debug]"), ...d.map(kleur.gray))
+    // @ts-ignore
+    debug("client.debug", ...(d as any))
   );
 
-  client.on("raw", (event) =>
-    console.debug(
-      kleur.gray("[client::raw]"),
-      kleur.gray(`${event.t} ${event.s}`)
-    )
-  );
+  client.on("raw", (event) => debug("client.raw", `${event.t} ${event.s}`));
 }
 
 client.login();

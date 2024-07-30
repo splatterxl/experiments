@@ -210,8 +210,6 @@ export const check = (
       if (override.ids.includes(guildId)) {
         res.active = true;
 
-        console.log(override);
-
         res.overrides.push(override);
         res.buckets.push(override.bucket_idx);
 
@@ -236,8 +234,6 @@ export const check = (
     if (!holdoutRes.buckets?.includes(exp.holdout_bucket)) {
       return res;
     }
-
-    console.log("holdout valid");
   }
 
   if (exp.overrides_formatted) {
@@ -269,8 +265,6 @@ export const check = (
       if (buckets.length === 0) {
         continue;
       }
-
-      console.log(override);
 
       res.active = true;
       res.buckets = res.buckets.concat(buckets.map((b) => b.bucket_idx));
@@ -313,8 +307,6 @@ export const check = (
         continue;
       }
 
-      console.log(population);
-
       res.active = true;
       res.buckets = res.buckets.concat(buckets.map((b) => b.bucket_idx));
 
@@ -349,8 +341,6 @@ export const checkFilters = (
 
   for (const filter of filters) {
     const res = checkFilter(filter, guild, guildId);
-
-    console.log(filter, guild, guildId, res);
 
     if (res !== true) return res;
   }

@@ -127,8 +127,6 @@ export default async function (i: CommandInteraction) {
     } else {
       if (has_effective) lines += "\n";
 
-      console.log(val);
-
       // formatted overrides
       const overrides = val.formatted_overrides;
 

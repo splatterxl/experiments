@@ -8,6 +8,7 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
+      "runtimeExecutable": "/Users/splt/.nvm/versions/node/v19.9.0/bin/node",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -15,7 +16,8 @@
       "preLaunchTask": "tsc: build - tsconfig.json",
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
-      ]
+      ],
+      "envFile": "${workspaceFolder}/.env"
     }
   ]
 }
