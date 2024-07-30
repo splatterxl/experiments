@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { Collection, version } from "discord.js";
 import { readFileSync, statSync, writeFileSync } from "fs";
 import FuzzySearch from "fuzzy-search";
@@ -53,6 +54,8 @@ export async function loadRollouts() {
 
     if (!__DEV__) backupRollouts();
   } catch (e) {
+    Sentry.captureException(e);
+
     console.error(
       `[${kleur.bold("rollouts")}::load] failed to fetch rollouts: ${e}`
     );
@@ -122,6 +125,7 @@ function startReAttemptingRolloutLoad() {
       );
       lastFetchedAt = statSync(__dirname + "/../rollouts.json").mtimeMs;
     } catch (e) {
+      Sentry.captureException(e);
       // invalid/missing backups
       console.error(
         `[${kleur.bold(
@@ -147,7 +151,8 @@ function backupRollouts() {
     console.info(
       `[${kleur.bold("rollouts")}::backup] backed up ${rollouts.size} rollouts`
     );
-  } catch {
+  } catch (e) {
+    Sentry.captureException(e);
     // trollface
   }
 }

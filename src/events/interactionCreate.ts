@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/node";
 import {
   ApplicationCommandOptionType,
   AttachmentBuilder,
@@ -90,6 +91,7 @@ export default async function (i: Interaction) {
       }
     }
   } catch (e) {
+    captureException(e);
     console.error(
       `[${kleur.blue("commands")}::handler] ${kleur.gray(
         i.user.id

@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import {
   ComponentType,
   GuildHubType,
@@ -39,6 +40,7 @@ export async function editMessage(
     await message.edit(data as any);
     return i.deferUpdate();
   } catch (e) {
+    Sentry.captureException(e);
     await i.reply({
       content: `I couldn't update the message. \`\`\`js\n${e}\n\`\`\``,
       ephemeral: true,
