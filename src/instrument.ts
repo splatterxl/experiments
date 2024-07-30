@@ -6,7 +6,9 @@ import { __DEV__ } from "./util.js";
 Sentry.init({
   enabled: !__DEV__,
 
-  dsn: "https://f6dc910d06a442c08251d608ff160fe7@o917511.ingest.us.sentry.io/4504746769514496",
+  dsn:
+    process.env.SENTRY_DSN ??
+    "https://f6dc910d06a442c08251d608ff160fe7@o917511.ingest.us.sentry.io/4504746769514496",
   integrations: [],
 
   beforeSend(event, hint) {
