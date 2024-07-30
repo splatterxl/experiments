@@ -11,5 +11,6 @@ Every 4 hours, data is fetched and cached from
 ## Links
 
 - [Invite the bot](https://discord.com/api/oauth2/authorize?client_id=957383358592217088&scope=applications.commands)
+- [App Directory](https://discord.com/application-directory/957383358592217088)
 - [Source code](https://github.com/splatterxl/experiments)
 - [Rollouts UI](https://rollouts.advaith.io)
