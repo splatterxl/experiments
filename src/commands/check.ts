@@ -16,9 +16,14 @@ export default async function (i: CommandInteraction) {
 
   const guildId = (i.options.get("id", false)?.value as string) ?? i.guildId;
 
+  if (!/^\d{17,19}$/.test(guildId)) {
+    i.reply("Invalid guild ID.");
+    return { error: "invalid gid" };
+  }
+
   if (rollouts.size === 0) {
     i.reply("Unexpected service interruption. Please try again later.");
-    return;
+    return { error: "no rollouts" };
   }
 
   const guild =
@@ -29,7 +34,7 @@ export default async function (i: CommandInteraction) {
 
   if (!exp) {
     i.reply("No experiment with that ID exists.");
-    return;
+    return { error: "invalid exp" };
   }
 
   if (
@@ -37,7 +42,9 @@ export default async function (i: CommandInteraction) {
     !exp.populations?.length &&
     !exp.overrides_formatted?.length
   ) {
-    i.reply("This experiment has not started its rollout yet.");
+    i.reply("This experiment has no associated rollout data.");
+
+    return { error: "no data" };
   }
 
   const val = check(guildId, exp, guild ?? undefined);

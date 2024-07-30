@@ -8,7 +8,7 @@ import {
 import { COMMIT_SHA, VERSION } from "../index.js";
 
 export default function (i: CommandInteraction) {
-  return i.reply({
+  i.reply({
     embeds: [
       {
         color: 0xffcc00,
@@ -54,6 +54,8 @@ export default function (i: CommandInteraction) {
       },
     ],
   });
+
+  return { success: true };
 }
 
 export async function handleComponent(i: MessageComponentInteraction) {

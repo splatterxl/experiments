@@ -23,14 +23,18 @@ export default async function (i: Interaction) {
       );
 
       if (commands.has(i.commandName)) {
+        const started = performance.now();
+
         const result = await command!.handle(i);
+
+        const ended = performance.now();
 
         console.debug(
           `[${kleur.blue("commands")}::handler] ${kleur.gray(
             i.user.id
           )} % ${kleur.green(i.commandName)} => ${
-            result.success ? "success" : "error"
-          } ${kleur.gray(result.error ?? "")}${
+            result ? (result.success ? "success" : "error") : "completed"
+          } in ${ended - started}ms. ${kleur.gray(result?.error ?? "")}${
             i.options.data.length
               ? (() => {
                   const data = i.options.data
