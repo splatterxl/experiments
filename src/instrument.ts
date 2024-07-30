@@ -8,15 +8,20 @@ Sentry.init({
 
   dsn:
     process.env.SENTRY_DSN ??
-    "https://f6dc910d06a442c08251d608ff160fe7@o917511.ingest.us.sentry.io/4504746769514496",
+    "https://352f8e9b23364aa284aaf79fd69cf727@o917511.ingest.us.sentry.io/4504368705830912",
   integrations: [],
 
   beforeSend(event, hint) {
     if (__DEV__) return null;
 
     if (
-      // @ts-ignore
-      [DiscordjsErrorCodes.InteractionAlreadyReplied].includes(event.code) ||
+      [
+        DiscordjsErrorCodes.InteractionAlreadyReplied,
+        10062 /* Unknown interaction */,
+      ].includes(
+        // @ts-ignore
+        event.code
+      ) ||
       event.message?.toLowerCase().includes("unknown interaction")
     )
       return null;
