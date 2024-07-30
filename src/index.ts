@@ -24,7 +24,11 @@ export const COMMIT_SHA =
 /// --- BOT --- ///
 
 const client = new Client({
-  intents: GatewayIntentBits.Guilds,
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.DirectMessages,
+  ],
   makeCache: Options.cacheWithLimits({
     ApplicationCommandManager: 0,
     BaseGuildEmojiManager: 0,
