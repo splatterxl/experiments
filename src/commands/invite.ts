@@ -1,11 +1,8 @@
-import { OAuth2Scopes } from "discord-api-types/v10";
 import { CommandInteraction } from "discord.js";
 
 export default async function (i: CommandInteraction) {
   await i.reply(
-    `<${i.client.generateInvite({
-      scopes: [OAuth2Scopes.ApplicationsCommands, OAuth2Scopes.Bot],
-    })}>`
+    `<https://discord.com/oauth2/authorize?client_id=${i.client.user!.id}>`
   );
 
   return { success: true };
