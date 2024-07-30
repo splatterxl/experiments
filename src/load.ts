@@ -13,11 +13,11 @@ import { __DEV__ } from "./util.js";
 
 invariant(process.env.NELLY, "nelly.tools api url not set");
 
-export let rollouts = new Collection<string, Experiment>(),
-  list = () =>
-    rollouts
-      .sort((a, b) => b.exp_id.localeCompare(a.exp_id))
-      .map((r) => `${r.title} (\`${r.exp_id}\`)`);
+export let rollouts = new Collection<string, Experiment>();
+export const list = () =>
+  rollouts
+    .sort((a, b) => b.exp_id.localeCompare(a.exp_id))
+    .map((r) => `${r.title} (\`${r.exp_id}\`)`);
 export let fuzzy: FuzzySearch<Experiment> = null as unknown as any;
 export let lastFetchedAt = 0;
 
@@ -54,7 +54,7 @@ export async function loadRollouts() {
       throw new Error("nelly.tools returned invalid JSON");
     }
 
-    if (!result.success) {
+    if (!result.success || !result.data?.length) {
       postMaintenance(
         "failed to check rollouts from nelly.tools",
         Buffer.from(JSON.stringify(result, null, 2)),
@@ -65,7 +65,7 @@ export async function loadRollouts() {
     }
 
     rollouts.clear();
-    rollouts.concat(
+    rollouts = rollouts.concat(
       new Collection(
         result.data
           .filter(
@@ -74,6 +74,7 @@ export async function loadRollouts() {
           .map((d: any) => [d.exp_id, d])
       )
     );
+
     info("rollouts.load", `loaded ${rollouts.size} rollouts`);
     fuzzy = new FuzzySearch(
       [...rollouts.values()],

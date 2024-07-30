@@ -30,6 +30,8 @@ import { __DEV__ } from "./util.js";
 
 /// --- BOT --- ///
 
+await loadRollouts();
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds].concat(
     __DEV__
@@ -151,7 +153,6 @@ async function load() {
 }
 
 client.login();
-loadRollouts();
 setInterval(loadRollouts, /* four hours */ 4 * 60 * 60 * 1000);
 
 export * from "./load.js";
