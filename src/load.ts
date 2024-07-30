@@ -1,10 +1,11 @@
 import { Collection, version } from "discord.js";
-import { readFileSync, statSync } from "fs";
+import { readFileSync, statSync, writeFileSync } from "fs";
 import FuzzySearch from "fuzzy-search";
 import kleur from "kleur";
 import { dirname } from "path";
 import { URLSearchParams } from "url";
 import { Experiment, ExperimentType } from "./experiment.js";
+import { __DEV__ } from "./util.js";
 
 export let rollouts = new Collection<string, Experiment>(),
   list = () =>
@@ -50,7 +51,7 @@ export async function loadRollouts() {
     );
     lastFetchedAt = Date.now();
 
-    // backupRollouts();
+    if (!__DEV__) backupRollouts();
   } catch (e) {
     console.error(
       `[${kleur.bold("rollouts")}::load] failed to fetch rollouts: ${e}`
@@ -133,21 +134,20 @@ function startReAttemptingRolloutLoad() {
 }
 
 // this isn't going to be corrupted because it's gonna be only done every four hours
-// function backupRollouts() {
+function backupRollouts() {
+  // return;
 
-//   return;
+  console.debug(
+    `[${kleur.bold("rollouts")}::backup] backing up ${rollouts.size} rollouts`
+  );
+  try {
+    const data = JSON.stringify([...rollouts.values()]);
+    writeFileSync(__dirname + "/../rollouts.json", data, "utf8");
 
-//   console.debug(
-//     `[${kleur.bold("rollouts")}::backup] backing up ${rollouts.size} rollouts`
-//   );
-//   try {
-//     const data = JSON.stringify([...rollouts.values()]);
-//     writeFileSync(__dirname + "/../rollouts.json", data, "utf8");
-
-//     console.info(
-//       `[${kleur.bold("rollouts")}::backup] backed up ${rollouts.size} rollouts`
-//     );
-//   } catch {
-//     // trollface
-//   }
-// }
+    console.info(
+      `[${kleur.bold("rollouts")}::backup] backed up ${rollouts.size} rollouts`
+    );
+  } catch {
+    // trollface
+  }
+}

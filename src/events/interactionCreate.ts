@@ -66,6 +66,14 @@ export default async function (i: Interaction) {
     } else if (i.type === InteractionType.ApplicationCommandAutocomplete) {
       await autocompleteStores.get(i.commandName)?.(i);
     } else if (i.type === InteractionType.MessageComponent) {
+      if (i.message.interaction?.user.id !== i.user.id) {
+        await i.reply({
+          content: `I'm sorry, ${i.user.toString()}, I'm afraid I can't do that.`,
+          ephemeral: true,
+        });
+        return;
+      }
+
       const [scope, ...args] = i.customId.split(",");
 
       console.debug(
