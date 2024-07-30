@@ -32,6 +32,7 @@ Sentry.init({
   ignoreErrors: [
     "Unknown interaction",
     DiscordjsErrorCodes.InteractionAlreadyReplied,
+    "Interaction has already been",
     "nelly.tools returned",
   ],
 
