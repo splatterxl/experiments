@@ -31,7 +31,8 @@ export async function loadRollouts() {
       })}`,
       {
         headers: {
-          Referer: "https://splatterxl.github.io",
+          Referer: "https://splt.dev",
+
           "User-Agent": `Experiments (https://github.com/splatterxl/experiments; ${VERSION}) Node.js/${process.version} Discord.js/${version}`,
         },
       }
@@ -63,10 +64,15 @@ export async function loadRollouts() {
       throw new Error("nelly.tools returned error");
     }
 
-    rollouts = new Collection(
-      result.data
-        .filter((s: Experiment) => s.exp_id && s.type === ExperimentType.GUILD)
-        .map((d: any) => [d.exp_id, d])
+    rollouts.clear();
+    rollouts.concat(
+      new Collection(
+        result.data
+          .filter(
+            (s: Experiment) => s.exp_id && s.type === ExperimentType.GUILD
+          )
+          .map((d: any) => [d.exp_id, d])
+      )
     );
     info("rollouts.load", `loaded ${rollouts.size} rollouts`);
     fuzzy = new FuzzySearch(
