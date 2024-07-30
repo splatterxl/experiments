@@ -5,6 +5,8 @@ const {
   ApplicationCommandOptionType,
 } = require("discord-api-types/v10");
 
+require("dotenv/config");
+
 if (!process.env.DISCORD_TOKEN)
   throw new Error("invariant failed: DISCORD_TOKEN");
 
@@ -108,5 +110,68 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     body,
   });
 
-  console.info(`PUT ${res.length} commands`);
+  if (process.env.INTERNAL_GUILD) {
+    /**
+     * @type {import("discord-api-types/v10").RESTPutAPIApplicationGuildCommandsJSONBody}
+     */
+    const body = [
+      {
+        name: "eval",
+        description: "Evaluate JavaScript code",
+        options: [
+          {
+            name: "code",
+            description: "The code to evaluate",
+            type: ApplicationCommandOptionType.String,
+            required: true,
+          },
+        ],
+        default_member_permissions: "8",
+      },
+      {
+        name: "refresh",
+        description: "Refresh the experiment cache",
+        default_member_permissions: "8",
+      },
+      {
+        name: "shutdown",
+        description: "Shutdown the bot",
+        default_member_permissions: "8",
+        options: [
+          {
+            name: "environment",
+            description: "Environment to shutdown",
+            type: ApplicationCommandOptionType.String,
+            choices: [
+              {
+                name: "prod",
+                value: "production",
+              },
+              {
+                name: "dev",
+                value: "development",
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    /**
+     * @type {import("discord-api-types/v10").RESTPutAPIApplicationGuildCommandsResult}
+     */
+    const guildCommands = await rest.put(
+      Routes.applicationGuildCommands(
+        application.id,
+        process.env.INTERNAL_GUILD
+      ),
+      {
+        body,
+      }
+    );
+
+    console.info(`PUT ${guildCommands.length} [internal]`);
+  }
+
+  console.info(`PUT ${res.length}`);
 })();
