@@ -31,7 +31,7 @@ export default async function (i: CommandInteraction) {
     i.reply({
       content: `\`\`\`js\n${inspect(result, { depth: 4 })}\n\`\`\``,
     });
-  } catch (e) {
+  } catch (e: any) {
     i.reply({
       content: `\`\`\`js\n${e.toString()}\n\`\`\``,
     });
