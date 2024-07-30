@@ -30,5 +30,7 @@ export default async function (c: Client<true>) {
       state: "testing on prod",
       type: ActivityType.Watching,
     });
+  } else {
+    c.user.setPresence({ activities: [] });
   }
 }
