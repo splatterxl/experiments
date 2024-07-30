@@ -4,12 +4,13 @@ import { Collection, version } from "discord.js";
 import { readFileSync, statSync, writeFileSync } from "fs";
 import FuzzySearch from "fuzzy-search";
 import { dirname } from "path";
+import invariant from "tiny-invariant";
 import { URLSearchParams } from "url";
 import { Experiment, ExperimentType } from "./experiment.js";
 import { error, info } from "./instrument.js";
 import { __DEV__ } from "./util.js";
 
-if (!process.env.NELLY) throw new Error("invariant failed: NELLY");
+invariant(process.env.NELLY, "nelly.tools api url not set");
 
 export let rollouts = new Collection<string, Experiment>(),
   list = () =>
