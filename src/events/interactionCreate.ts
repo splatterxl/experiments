@@ -12,7 +12,7 @@ import {
 import kleur from "kleur";
 import { inspect } from "util";
 import { autocompleteStores, commands } from "../index.js";
-import { error, info } from "../instrument.js";
+import { debug, error, info, warn } from "../instrument.js";
 import { __DEV__ } from "../util.js";
 
 export default async function (i: Interaction) {
@@ -63,10 +63,9 @@ export default async function (i: Interaction) {
           result ? (result.success ? "success" : "error") : "completed"
         );
 
-        console.debug(
-          `[${kleur.blue("commands")}::handler] ${kleur.gray(
-            i.user.id
-          )} % ${kleur.green(i.commandName)} => ${
+        info(
+          "commands.handler",
+          `${kleur.gray(i.user.id)} % ${kleur.green(i.commandName)} => ${
             result ? (result.success ? "success" : "error") : "completed"
           } in ${ended - started}ms. ${kleur.gray(result?.error ?? "")}${
             i.options.data.length
@@ -99,10 +98,11 @@ export default async function (i: Interaction) {
           ephemeral: true,
         });
 
-        console.warn(
-          `[${kleur.blue("commands")}::handler] ${kleur.gray(
-            i.user.id
-          )} % command ${kleur.green(i.commandName)} => not found`
+        warn(
+          "commands.handler",
+          `${kleur.gray(i.user.id)} % command ${kleur.green(
+            i.commandName
+          )} => not found`
         );
       }
     } else if (i.type === InteractionType.ApplicationCommandAutocomplete) {
@@ -126,10 +126,9 @@ export default async function (i: Interaction) {
 
       args = { scope, rest: params.join(",") };
 
-      console.debug(
-        `[${kleur.blue("commands")}::handler] ${kleur.gray(
-          i.user.id
-        )} % component ${kleur.green(i.customId)}`
+      debug(
+        "commands.handler",
+        `${kleur.gray(i.user.id)} % component ${kleur.green(i.customId)}`
       );
       const component = commands.get(scope);
 
@@ -206,10 +205,11 @@ export default async function (i: Interaction) {
 }
 
 export async function notFound(i: MessageComponentInteraction) {
-  console.warn(
-    `[${kleur.blue("commands")}::handler] ${kleur.gray(
-      i.user.id
-    )} % component ${kleur.green(i.customId)} => not found`
+  warn(
+    "commands.handler",
+    `${kleur.gray(i.user.id)} % component ${kleur.green(
+      i.customId
+    )} => not found`
   );
   await i.channel?.messages
     .fetch(i.message.id)

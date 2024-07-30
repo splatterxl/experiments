@@ -134,14 +134,22 @@ export interface CheckableGuild {
   source?: "cache" | "preview" | "widget" | "mee6" | "servus";
 }
 
+export function getCheckableGuildForInteraction(i: CommandInteraction) {
+  if (i.guildId === null) return;
+  return i.guild ?? getGuild(i.guildId, i.client);
+}
+
 /**
  * Given a guild id, tries many different ways to get the guild object. (id, name, )
  */
 export async function getGuild(
   id: string,
-  client: Client
+  client: Client,
+  interaction?: CommandInteraction
 ): Promise<CheckableGuild | null> {
   let guild: CheckableGuild | null = null;
+
+  if (id === interaction?.guildId) return interaction.guild;
 
   try {
     guild = await client.guilds.fetch(id);

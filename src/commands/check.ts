@@ -1,18 +1,18 @@
 import { CommandInteraction } from "discord.js";
-import { check } from "../experiment.js";
+import { check, treatmentName } from "../experiment.js";
 import { rollouts } from "../index.js";
-import {
-  createRolloutsURL,
-  parsePopulation,
-  treatment,
-  ViewType,
-} from "../render.js";
+import { createRolloutsURL, parsePopulation } from "../render.js";
 import { __DEV__, getGuild, removeRolloutsPrefix } from "../util.js";
+import list from "./list.js";
 
 export default async function (i: CommandInteraction) {
   const id = removeRolloutsPrefix(
     i.options.get("experiment", true).value!.toString()
   ).toLowerCase();
+
+  if (["all", "all experiments"].includes(id.toLowerCase())) {
+    return list(i);
+  }
 
   const guildId = (i.options.get("id", false)?.value as string) ?? i.guildId;
 
@@ -29,7 +29,6 @@ export default async function (i: CommandInteraction) {
   const guild =
     guildId === i.guildId ? i.guild : await getGuild(guildId, i.client);
 
-  let res: [ViewType, string, boolean];
   const exp = rollouts.get(id);
 
   if (!exp) {
@@ -77,7 +76,7 @@ export default async function (i: CommandInteraction) {
     // overrides
 
     if (val.overrides?.length) {
-      lines += `__${treatment(
+      lines += `__${treatmentName(
         val.overrides[0].bucket_idx,
         exp
       )}__ (id override)`;
@@ -95,7 +94,7 @@ export default async function (i: CommandInteraction) {
           val.formatted_overrides?.length &&
           !val.formatted_overrides[0].maybe
         ) {
-          lines += `__${treatment(
+          lines += `__${treatmentName(
             val.formatted_overrides[0].buckets[0].bucket_idx,
             exp
           )}__ (formatted override)\n`;
@@ -110,7 +109,7 @@ export default async function (i: CommandInteraction) {
         }
 
         if (val.populations?.length && !val.populations[0].maybe) {
-          lines += `__${treatment(
+          lines += `__${treatmentName(
             val.populations[0].buckets[0].bucket_idx,
             exp
           )}__ (population)\n`;
@@ -132,7 +131,7 @@ export default async function (i: CommandInteraction) {
 
       if (overrides?.length) {
         for (const override of overrides) {
-          lines += `__${treatment(
+          lines += `__${treatmentName(
             override.buckets[0].bucket_idx,
             exp
           )}__ (formatted override)\n`;
@@ -145,7 +144,7 @@ export default async function (i: CommandInteraction) {
 
       if (populations?.length) {
         for (const pop of populations) {
-          lines += `__${treatment(
+          lines += `__${treatmentName(
             pop.buckets[0].bucket_idx,
             exp
           )}__ (population)\n`;

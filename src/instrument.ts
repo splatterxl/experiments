@@ -39,8 +39,6 @@ Sentry.init({
   beforeSend(event, hint) {
     // if (__DEV__) return null;
 
-    console.log(hint);
-
     if (
       process.env.ERROR_WEBHOOK &&
       /* normally caught error */ (hint.originalException instanceof Error ||
@@ -64,9 +62,11 @@ Sentry.init({
                 "guild_name",
                 "replied",
                 "channel_id",
-                "channel_name",
+                "channel_type",
                 "message",
                 "stack",
+                "requestBody",
+                "rawError",
               ].includes(k) && v
           )
         );
@@ -87,7 +87,7 @@ Sentry.init({
                           : "caught"
                       }`
                     : ""
-                }${
+                } ${
                   hint.mechanism?.type === "onunhandledrejection"
                     ? "Promise Rejection"
                     : hint.mechanism?.type === "onuncaughtexception"
@@ -132,7 +132,10 @@ Sentry.init({
                 }>>> ${
                   event.exception?.values?.slice(0, 5)?.map(
                     (exception) =>
-                      `__**${exception.type}**: ${exception.value}__\n-# ${
+                      `__**${exception.type}**: ${exception.value?.replace(
+                        "\n",
+                        "__\n"
+                      )}${exception.value?.includes("\n") ? "" : "__"}\n-# ${
                         exception.mechanism?.type
                           ? `${exception.mechanism.type.replace(
                               /onun(handled|caught)(rejection|exception)/,
@@ -266,7 +269,7 @@ export function postMaintenance(
   file?: Buffer,
   filename?: string
 ) {
-  if (process.env.MAINTENANCE_WEBHOOK)
+  if (process.env.MAINTENANCE_WEBHOOK && !__DEV__)
     rest.post(
       new URL(process.env.MAINTENANCE_WEBHOOK).pathname.replace(
         /^\/api(\/v\d{1,2})?/,

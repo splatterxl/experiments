@@ -168,6 +168,7 @@ interface CheckResult {
    * Whether the guild is included in the rollout
    */
   active: boolean;
+  included: boolean;
   hash?: number;
 
   buckets?: number[];
@@ -199,6 +200,7 @@ export const check = (
 
   const res: CheckResult & Required<Pick<CheckResult, "buckets" | "active">> = {
     active: false,
+    included: true,
     hash,
     buckets: [],
   };
@@ -322,11 +324,16 @@ export const check = (
     );
   }
 
+  res.buckets = dedupe(res.buckets);
+
   if (res.buckets.length === 1 && res.buckets[0] === -1) {
-    res.active = false;
+    res.active = true;
+    res.included = false;
   }
 
-  res.buckets = dedupe(res.buckets).filter((v) => v !== -1);
+  if (res.active && res.buckets.length === 0) {
+    throw new Error("active but without buckets");
+  }
 
   return res;
 };
@@ -419,18 +426,136 @@ const checkFilter = (
   }
 };
 
+type MultiCheckResult = {
+  exp: Experiment;
+  buckets: number[];
+  confident: boolean;
+}[];
+
+/**
+ * Given a list of experiments, returns a list of buckets for the experiments the guild is included (diff. from active) in
+ */
 export const checkMulti = (
   exps: Experiment[],
   guildId: Snowflake,
-  guild?: CheckableGuild
-) => {};
+  guild?: CheckableGuild | null
+): MultiCheckResult => {
+  const res: MultiCheckResult = [];
 
-export function treatmentName(t: number | string) {
+  for (const exp of exps) {
+    const result = check(guildId, exp, guild ?? undefined);
+
+    result.buckets = result.buckets?.filter((b) => b !== -1);
+
+    if (!result.active || !result.included) {
+      res.push({
+        exp,
+        buckets: [],
+        confident: true,
+      });
+
+      continue;
+    }
+
+    if (result.overrides?.[0]?.bucket_idx) {
+      res.push({
+        exp,
+        buckets: [result.overrides[0].bucket_idx],
+        confident: true,
+      });
+
+      continue;
+    }
+
+    if (result.formatted_overrides?.length) {
+      if (result.formatted_overrides.length === 1)
+        res.push({
+          exp,
+          buckets: [result.formatted_overrides[0].buckets[0].bucket_idx],
+          confident: !result.formatted_overrides[0].maybe,
+        });
+      else if (result.formatted_overrides.every((o) => !o.maybe)) {
+        res.push({
+          exp,
+          buckets: [result.formatted_overrides[0].buckets[0].bucket_idx],
+          confident: true,
+        });
+      } else {
+        res.push({
+          exp,
+          buckets: result.formatted_overrides.map(
+            (o) => o.buckets[0].bucket_idx
+          ),
+          confident: false,
+        });
+      }
+
+      continue;
+    }
+
+    if (result.populations?.length) {
+      if (result.populations.length === 1)
+        res.push({
+          exp,
+          buckets: [result.populations[0].buckets[0].bucket_idx],
+          confident: !result.populations[0].maybe,
+        });
+      else if (result.populations.every((o) => !o.maybe)) {
+        res.push({
+          exp,
+          buckets: [result.populations[0].buckets[0].bucket_idx],
+          confident: true,
+        });
+      } else {
+        res.push({
+          exp,
+          buckets: result.populations.map((o) => o.buckets[0].bucket_idx),
+          confident: false,
+        });
+      }
+
+      continue;
+    }
+  }
+
+  return res
+    .map((r) => ({ ...r, buckets: r.buckets.filter((b) => b !== -1) }))
+    .filter((r) => r.buckets.length);
+};
+
+export function treatmentName(
+  t: number | string,
+  exp?: Experiment,
+  removePrefix?: boolean
+): string;
+export function treatmentName(
+  elem: number,
+  _index?: number,
+  _array?: number[]
+): string;
+export function treatmentName(
+  t: number | string,
+  exp?: Experiment | number,
+  removePrefix: boolean | number[] = false
+) {
   switch (typeof t) {
     case "number":
-      if (t === -1) return "None";
+      if (t === -1) return "Not Included";
       if (t === 0) return "Control";
-      return `Treatment ${t}`;
+
+      if (!exp || typeof exp === "number") {
+        return `Treatment ${t}`;
+      } else {
+        const desc = exp.treatments?.find(
+          (s) => s.bucket_idx === t
+        )?.description;
+
+        return desc
+          ? removePrefix
+            ? desc.split(":").slice(1).join(":")
+            : desc
+          : `Treatment ${t}`;
+      }
     case "string":
       return t.split(":")[0];
     default:

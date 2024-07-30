@@ -1,8 +1,8 @@
-import { Client } from "discord.js";
+import { ActivityType, Client } from "discord.js";
 import kleur from "kleur";
 import { LOADING_COMPLETE } from "../index.js";
 import { info, postMaintenance } from "../instrument.js";
-import { hostname } from "../util.js";
+import { __DEV__, hostname } from "../util.js";
 
 export default async function (c: Client<true>) {
   const uptime = process.uptime();
@@ -23,4 +23,12 @@ export default async function (c: Client<true>) {
       2
     )}\` ms was spent waiting for Discord`
   );
+
+  if (__DEV__) {
+    c.user.setActivity({
+      name: "development build",
+      state: "testing on prod",
+      type: ActivityType.Watching,
+    });
+  }
 }

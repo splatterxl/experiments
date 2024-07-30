@@ -25,6 +25,7 @@ import {
   IExperimentPopulation,
   IPopulationBucket,
   IPopulationFilter,
+  treatmentName,
 } from "./experiment.js";
 import { lastFetchedAt, rollouts } from "./index.js";
 import { __DEV__, murmur3 } from "./util.js";
@@ -125,7 +126,7 @@ export const parseBuckets = (p: IPopulationBucket[], exp: Experiment) => {
   return p
     .map(
       (p) =>
-        `${treatment(p.bucket_idx)}: ${p.positions
+        `${treatmentName(p.bucket_idx)}: ${p.positions
           .map((v) => `${v.start}..${v.end}`)
           .join(", ")}`
     )
@@ -137,23 +138,10 @@ export const parseBuckets = (p: IPopulationBucket[], exp: Experiment) => {
 export const parseOverrides = (o: IBucketOverride[], exp: Experiment) => {
   return o.map(
     (o) =>
-      `${treatment(o.bucket_idx)}\n------------\n${o.ids
+      `${treatmentName(o.bucket_idx)}\n------------\n${o.ids
         .map((id) => `${id}${id in guilds ? `: ${guilds[id]}` : ""}`)
         .join("\n")}`
   );
-};
-
-export const treatment = (t: number, exp?: Experiment | number) => {
-  if (t === -1) return "None";
-  if (t === 0) return "Control";
-  if (!exp || typeof exp === "number") {
-    return `Treatment ${t}`;
-  } else {
-    return (
-      exp.treatments?.find((s) => s.bucket_idx === t)?.description ??
-      `Treatment ${t}`
-    );
-  }
 };
 
 /**
@@ -243,7 +231,7 @@ export function renderRolloutView(
                       )}\n${parsePopulations(
                         exp.overrides_formatted?.flat(),
                         exp
-                      )}`
+                      ).join("\n\n")}`
                     : ""
                 }${
                   exp.overrides_formatted?.length && exp.populations?.length

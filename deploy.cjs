@@ -59,8 +59,14 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     {
       name: "list",
       description: "Shows a list of currently active experiments in your guild",
-      dm_permission: false,
-      contexts: [0],
+      options: [
+        {
+          name: "id",
+          description: "Guild ID to check against (default: current guild)",
+          type: ApplicationCommandOptionType.String,
+          required: false,
+        },
+      ],
     },
     {
       name: "invite",
@@ -69,7 +75,6 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     {
       name: "check",
       description: "Check if an experiment is active in your guild",
-      dm_permission: false,
       options: [
         {
           name: "experiment",
@@ -85,7 +90,6 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
           required: false,
         },
       ],
-      contexts: [0],
     },
     {
       name: "info",
