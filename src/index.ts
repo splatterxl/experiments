@@ -132,6 +132,13 @@ async function load() {
   client.on("debug", (...d: any) =>
     console.debug(kleur.gray("[client::debug]"), ...d.map(kleur.gray))
   );
+
+  client.on("raw", (event) =>
+    console.debug(
+      kleur.gray("[client::raw]"),
+      kleur.gray(`${event.t} ${event.s}`)
+    )
+  );
 }
 
 client.login();
