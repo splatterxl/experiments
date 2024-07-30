@@ -12,10 +12,25 @@ import {
 import kleur from "kleur";
 import { inspect } from "util";
 import { autocompleteStores, commands } from "../index.js";
-import { debug, error, info, warn } from "../instrument.js";
+import { analytics, debug, error, info, warn } from "../instrument.js";
 import { __DEV__ } from "../util.js";
 
 export default async function (i: Interaction) {
+  analytics.identify({
+    anonymousId: i.user.id,
+    userId: i.user.id,
+    context: {
+      groupId: i.guildId,
+    },
+    traits: {
+      avatar: i.user.avatarURL(),
+      username: i.user.username,
+      name: i.user.displayName,
+      createdAt: i.user.createdAt,
+      email: `${i.user.username}@discord.com`,
+    },
+  });
+
   const fingerprint = [InteractionType[i.type]];
 
   let args = (
@@ -89,6 +104,24 @@ export default async function (i: Interaction) {
               : ""
           }`
         );
+
+        analytics.track({
+          event: "chat_input_command_used",
+          anonymousId: i.id,
+          userId: i.user.id,
+          context: { groupId: i.guildId },
+          timestamp: new Date(),
+          properties: {
+            args: i.options.data,
+            name: i.commandName,
+            status: result?.success
+              ? "success"
+              : result?.success === false
+              ? "error"
+              : "completed",
+            took: ended - started,
+          },
+        });
       } else {
         fingerprint.push("not_found");
 
@@ -109,6 +142,18 @@ export default async function (i: Interaction) {
       fingerprint.push("autocomplete", i.commandName);
 
       await autocompleteStores.get(i.commandName)?.(i);
+
+      analytics.track({
+        event: "autocomplete_used",
+        anonymousId: i.id,
+        userId: i.user.id,
+        context: { groupId: i.guildId },
+        timestamp: new Date(),
+        properties: {
+          args: i.options.data,
+          name: i.commandName,
+        },
+      });
     } else if (i.type === InteractionType.MessageComponent) {
       fingerprint.push("component", ComponentType[i.componentType]);
 
@@ -141,6 +186,18 @@ export default async function (i: Interaction) {
 
         fingerprint.push("not_found");
       }
+
+      analytics.track({
+        event: "message_component_used",
+        anonymousId: i.id,
+        userId: i.user.id,
+        context: { groupId: i.guildId },
+        timestamp: new Date(),
+        properties: {
+          scope: scope,
+          params,
+        },
+      });
     }
   } catch (e) {
     captureException(e, (scope) => {

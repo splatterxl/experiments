@@ -26,18 +26,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { debug, error, info } from "./instrument.js";
 import { loadRollouts } from "./load.js";
-import { __DEV__ } from "./util.js";
 
 /// --- BOT --- ///
 
 await loadRollouts();
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds].concat(
-    __DEV__
-      ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages]
-      : []
-  ),
+  intents: [GatewayIntentBits.Guilds],
   makeCache: Options.cacheWithLimits({
     ApplicationCommandManager: 0,
     BaseGuildEmojiManager: 0,

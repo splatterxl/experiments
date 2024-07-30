@@ -1,23 +1,50 @@
-# Experiments Privacy Policy
+# Privacy Policy
 
-The bot collects certain data during its processing of slash commands.
+_Effective: July 2024_
 
-This includes your user information (unique ID provided by Discord and your
-username), to display logs. This is only accessed for debugging purposes.
+This privacy policy outlines how we collect, use, and protect your data in
+compliance with GDPR. By using the Experiments bot, you agree to the processing
+of your data in accordance with this policy.
 
-If you run `/check`, you have an option to provide a server ID to check on. If
-you decide to do so, we will collect certain data about this server, if
-possible, to allow the `/check` command to run with the best accuracy. This
-includes your server's ID, feature flags[^1], vanity URL code, member count and
-hub type (if applicable).
+## Data Collection and Usage
 
-The bot does not collect your personal data or message content. All data is
-purged very soon after it is accessed. Because of that, your rights under the
-GDPR do not apply as we do not store any personal data (or any data at all) long
-enough to be able to access, erase, rectify, etc. it.
+We collect the following data to provide and improve our service:
 
-[^1]:
-    Feature flags are sent by Discord for every server, to enable certain
-    experiments and features within the Discord app. They are specific strings
-    of text that are automatically or manually applied to your server by
-    Discord, e.g. `GUILD_ROLE_SUBSCRIPTIONS`, `WIDGET_ENABLED`.
+- **Functional Data**: Server ID, Name, Features, Member Count, Vanity URL, Hub
+  Type
+- **Analytics Data**: Server and User IDs, Owner ID, Timestamp, Guild and User
+  Traits, Event Data
+
+**Purposes**:
+
+- To check and display enabled experiments for your server.
+- To analyze usage patterns and enhance the bot’s functionality.
+
+**Third-Party Services**:
+
+- **Analytics**: Sent to [June.so](https://june.so)
+- **Error Tracking**: Sent to [Sentry.io](https://sentry.io)
+
+## Data Protection and Rights
+
+- **Security**: We implement sufficient security measures and access control to
+  protect your data.
+- **Data Sharing**: We only share data with third parties for analytics and
+  error tracking purposes.
+- **Retention**: Functional data is processed in real-time and not stored
+  long-term.
+
+**Your Rights**:
+
+- You can access, correct, or delete your data by contacting us.
+- You may withdraw your consent at any time by simply stopping your usage of the
+  bot.
+- You have a right to lodge a complaint with a supervisory authority.
+
+## Changes and Contact
+
+- **Policy Updates**: Changes will be posted here. Continued use of the bot
+  implies acceptance.
+- **Contact**: For questions or concerns, or to invoke your rights under the
+  GDPR, contact [privacy@splt.dev](mailto:privacy@splt.dev) or join the
+  [Support Server](https://discord.gg/BYubfNrzkU).

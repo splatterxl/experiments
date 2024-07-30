@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@discordjs/rest": "^2.3.0",
+    "@june-so/analytics-node": "^8.0.0",
     "@sentry/cli": "^2.33.0",
     "@sentry/node": "^8.20.0",
     "@sentry/profiling-node": "^8.20.0",

@@ -302,3 +302,18 @@ export function postMaintenance(
       }
     );
 }
+
+// Import June SDK:
+import { Analytics } from "@june-so/analytics-node";
+
+// Instantiate the client:
+export let analytics: Analytics = new Proxy({} as any, {
+  // silently fail any calls to a child function
+  get() {
+    return () => {};
+  },
+});
+
+if (process.env.JUNE_API_KEY) {
+  analytics = new Analytics(process.env.JUNE_API_KEY!);
+}

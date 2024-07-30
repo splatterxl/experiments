@@ -2,10 +2,12 @@ import * as Sentry from "@sentry/node";
 import { CommandInteraction } from "discord.js";
 import { inspect } from "util";
 import { rollouts } from "../load.js";
+import { analytics } from "../instrument.js";
 
 export default async function (i: CommandInteraction) {
   Sentry;
   rollouts;
+  analytics;
 
   const string = i.options.get("code", true).value as string;
 
@@ -26,7 +28,7 @@ export default async function (i: CommandInteraction) {
   }
 
   try {
-    const result = eval(string);
+    const result = await eval(string);
     console.log(result);
     i.reply({
       content: `\`\`\`js\n${inspect(result, { depth: 4 })}\n\`\`\``,
