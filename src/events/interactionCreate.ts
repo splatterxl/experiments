@@ -179,7 +179,9 @@ export default async function (i: Interaction) {
     if (i.isRepliable())
       try {
         i.reply({
-          content: __DEV__ ? "" : `An error occurred. \`\`\`js\n${e}\n\`\`\``,
+          content: __DEV__
+            ? ""
+            : `An error occurred. The developers have been notified. \`\`\`js\n${e}\n\`\`\``,
           files: __DEV__
             ? [
                 new AttachmentBuilder(

@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { debug } from "console";
 import { Collection, version } from "discord.js";
-import { readFileSync, statSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
 import FuzzySearch from "fuzzy-search";
 import { dirname } from "path";
 import invariant from "tiny-invariant";
@@ -24,7 +24,7 @@ const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
 
 export async function loadRollouts() {
   try {
-    const result = await fetch(
+    const resp = await fetch(
       `${process.env.NELLY}?${new URLSearchParams({
         type: "guild",
       })}`,
@@ -34,7 +34,17 @@ export async function loadRollouts() {
           "User-Agent": `Experiments (https://github.com/splatterxl/experiments; 2.0.0) Node.js/${process.version} Discord.js/${version}`,
         },
       }
-    ).then((res) => res.json());
+    ).then((res) => res.text());
+
+    let result;
+
+    try {
+      result = JSON.parse(resp);
+    } catch {
+      error("rollouts.load", "nelly.tools returned invalid JSON", resp);
+
+      throw new Error("nelly.tools returned invalid JSON");
+    }
 
     if (!result.success) throw new Error("nelly.tools returned error");
 
@@ -99,7 +109,7 @@ export async function loadRollouts() {
 
 function startReAttemptingRolloutLoad() {
   error("rollouts.load", "failed to load rollouts, retrying in 5 minutes");
-  if (rollouts.size === 0) {
+  if (rollouts.size === 0 && existsSync(__dirname + "/../rollouts.json")) {
     try {
       const data = JSON.parse(
         readFileSync(__dirname + "/../rollouts.json", "utf-8")
@@ -123,6 +133,8 @@ function startReAttemptingRolloutLoad() {
       // invalid/missing backups
       error("rollouts.load.file", `failed to load rollouts from backup: ${e}`);
     }
+  } else {
+    error("rollouts.load.file", "no backup found");
   }
   setTimeout(loadRollouts, 5 * 60 * 1000);
 }
