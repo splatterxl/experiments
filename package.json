@@ -25,6 +25,8 @@
   },
   "dependencies": {
     "@discordjs/rest": "^2.3.0",
+    "@sentry/node": "^8.20.0",
+    "@sentry/profiling-node": "^8.20.0",
     "@types/fuzzy-search": "^2.1.2",
     "dayjs": "^1.11.12",
     "discord-api-types": "^0.37.93",
