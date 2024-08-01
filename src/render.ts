@@ -27,7 +27,7 @@ import {
   IPopulationFilter,
   treatmentName,
 } from "./experiment.js";
-import { lastFetchedAt, rollouts } from "./index.js";
+import { getRollout, lastFetchedAt } from "./index.js";
 import { __DEV__, murmur3 } from "./util.js";
 
 import dayjs from "dayjs";
@@ -165,7 +165,7 @@ export function renderExperimentHomeView(
   i: { guild: any; guildId: any },
   id: string
 ): InteractionReplyOptions {
-  const exp = rollouts.get(id)!;
+  const exp = getRollout(id)!;
 
   return {
     content: `Last updated: <t:${Math.floor(lastFetchedAt / 1000)}>${
@@ -205,7 +205,7 @@ export function renderRolloutView(
   i: { guild: any; user: User },
   id: string
 ): InteractionReplyOptions {
-  const exp = rollouts.get(id)!;
+  const exp = getRollout(id)!;
 
   return {
     content: `${
@@ -261,7 +261,7 @@ export function renderOverrideView(
   i: { guild: any; user: User },
   id: string
 ): InteractionReplyOptions {
-  const exp = rollouts.get(id)!;
+  const exp = getRollout(id)!;
 
   return {
     content: `${
