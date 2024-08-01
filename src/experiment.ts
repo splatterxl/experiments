@@ -223,7 +223,7 @@ export const check = (
   if (exp.holdout_name && exp.holdout_bucket) {
     res.holdout = [exp.holdout_name, exp.holdout_bucket];
 
-    const holdout = rollouts.get(exp.holdout_name);
+    const holdout = getRollout(exp.holdout_name);
 
     if (!holdout) throw new ReferenceError("Holdout experiment not found");
 
@@ -563,4 +563,4 @@ export function treatmentName(
   }
 }
 
-import { rollouts } from "./load.js";
+import { getRollout } from "./load.js";

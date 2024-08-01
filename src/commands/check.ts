@@ -1,11 +1,13 @@
 import { CommandInteraction } from "discord.js";
 import { check, treatmentName } from "../experiment.js";
-import { rollouts } from "../index.js";
+import { getRollouts } from "../index.js";
 import { createRolloutsURL, parsePopulation } from "../render.js";
 import { __DEV__, getGuild, removeRolloutsPrefix } from "../util.js";
 import list from "./list.js";
 
 export default async function (i: CommandInteraction) {
+  const rollouts = getRollouts();
+
   const id = removeRolloutsPrefix(
     i.options.get("experiment", true).value!.toString()
   ).toLowerCase();

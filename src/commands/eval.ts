@@ -1,11 +1,12 @@
 import * as Sentry from "@sentry/node";
 import { CommandInteraction } from "discord.js";
 import { inspect } from "util";
-import { rollouts } from "../load.js";
 import { analytics } from "../instrument.js";
+import { getRollouts } from "../load.js";
 
 export default async function (i: CommandInteraction) {
   Sentry;
+  const rollouts = getRollouts();
   rollouts;
   analytics;
 

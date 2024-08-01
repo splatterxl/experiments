@@ -13,15 +13,17 @@ import { __DEV__ } from "./util.js";
 
 invariant(process.env.NELLY, "nelly.tools api url not set");
 
-export let rollouts = new Collection<string, Experiment>();
-export const list = () =>
-  rollouts
-    .sort((a, b) => b.exp_id.localeCompare(a.exp_id))
-    .map((r) => `${r.title} (\`${r.exp_id}\`)`);
-export let fuzzy: FuzzySearch<Experiment> = null as unknown as any;
+let rollouts = new Collection<string, Experiment>();
+
+let fuzzy: FuzzySearch<Experiment> = null as unknown as any;
+
 export let lastFetchedAt = 0;
 
 const __dirname = dirname(import.meta.url).replace(/^file:\/{2}/, "");
+
+export const getRollouts = () => rollouts;
+export const getRollout = (id: string) => rollouts.get(id);
+export const getFuzzy = () => fuzzy;
 
 export async function loadRollouts() {
   try {

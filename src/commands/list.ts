@@ -4,7 +4,7 @@ import {
   CommandInteraction,
 } from "discord.js";
 import { checkMulti, orList, treatmentName } from "../experiment.js";
-import { rollouts } from "../load.js";
+import { getRollouts } from "../load.js";
 import { __DEV__, getGuild } from "../util.js";
 
 export default async function (i: CommandInteraction) {
@@ -17,7 +17,7 @@ export default async function (i: CommandInteraction) {
 
   const guild = await getGuild(id, i.client, i);
 
-  const experiments = rollouts
+  const experiments = getRollouts()
     .filter(
       (r) =>
         r.overrides?.length ||

@@ -1,5 +1,5 @@
 import { AutocompleteInteraction } from "discord.js";
-import { fuzzy, rollouts } from "../index.js";
+import { getFuzzy, getRollouts } from "../index.js";
 import { removeRolloutsPrefix } from "../util.js";
 
 export default function (i: AutocompleteInteraction) {
@@ -7,7 +7,7 @@ export default function (i: AutocompleteInteraction) {
 
   if (typing.length === 0)
     return i.respond(
-      rollouts
+      getRollouts()
         .sort((a, b) => b.exp_id.localeCompare(a.exp_id))
         .map((x) => ({
           name: (x.title ?? x.exp_id).slice(0, 100),
@@ -17,7 +17,7 @@ export default function (i: AutocompleteInteraction) {
     );
 
   const res =
-    fuzzy
+    getFuzzy()
       ?.search(typing)
       .map((x: any) => ({
         name: (x.title ?? x.exp_id).slice(0, 100),
